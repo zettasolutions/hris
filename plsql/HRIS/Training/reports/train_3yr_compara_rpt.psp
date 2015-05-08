@@ -1,0 +1,205 @@
+<%@ plsql procedure="train_3yr_compara_rpt" %>
+<%@ plsql parameter="p_year"    type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_cc"      type="NUMBER" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   13-FEB-15  BD    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+
+   l_select                     VARCHAR2(3000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_order                      VARCHAR2(4000);
+   l_sql                        VARCHAR2(8000);
+
+   l_ctr                        NUMBER:=0;
+   TYPE ts_cur IS REF CURSOR;
+   tsref              ts_cur;
+
+   l_empl_id_no                  employee_v.empl_id_no%TYPE;
+   l_empl_name                   employee_v.empl_name%TYPE;
+   l_job_desc                    employee_v.job_desc%TYPE;
+
+   l_year_from                   trainingtrainees_v.trn_year%TYPE;
+   l_year_to                     trainingtrainees_v.trn_year%TYPE;
+   l_year1                       trainingtrainees_v.trn_year%TYPE;
+   l_year2                       trainingtrainees_v.trn_year%TYPE;
+   l_year3                       trainingtrainees_v.trn_year%TYPE;
+
+   TYPE T_TRAIN_REC IS RECORD (empl_id_no    employee_v.empl_id_no%TYPE,
+                               empl_name     employee_v.empl_name%TYPE,
+                               job_desc      employee_v.job_desc%TYPE,
+                               trn_desc1      trainingtrainees_v.trn_desc%TYPE,
+                               start_date1    trainingtrainees_v.start_date%TYPE,
+                               trn_hours1     trainingtrainees_v.trn_hours%TYPE,
+                               trn_desc2      trainingtrainees_v.trn_desc%TYPE,
+                               start_date2    trainingtrainees_v.start_date%TYPE,
+                               trn_hours2     trainingtrainees_v.trn_hours%TYPE,
+                               trn_desc3      trainingtrainees_v.trn_desc%TYPE,
+                               start_date3    trainingtrainees_v.start_date%TYPE,
+                               trn_hours3     trainingtrainees_v.trn_hours%TYPE
+                               );
+   TYPE T_TRAIN_TAB IS TABLE OF T_TRAIN_REC INDEX BY BINARY_INTEGER;
+   train_arr                   T_TRAIN_TAB;
+   l_index                     NUMBER;
+
+   CURSOR training_cur (p_empl_id_no NUMBER, p_trn_year NUMBER) IS
+      SELECT trn_desc, start_date, trn_hours
+        FROM trainingtrainees_v
+       WHERE empl_id_no = p_empl_id_no
+         AND trn_year = p_trn_year
+       ORDER BY start_date, trn_desc;
+
+
+   l_module_id                   s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+<%
+   l_select := 'SELECT DISTINCT t.empl_id_no, e.empl_name, e.job_desc ';
+   l_from   := '  FROM trainingtrainees_v t,  employee_v e ';
+   l_where  := ' WHERE t.empl_id_no = e.empl_id_no ';
+   l_order  := ' ORDER BY empl_name ';
+
+
+   IF p_year IS NOT NULL THEN
+      l_year_from := p_year - 2;
+      l_year_to   := p_year;
+      l_where := l_where || ' AND t.trn_year BETWEEN ' || l_year_from || ' AND ' || l_year_to ;
+   END IF;
+   l_year1 := l_year_from;
+   l_year2 := l_year_from+1;
+   l_year3 := l_year_from+2;
+
+
+   IF p_cc IS NOT NULL THEN
+      l_where := l_where || ' AND t.dept_code= ' || p_cc;
+   END IF;
+
+
+   l_sql := l_select || l_from || l_where || l_order;
+
+   reportheader(p_output=>'H');
+%>
+<body >
+
+<table>
+   <tr valign="top">
+      <td align="left" class="head1 reportTitle">THREE-YEAR TRAINING COMPARATIVE REPORT</td>
+      <td align="right" class="reportcriteria">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss')) %></td>
+   </tr>
+</table>
+
+
+<table >
+   <thead>
+      <tr>
+         <th rowspan="2" align="left">Employee</th>
+         <th rowspan="2" align="left">Position</th>
+         <th align="center" colspan="3"><%= l_year1 %></th>
+         <th align="center" colspan="3"><%= l_year2 %></th>
+         <th align="center" colspan="3"><%= l_year3 %></th>
+      </tr>
+      <tr>
+         <th align="left">Training Title</th>
+         <th align="center">Date</th>
+         <th align="center">Hours</th>
+         <th align="left">Training Title</th>
+         <th align="center">Date</th>
+         <th align="center">Hours</th>
+         <th align="left">Training Title</th>
+         <th align="center">Date</th>
+         <th align="center">Hours</th>
+      </tr>
+   </thead>
+   <tbody>
+<%
+   OPEN tsref FOR l_sql;
+   LOOP
+      FETCH tsref INTO l_empl_id_no, l_empl_name, l_job_desc;
+
+
+      EXIT WHEN tsref%NOTFOUND;
+      train_arr.DELETE();
+      l_index := 1;
+
+      train_arr(l_index).empl_id_no := l_empl_id_no;
+      train_arr(l_index).empl_name  := l_empl_name ;
+      train_arr(l_index).job_desc   := l_job_desc  ;
+
+      FOR t IN training_cur (l_empl_id_no,l_year1) LOOP
+         train_arr(l_index).trn_desc1   := t.trn_desc;
+         train_arr(l_index).start_date1 := t.start_date;
+         train_arr(l_index).trn_hours1  := t.trn_hours;
+         l_index := l_index + 1;
+      END LOOP;
+      l_index := 1;
+      FOR t IN training_cur (l_empl_id_no,l_year2) LOOP
+         train_arr(l_index).trn_desc2   := t.trn_desc;
+         train_arr(l_index).start_date2 := t.start_date;
+         train_arr(l_index).trn_hours2  := t.trn_hours;
+         l_index := l_index + 1;
+      END LOOP;
+      l_index := 1;
+      FOR t IN training_cur (l_empl_id_no,l_year2) LOOP
+         train_arr(l_index).trn_desc3   := t.trn_desc;
+         train_arr(l_index).start_date3 := t.start_date;
+         train_arr(l_index).trn_hours3  := t.trn_hours;
+         l_index := l_index + 1;
+      END LOOP;
+%>
+         <tr>
+            <td align="left"><%= train_arr(1).empl_name %></td>
+            <td align="left"><%= train_arr(1).job_desc %></td>
+            <td align="left"><%= train_arr(1).trn_desc1 %></td>
+            <td align="center"><%= train_arr(1).start_date1 %></td>
+            <td align="center"><%= train_arr(1).trn_hours1 %></td>
+            <td align="left"><%= train_arr(1).trn_desc2 %></td>
+            <td align="center"><%= train_arr(1).start_date2 %></td>
+            <td align="center"><%= train_arr(1).trn_hours2 %></td>
+            <td align="left"><%= train_arr(1).trn_desc3 %></td>
+            <td align="center"><%= train_arr(1).start_date3 %></td>
+            <td align="center"><%= train_arr(1).trn_hours3 %></td>
+         </tr>
+<%
+
+      FOR i IN 2..train_arr.COUNT LOOP
+%>
+         <tr>
+            <td align="left"></td>
+            <td align="left"></td>
+            <td align="left"><%= train_arr(1).trn_desc1 %></td>
+            <td align="center"><%= train_arr(1).start_date1 %></td>
+            <td align="center"><%= train_arr(1).trn_hours1 %></td>
+            <td align="left"><%= train_arr(1).trn_desc2 %></td>
+            <td align="center"><%= train_arr(1).start_date2 %></td>
+            <td align="center"><%= train_arr(1).trn_hours2 %></td>
+            <td align="left"><%= train_arr(1).trn_desc3 %></td>
+            <td align="center"><%= train_arr(1).start_date3 %></td>
+            <td align="center"><%= train_arr(1).trn_hours3 %></td>
+         </tr>
+<%
+      END LOOP;
+   END LOOP;
+%>
+</tbody>
+</table>
+
+
+
+</body>
+</html>

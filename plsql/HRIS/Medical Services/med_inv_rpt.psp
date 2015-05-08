@@ -1,0 +1,113 @@
+<%@ plsql procedure="med_inv_rpt" %>
+<%@ plsql parameter="p_meds_code"   type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_Criteria"    type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   12-DEC-14  GF    New
+*/
+--DECLARATION SECTION
+l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+l_dhtmlx_sort                VARCHAR2(1024);
+l_year                       NUMBER := 2014;
+%>
+<%
+   reportheader(p_output=>'H');   
+%> 
+<body>
+
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+
+<table>
+   <tr valign="top">
+      <td width="400px" align="left" class="head1 reportTitle">Medicine Inventory</td>
+   </tr>
+    <tr valign="top">
+      <td  class="reportcriteria">Criteria: <%=p_Criteria %></td>
+   </tr>     
+</table>
+   
+<table class="gridReport" >
+<thead>
+   <tr>
+      <th align="left" width="80px">Ledger No</th>
+      <th align="left" width="100px">Tran Date </th>
+      <th align="left" width="100px">Beg. Qty</th>      
+      <th align="left" width="100px">Debit</th>   
+      <th align="left" width="100px">Credit</th>   
+      <th align="left" width="100px">Balance</th>   
+      <th align="left" width="100px">Purchase Date</th>      
+      <th align="left" width="100px">Unit Price</th>   
+      <th align="left" width="100px">Expiry Date</th>   
+      <th align="left" width="100px">Treatment For</th> 
+   </tr>
+</thead>
+</table>
+
+
+<script type="text/javascript">
+
+function LoadData(){
+   var l_params="";
+   l_params += "p_meds_code=<%=p_meds_code%>";   
+   
+   
+   $.getJSON("med_inv_detail_json?" + l_params
+      ,onLoadComplete
+   ).fail(function() {
+       $(".loadingStatus").css("display","none");
+       alert("Sorry, the current report cannot display at this moment.");
+   });
+
+}
+
+function onLoadComplete(data){
+   var jsonGrid = $(".gridReport");
+   jsonGrid.clearGrid();
+   $.each(data.rows, function () {
+      var r = ""
+      r += "<tr>";
+      r += "<td>" + this.data[0]   + "</td>";
+      r += "<td>" + this.data[1]   + "</td>";
+      r += "<td>" + this.data[2]   + "</td>";
+      r += "<td>" + this.data[3]   + "</td>";
+      r += "<td>" + this.data[4]   + "</td>";
+      r += "<td>" + this.data[5]   + "</td>";
+      r += "<td>" + this.data[6]   + "</td>";
+      r += "<td>" + this.data[7]   + "</td>";
+      r += "<td>" + this.data[8]   + "</td>";
+      r += "<td>" + this.data[9]   + "</td>";
+      r += "</tr>";   
+      jsonGrid.append(r);
+   });
+   $(".loadingStatus").css("display","none");
+   window.print();
+}
+
+ 
+//on page loaded
+$(document).ready(function(){    
+   LoadData();
+}); 
+   
+ 
+</script>
+
+</body>
+</html>

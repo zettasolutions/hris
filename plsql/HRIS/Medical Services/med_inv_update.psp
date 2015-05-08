@@ -1,0 +1,199 @@
+<%@ plsql procedure="med_inv_update" %>
+<%@ plsql parameter="p_tran_no"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tran_date"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_meds_type"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_meds_code"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_medicine "               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_meds_qty"                type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_quantity"                type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_unit_price"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_purchase_date"           type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_expiry_date"             type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_post_status"             type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_remarks"                 type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   02-AUG-14  GT    New
+*/
+--DECLARATION SECTION
+   l_js_path         VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed         VARCHAR2(1) := 'N';
+   l_rec             S004_T08007%ROWTYPE;
+   l_date_format     VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+   l_tran_date       DATE;
+   l_post_date       DATE;
+   l_purchase_date   DATE;
+   l_expiry_date     DATE;
+   l_unit_price      NUMBER;
+   l_tran_month      DATE;
+   l_begbal_qty      NUMBER:=0;
+   l_debit_qty       NUMBER:=0;
+   l_balance         NUMBER:=0;  
+   
+   
+%>
+<%
+BEGIN
+   l_tran_date := TO_DATE(p_tran_date,l_date_format);
+   l_purchase_date := TO_DATE(p_purchase_date,l_date_format);
+   l_expiry_date := TO_DATE(p_expiry_date,l_date_format);
+   l_unit_price := TO_NUMBER(TRIM(REPLACE(p_unit_price,',','')));
+
+   IF p_post_status = 1 then
+      l_post_date := SYSDATE;
+   ELSE 
+      l_post_date := NULL;
+   END IF;
+   
+   IF p_tran_no IS NULL  AND p_tran_date IS NOT NULL THEN
+      INSERT INTO S004_T08007 (
+          tran_no
+         ,tran_date
+         ,quantity
+         ,unit_price
+         ,purchase_date
+         ,expiry_date
+         ,meds_type
+         ,meds_code
+         ,remarks
+         ,post_status
+         ,post_date
+         ,created_by
+         ,date_created
+      )
+      VALUES
+      (  S004_T08007_SQ001.NEXTVAL 
+         ,l_tran_date
+         ,p_quantity
+         ,l_unit_price
+         ,l_purchase_date
+         ,l_expiry_date
+         ,p_meds_type
+         ,p_meds_code
+         ,p_remarks
+         ,p_post_status
+         ,l_post_date
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+   );
+   ELSIF p_tran_no IS NOT NULL AND p_tran_date IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T08007 WHERE tran_no=p_tran_no;
+
+      IF zsi_lib.IsChanged(l_rec.tran_date, l_tran_date) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.tran_date := l_tran_date;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.meds_type, p_meds_type) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.meds_type := p_meds_type;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.meds_code, TO_NUMBER(p_meds_code)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.meds_code := p_meds_code;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.quantity, TO_NUMBER(p_quantity)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.quantity := p_quantity;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.unit_price, l_unit_price) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.unit_price := l_unit_price;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.post_status, TO_NUMBER(p_post_status)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.post_status := p_post_status;
+      l_rec.post_date := l_post_date;      
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.purchase_date, l_purchase_date) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.purchase_date := l_purchase_date;
+      END IF;
+      
+      IF zsi_lib.IsChanged(l_rec.expiry_date, l_expiry_date) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.expiry_date := l_expiry_date;
+      END IF;
+      
+      IF zsi_lib.IsChanged(l_rec.remarks, p_remarks) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.remarks := p_remarks;
+      END IF;
+      
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08007 SET row = l_rec WHERE tran_no=p_tran_no;
+      END IF;
+   END IF;
+   
+   IF p_post_status = 1 then
+      IF l_purchase_date IS NULL THEN
+         l_tran_month := (l_tran_date - EXTRACT(DAY FROM l_tran_date)) + 1; 
+         l_begbal_qty := p_quantity;
+         l_tran_date := NULL;
+      ELSE
+         l_debit_qty := p_quantity;
+      END IF;
+      
+      INSERT INTO S004_T08008 
+      (   ldgr_no               
+         ,tran_no               
+         ,tran_date             
+         ,tran_month            
+         ,unit_price            
+         ,purchase_date         
+         ,expiry_date           
+         ,meds_type             
+         ,meds_code 
+         ,begbal_qty
+         ,debit_qty             
+         ,balance               
+         ,remarks               
+         ,post_date 
+         ,created_by
+         ,date_created
+      )
+      VALUES
+      (  S004_T08008_SQ001.NEXTVAL 
+         ,p_tran_no
+         ,l_tran_date
+         ,l_tran_month
+         ,l_unit_price
+         ,l_purchase_date
+         ,l_expiry_date
+         ,p_meds_type
+         ,p_meds_code
+         ,l_begbal_qty
+         ,l_debit_qty
+         ,l_balance
+         ,p_remarks
+         ,l_post_date
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+      );
+      IF l_purchase_date IS NOT NULL OR l_unit_price IS NOT NULL THEN
+         UPDATE S004_T08003 SET unit_price = l_unit_price WHERE meds_code = p_meds_code;
+      END IF;
+   END IF;  
+
+END;
+%>

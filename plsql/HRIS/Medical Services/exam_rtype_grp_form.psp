@@ -1,0 +1,132 @@
+<%@ plsql procedure="exam_rtype_grp_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_seq_no"      type="VARCHAR2" DEFAULT='NULL'%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   05-JAN-15  GT    Added APE_PRIORITY
+   09-SEP-14  BD    Added security logic.
+   08-JUL-14  GT    Added p_seq_no.
+   01-JUL-14  RN    New.
+*/
+
+   --DECLARATION SECTION
+   l_style_path     VARCHAR2(128) := zsi_lib.StylePath;
+   l_js_path        VARCHAR2(128) := zsi_lib.JSPath;
+   l_title          VARCHAR2(50);
+   l_frmOffset      VARCHAR2(50):='';
+
+   l_rec  S004_T08019_GROUP%ROWTYPE;
+   l_user_iswrite       NUMBER(1):=0;
+%>
+<%
+   pageheader();
+%>
+<body>
+<form name="frmDSList" action="exam_rtype_grp_update" method="POST" >
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_result_type');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_group_desc');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ape_priority');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_remarks');
+   IF p_seq_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM S004_T08019_GROUP WHERE seq_no = p_seq_no;
+
+      zsi_bs_lib.OpenEntryForm;
+         zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no',p_inputValue=>p_seq_no);
+
+
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.SelectBox(p_labelName=>'Type', p_Name=>'p_result_type', p_labelSize=>3, p_selectSize=>4);
+         zsi_bs_lib.CloseFormGroup();
+
+            
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.InputTextBox(p_labelName =>'Description',p_inputName=>'p_group_desc', p_labelSize =>3, p_inputSize =>6,p_inputValue=>l_rec.group_desc);
+         zsi_bs_lib.CloseFormGroup();
+
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.InputTextBox(p_labelName =>'APE Priority',p_inputName=>'p_ape_priority', p_labelSize =>3, p_inputSize =>1, p_inputValue=> l_rec.ape_priority, p_inputclass=>'numeric' );
+         zsi_bs_lib.CloseFormGroup();
+
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.InputTextBox(p_labelName =>'Remarks',p_inputName=>'p_remarks', p_labelSize =>3, p_inputSize =>6,p_inputValue=>l_rec.remarks);
+         zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.CloseEntryForm;
+      l_frmOffset:='col-xs-offset-3';
+   ELSE
+%>
+   <div class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-2" nowrap align="left">Type</th>
+            <th class="col-xs-2" nowrap align="left">Description</th>
+            <th class="col-xs-2" nowrap align="left">APE Priority</th>
+            <th class="col-xs-2" nowrap align="left">Remarks</th>
+   </tr>
+<%
+   FOR i IN 1..5 LOOP
+
+%>
+   <tr>
+          <input type="hidden" id="p_seq_no" name="p_seq_no">
+       <td><% zsi_bs_lib.SelectBox(p_Name=>'p_result_type', p_wrapper=>'N'); %></td>
+       <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_group_desc', p_wrapper=>'N');%></td>
+       <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ape_priority', p_wrapper=>'N', p_inputclass=>'numeric');%></td>
+       <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_remarks', p_wrapper=>'N');%></td>
+
+    </tr>
+<%
+   END LOOP;
+%>
+      </table>
+   </div>
+<%
+   END IF;
+%>
+<div class="buttonGroup <%=l_frmOffset%>">
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+</form>
+
+
+<script type="text/javascript">
+/*variable declaration*/
+   var ctrlSel = zsi.control.SelectList;
+
+
+/*end of declaration*/
+
+   $(document).ready(function(){
+      $('.modal-dialog').css('width', '450px');
+
+      ctrlSel("select[name=p_result_type]","<%=l_rec.result_type%>","N","S004_T08019","result_type","result_desc","");
+
+   });
+   
+ zsi.json.checkValueExist("input[name=p_group_desc]","S004_T08019_GROUP","group_desc");   
+ 
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

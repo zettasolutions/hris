@@ -1,0 +1,21 @@
+set scan off
+spool s004_upd_res.txt
+@@s004_t08010_billing.sql
+@@s004_t08010_dental.sql
+@@s004_t08010_doctor.sql
+@@s004_t08010_illness.sql
+@@s004_t08010_meds.sql
+@@s004_t08010_result.sql
+@@s004_t08010_rmtpatho.sql
+@@s004_t08010_vaccine.sql
+@@s004_t08020_billing.sql
+@@s004_t08020_dental.sql
+@@s004_t08020_doctor.sql
+@@s004_t08020_illness.sql
+@@s004_t08020_meds.sql
+@@s004_t08020_result.sql
+@@s004_t08020_rmtpatho.sql
+@@s004_t08021_billing.sql
+@@s004_t08021_doctor.sql
+spool off
+set scan on

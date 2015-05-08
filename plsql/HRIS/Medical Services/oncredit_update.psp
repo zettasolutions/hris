@@ -1,0 +1,220 @@
+<%@ plsql procedure="oncredit_update" %>
+<%@ plsql parameter="p_tran_no"         type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_tran_type"       type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_invoice_no"      type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_invoice_date"    type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_empl_id_no"      type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_empl_name"       type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_amount"          type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_establishment"   type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_payment_tag"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_post_status"     type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   05-JAN-15  GT    New
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_sql                        VARCHAR2(1000);
+   l_date_format                VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+   l_changed                    VARCHAR2(1) := 'N';
+   l_post_date                  DATE;
+   l_rec                        S004_T08023%ROWTYPE;
+   l_amount                     NUMBER;
+   l_invoice_date               DATE;
+   l_ledger_no                 NUMBER:=0;
+   l_emp_rec                   employee_active_v%ROWTYPE;
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update On-Credit Transactions </title>
+</head>
+<body>
+<%
+FOR i IN 2..p_tran_no.COUNT LOOP
+   l_post_date := '';
+   IF p_post_status(i) = 1 then
+      l_post_date := SYSDATE;
+   end if;
+   l_invoice_date := TO_DATE(p_invoice_date(i),l_date_format);
+
+
+   l_amount       := TO_NUMBER(TRIM(REPLACE(p_amount(i),',','')));
+
+   IF p_tran_no(i) IS NULL  AND p_empl_id_no(i) IS NOT NULL AND p_tran_type IS NOT NULL AND p_establishment IS NOT NULL AND p_payment_tag IS NOT NULL THEN
+
+      INSERT INTO S004_T08023
+      (   tran_no
+         ,tran_type
+         ,invoice_no
+         ,invoice_date
+         ,id_no
+         ,amount
+         ,establishment
+         ,payment_tag
+         ,post_status
+         ,post_date
+         ,created_by
+         ,date_created
+
+      )
+      VALUES
+      (   S004_T08023_SQ001.NEXTVAL
+         ,p_tran_type
+         ,p_invoice_no(i)
+         ,l_invoice_date
+         ,p_empl_id_no(i)
+         ,l_amount
+         ,p_establishment
+         ,p_payment_tag
+         ,p_post_status(i)
+         ,l_post_date
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+      );
+
+    ELSIF p_tran_no(i) IS NOT NULL  AND p_empl_id_no(i) IS NOT NULL AND p_tran_type IS NOT NULL AND p_establishment IS NOT NULL AND p_payment_tag IS NOT NULL THEN
+      SELECT * INTO l_rec FROM S004_T08023 WHERE tran_no = p_tran_no(i);
+      IF zsi_lib.IsChanged(l_rec.tran_type, TO_NUMBER(p_tran_type)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.tran_type := p_tran_type;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.invoice_no, p_invoice_no(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.invoice_no := p_invoice_no(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.invoice_date, l_invoice_date) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.invoice_date := p_invoice_date(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.id_no, TO_NUMBER(p_empl_id_no(i))) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.id_no := p_empl_id_no(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.amount, l_amount) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.amount := l_amount;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.establishment, TO_NUMBER(p_establishment)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.establishment := p_establishment;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.payment_tag, TO_NUMBER(p_payment_tag)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.payment_tag :=  p_payment_tag;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.post_status, TO_NUMBER(p_post_status(i))) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.post_status := p_post_status(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.post_date, l_post_date) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.post_date := l_post_date;
+      END IF;
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08023 SET row = l_rec WHERE tran_no=p_tran_no(i);
+      END IF;
+      
+       IF p_post_status(i) = 1 THEN
+         UPDATE S004_T08001 SET PLAN_CURR_BAL =  (PLAN_CURR_BAL - l_amount) WHERE id_no = TO_NUMBER(p_empl_id_no(i));
+      END IF;
+   END IF;
+   
+   IF p_post_status(i) = 1 THEN
+      SELECT S004_T08010_SQ001.NEXTVAL INTO l_ledger_no FROM DUAL; 
+      SELECT * INTO l_emp_rec FROM employee_active_v WHERE empl_id_no = p_empl_id_no(i);
+      INSERT INTO S004_T08010
+         (ldgr_no
+         ,oc_tran_no                
+         ,tran_year                  
+         ,tran_date                  
+         ,id_no                      
+         ,age_brak_code
+         ,empl_type                  
+         ,cost_center                
+         ,department                 
+         ,group_code                 
+         ,medplan_type               
+         ,medplan_code
+         ,created_by
+         ,date_created)   
+   SELECT l_ledger_no
+         ,tran_no
+         ,EXTRACT(YEAR FROM invoice_date)
+         ,invoice_date
+         ,id_no
+         ,l_emp_rec.age_brak_code
+         ,l_emp_rec.empl_type
+         ,l_emp_rec.empl_group_code
+         ,l_emp_rec.department
+         ,l_emp_rec.group_code
+         ,1
+         ,tran_type
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+    FROM S004_T08023
+   WHERE tran_no = p_tran_no(i);
+
+
+  INSERT INTO S004_T08010_BILLING
+            (ldgr_no                        
+            ,tran_year                  
+            ,tran_date                  
+            ,id_no                      
+            ,medservice_code            
+            ,amnt_billed                
+            ,reference_code
+            ,payment_tag
+            ,created_by
+            ,date_created)  
+       SELECT l_ledger_no
+            ,EXTRACT(YEAR FROM invoice_date)
+            ,invoice_date
+            ,id_no
+            ,tran_type
+            ,amount   
+            ,establishment
+            ,payment_tag
+            ,zsi_sessions_lib.GetCookieUser
+            ,SYSDATE
+      FROM S004_T08023
+      WHERE tran_no = p_tran_no(i);
+   END IF;
+
+
+END LOOP;
+END;
+%>
+
+<script type="text/javascript">
+    window.location.href="oncredit_form";
+</script>

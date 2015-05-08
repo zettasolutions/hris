@@ -1,0 +1,117 @@
+<%@ plsql procedure="curr_medplan_exp_rpt" %>
+<%@ plsql parameter="p_semi_annual"    type="NUMBER" default="1"  %>
+<%@ plsql parameter="p_cyear"          type="NUMBER"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   10-MAR-15  BD    New
+*/
+--DECLARATION SECTION
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+
+   l_ctr                        NUMBER(10) := 0;
+   l_amnt_billed                NUMBER;
+   l_comma                      VARCHAR2(1);
+   l_month_from                 NUMBER(2) := 1;
+   l_month_to                   NUMBER(2) := 6;
+   l_medplan_exp                zsi_lib.NUM_ARR;
+
+   CURSOR med_plan_code_cur IS
+      SELECT sele_value, description
+        FROM medplan_code_v
+       ORDER BY displayed_text;
+
+   FUNCTION GetMonth (p_month IN NUMBER) RETURN VARCHAR2 IS
+      l_date   DATE;
+   BEGIN
+      l_date := TO_DATE(p_month||'/01/2015','MM/DD/YYYY');
+      RETURN TO_CHAR(l_date,'Month');
+   END;
+%>
+<%
+   reportheader(p_output=>'H');
+
+   IF p_semi_annual = 2 THEN
+      l_month_from := 7;
+      l_month_to   := 12;
+   END IF;
+%>
+<body >
+
+<table>
+   <tr valign="top">
+      <td align="left" class="head1 reportTitle">Current Medical Plan Expenses</td>
+      <td align="right" class="reportcriteria">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss')) %></td>
+   </tr>
+</table>
+
+
+<table >
+   <thead>
+      <tr>
+         <th align="center"><%= p_cyear %></th>
+<%
+   FOR m IN l_month_from..l_month_to LOOP
+      l_medplan_exp(m) := 0;
+%>
+         <th><%= GetMonth(m) %></th>
+<%
+   END LOOP;
+%>
+      </tr>
+   </thead>
+   <tbody>
+<%
+   FOR mp IN med_plan_code_cur LOOP
+%>
+         <tr>
+            <td align="left"><%= mp.description %></td>
+<%
+      FOR m IN l_month_from..l_month_to LOOP
+         BEGIN
+            SELECT SUM(amnt_billed)
+              INTO l_amnt_billed
+              FROM s004_t08010_billing b,
+                   s004_t08010 a
+             WHERE b.ldgr_no = a.ldgr_no
+               AND b.tran_year = p_cyear
+               AND TO_CHAR(b.tran_date,'mm') = m
+               AND a.medplan_code = mp.sele_value;
+         END;
+         l_medplan_exp(m) := l_medplan_exp(m) + NVL(l_amnt_billed,0);
+%>
+         <td align="right"><%= zsi_lib.FormatAmount(l_amnt_billed,2) %></td>
+<%
+      END LOOP;
+%>
+         </tr>
+<%
+   END LOOP;
+%>
+   </tbody>
+   <tr>
+      <td style="font-weight:bold;" align="left">Total</td>
+<%
+      FOR m IN l_month_from..l_month_to LOOP
+%>
+         <td style="font-weight:bold;" align="right"><%= zsi_lib.FormatAmount(l_medplan_exp(m),2) %></td>
+<%
+      END LOOP;
+%>
+   </tr>
+</table>
+</body>
+</html>
+

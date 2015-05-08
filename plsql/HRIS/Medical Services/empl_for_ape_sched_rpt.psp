@@ -1,0 +1,204 @@
+<%@ plsql procedure="empl_for_ape_sched_rpt" %>
+<%@ plsql parameter="p_cmonth"            type="VARCHAR2"   default="NULL" %>
+<%@ plsql parameter="p_ape_date"          type="VARCHAR2"   default="NULL" %>
+<%@ plsql parameter="p_reference_desc"    type="VARCHAR2"   default="NULL" %>
+<%@ plsql parameter="p_doctor_name"       type="VARCHAR2"   default="NULL" %>
+<%@ plsql parameter="p_emp_grouping"      type="VARCHAR2"   default="NULL" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   16-MAR-15  GF    New
+*/
+--DECLARATION SECTION
+l_select                     VARCHAR2(3000);
+l_from                       VARCHAR2(1000);
+l_where                      VARCHAR2(4000);
+l_order                      VARCHAR2(4000);
+l_sql                        VARCHAR2(8000);
+l_ctr                        NUMBER:=0;
+l_pbreak_start               VARCHAR2(1000):='<div class="pb">';   
+l_pbreak_end                 VARCHAR2(1000):='</div>';   
+
+TYPE ta_cur IS REF CURSOR;
+taref              ta_cur;
+
+l_empl_name          employee_active_v.empl_name%TYPE;
+
+   PROCEDURE printHeader 
+   IS
+   BEGIN
+      htp.p('<div class="rptHeader">');
+      htp.p('<div class="rptLogo-sm">&nbsp;</div>');
+      htp.p('<div class="rptHeaderRight">');
+      htp.p('<div class="rptRepublic">Republic of the Philippines</div>');
+      htp.p('<div class="rptCompany-sm">Metropolitan Cebu Water District </div>');
+      htp.p('<div class="rptAddress">');
+      htp.p('Corner Lapu-lapu & Magallanes Sts.,  Cebu City'); 
+      htp.p('<br />  Tel. Nos. 254-8434 local 326, 256-3471');
+      htp.p('<br /> MCWD is ISO 9001 Certified');
+      htp.p('</div>');
+      htp.p('</div>');
+      htp.p('</div>');
+  END;
+  
+   PROCEDURE printBody(p_empl_name IN VARCHAR2)
+   IS
+   BEGIN
+
+   htp.p('<div class="rptP-sm"> '); 
+   htp.p('<div style="float:left;"><u> ' || p_reference_desc || '</u></div>');
+   htp.p('<div style="float:right;">Date: <u> ' || TO_CHAR(SYSDATE,'MM/DD/YYYY') || '</u></div>'); 
+
+   htp.p('<br />Dear <u>' || p_empl_name || '</u>,'); 
+   htp.p('</div>'); 
+   
+   htp.p('<div class="rptP-sm"> ');
+   htp.p('   This is to inform you that you are schedule for Annual Physical Exam on ' || p_ape_date || ' from 6:00 - 8:00 am at CUPSI Laboratory, Fuente Osmeña, Cebu City. ');
+   htp.p('   You are to undergo the following examinations.');
+   htp.p('   (pls. observe fasting for at least 10 hrs.)');
+   htp.p('   <ol style="padding-left:20px">');
+   htp.p('      <div style="float:left;">');
+   htp.p('         <li> Complete Blood Count </li>');
+   htp.p('         <li> Urinalysis </li>');
+   htp.p('         <li> Stool Exam</li>');
+   htp.p('         <li> FBS </li>');
+   htp.p('         <li> Cholesterol </li>');
+   htp.p('         <li> Triglycerides </li>');
+   htp.p('         <li> HDL </li>');
+   htp.p('         <li> LDL </li>');
+   htp.p('      </div>   ');
+   htp.p('      <div style="float:left;margin-left: 30px;">');   
+   htp.p('         <li> BUN </li>');
+   htp.p('         <li> Total Bilirubin </li>');
+   htp.p('         <li> Potassium </li>');
+   htp.p('         <li> Creatinine </li>');
+   htp.p('         <li> Uric Acid </li>');
+   htp.p('         <li> Alk. Phos. </li>');
+   htp.p('         <li> SGOT </li>');
+   htp.p('         <li> SGPT </li>');
+   htp.p('      </div>   ');
+   htp.p('      <div style="float:left;margin-left: 40px;">');
+   htp.p('         <li> Total Protein </li>');
+   htp.p('         <li> Albumin </li>');
+   htp.p('         <li> Globulin </li>');
+   htp.p('         <li> Calcium </li>');
+   htp.p('         <li> HBsAg </li>');
+   htp.p('         <li> Pap Smear </li>');
+   htp.p('         <li> PSA </li>');
+   htp.p('         <li> Chest X-ray </li>');
+   htp.p('         <li> ECG </li>');
+   htp.p('       </div> ');
+   htp.p('   </ol>');      
+   htp.p('<div> 26.Others________________ </div>');
+
+   htp.p('</div>');
+  END;
+
+   PROCEDURE printFooter 
+   IS
+   BEGIN
+   htp.p('<div class="rptP-sm">');
+      htp.p('Likewise, your Annual Dental Examination will be conducted by Dr. ' || p_doctor_name || ' from 8:00 a.m. to 12:00 noon at MCWD Clinic ');
+      htp.p('of the same date.');
+   htp.p('</div>');
+   htp.p('<div class="rptP-sm">');
+      htp.p('Please be reminded that failure to comply with the Annual Physical/Dental examination shall result to the suspension'); 
+      htp.p('of all the Medical & Dental benefits until such time you submit to the said examination.');
+   htp.p('</div>');
+   htp.p('<div class="rptP-sm"> ');
+      htp.p('Your health is both our concern. Thank you.');
+   htp.p('</div>');
+   htp.p('<div class="rptP-sm">');
+      htp.p('Very truly yours,');
+   htp.p('</div>');
+   htp.p('<div class="rptP-sm">'); 
+      htp.p('Medical & Dental Services');
+   htp.p('</div>');
+
+  END;
+
+
+%>
+<%
+   reportheader(p_output=>'H');      
+%> 
+
+<body onload="window.print();" >
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+
+<div class="rptPage rptFS-sm">
+<%
+
+
+l_select := 'SELECT empl_name';
+l_from   := ' FROM employee_active_v';
+l_where  := ' WHERE emp_grouping=' || '''' || p_emp_grouping || '''' || ' AND EXTRACT(MONTH FROM empl_birthdate)= ' || p_cmonth;
+l_order  := ' ORDER BY empl_name';
+
+l_sql := l_select || l_from || l_where || l_order;
+
+
+htp.p(l_pbreak_start);
+ 
+      OPEN taref FOR l_sql;
+      LOOP
+          FETCH taref INTO  l_empl_name;
+      EXIT WHEN taref%NOTFOUND;
+%>
+         <div class="rptOne4thSize">
+<%
+            printHeader;    
+            printBody(p_empl_name=>l_empl_name);
+            printFooter;
+
+%>   
+         </div>
+                  
+
+<%             
+         l_ctr:=l_ctr+1;         
+         IF(l_ctr=4) THEN         
+            htp.p(l_pbreak_end);
+            htp.p(l_pbreak_start);           
+            l_ctr:=0;
+         END IF;
+         
+   END LOOP;
+
+IF(l_ctr<>0 AND l_ctr<>4 ) THEN
+  htp.p(l_pbreak_end);
+END IF;
+
+%>
+    
+</div><!-- end of rptPage --> 
+
+
+<script type="text/javascript">
+ 
+ 
+//on page loaded
+$(document).ready(function(){    
+   $(".loadingStatus").css("display","none");
+}); 
+   
+ 
+</script>
+
+</body>
+</html>
+

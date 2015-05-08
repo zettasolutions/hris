@@ -1,0 +1,84 @@
+<%@ plsql procedure="train_sponsors_rpt" %>
+<%@ plsql parameter="p_order"      type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   28-JAN-15  GF    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(3000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_order                      VARCHAR2(4000);
+   l_sql                        VARCHAR2(8000);
+   TYPE ts_cur IS REF CURSOR;
+   tsref              ts_cur;
+   l_spsr_code                  S004_T07008.spsr_code%TYPE;
+   l_spsr_name                  S004_T07008.spsr_name%TYPE;
+   l_spsr_address               S004_T07008.spsr_address%TYPE;
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+
+<%
+   l_select := 'SELECT spsr_code,spsr_name,spsr_address';
+   l_from   := '  FROM S004_T07008 ';
+   l_where  := ' WHERE 1=1';
+   
+
+   l_sql := l_select || l_from || l_where || ' order by ' || p_order;
+
+   reportheader(p_output=>'H');   
+%>
+<body onload="window.print();">
+
+   <table>
+      <tr valign="top">
+         <td width="400px" align="left" class="head1 reportTitle">List of Training Sponsors</td>
+         <td width="200px" align="right" class="reportcriteria">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss')) %></td>
+      </tr>
+   </table>
+
+   <table >
+      <thead>
+         <tr valign="bottom">
+            <th align="left">Code</th>
+            <th >Name</th>
+            <th >Address</th>
+         </tr>
+      </thead>
+      <tbody>
+<%
+   OPEN tsref FOR l_sql;
+   LOOP
+       FETCH tsref INTO l_spsr_code,l_spsr_name,l_spsr_address;
+   EXIT WHEN tsref%NOTFOUND;
+%>
+         <tr valign="bottom">
+            <td align="left"><%=l_spsr_code %></td>
+            <td ><%=l_spsr_name %></td>
+            <td ><%=l_spsr_address %></td>
+         </tr>
+<%
+   END LOOP;
+%>
+   </tbody>
+   </table>
+
+ 
+ 
+</body>
+</html>

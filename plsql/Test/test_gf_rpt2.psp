@@ -1,0 +1,99 @@
+<%@ plsql procedure="test_gf_rpt2" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   28-JAN-15  GF    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+
+   TYPE ts_cur IS REF CURSOR;
+   tsref              ts_cur;
+
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+
+<%
+   reportheader(p_output=>'H');   
+%>
+<body >
+<script type="text/javascript" src="/apps/s004/js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="/apps/s004/js/jspdf.min.js"></script>
+<script type="text/javascript" src="zsi_pdf_js"></script>
+
+<script type="text/javascript" >
+
+   function runPDF(){
+      $.getJSON("employee_search_json?p_empl_name=" + $("#p_empl_name").val() ,onLoadComplete);
+   }
+
+   function onLoadComplete(data){
+      zsi.pdf.dhtmlx_json_to_pdf({
+         filename          : "json_report.pdf"
+        ,column_headers    : ["ID", "Name","Address"]
+        ,cols_index        : [0,43,9]     
+        ,cols_loc_x        : [10,25,120]       
+        ,line_start        : 10 
+        ,line_stop         : 67
+        ,limit_char_width  : 205
+        ,line_height       : 4
+        ,char_width        : 1.7721 
+        ,json_data         : data   
+        ,target_iframe_id  : "preview_pane"
+        //,auto_download   : false
+        ,onInit            :  
+            function(info){        
+               var _doc = new jsPDF();
+               var _title="List of Employees";
+               var _runDate="Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss')) %>";
+               _doc.setFontSize(12);
+               _doc.setFontType("bold");
+               _doc.text(10, info.line_start,_title );
+               _doc.setFontSize(8);
+               _doc.setFontType("normal");
+               _doc.text(160, info.line_start, _runDate);
+               return _doc;
+            }
+         /*,onBeforePrint :  
+            function(doc,currentLine){        
+               doc.setFontSize(12);
+               doc.setFontType("bold");
+               doc.text(10, currentLine,"Before Print" );
+              
+            }       
+
+         ,onAfterPrint :  
+            function(doc,currentLine){        
+               var _doc = new jsPDF();
+               doc.setFontSize(12);
+               doc.setFontType("bold");
+               doc.text(10, currentLine,"After Print" );
+            }  
+         */
+         
+        
+      });
+   }
+   
+</script>
+<label>Empl. Name:</label><input id="p_empl_name" name="p_empl_name" type="text" value="" >
+<br />
+<a href="javascript:runPDF();" class="button">Run PDF Report</a>
+<br />
+<iframe id="preview_pane" frameborder="0" height="800" width="100%"></iframe>
+  
+</body>
+</html>

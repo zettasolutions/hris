@@ -1,0 +1,75 @@
+<%@ plsql procedure="medplan_coverage_reset_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   02-FEB-15  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_year                  NUMBER := EXTRACT(YEAR FROM SYSDATE);
+   l_user_iswrite          NUMBER(1):=0;
+
+%>
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,zsi_lib.GetModuleID(owa_util.get_procedure));
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<h4><center>Generation of Annual Medical Plan Coverage</center></h4>
+</br>
+<%
+
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Offset(4);
+      zsi_bs_lib.Button('btnSubmit','Click to reset Medical Plan for active regular employees only',p_type =>'button');
+   END IF;
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+%>
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+<script type="text/javascript">
+   $(document).ready(function(){    
+     $(".loadingStatus").css("display","none");
+   });
+   
+$("#btnSubmit").click(function(){
+   $(".loadingStatus").css("display","block");   
+   $.ajax({
+      type:"POST"
+      ,url:"medplan_coverage_reset"
+      ,success: function(res){
+         $(".loadingStatus").css("display","none");
+         alert("Employees Medical Plan Coverage Reset Complete."); 
+      }
+      ,error: function(){        
+        alert("Sorry, the curent transaction is not successfull.");
+      }
+   });
+   
+});  
+</script>
+</body>
+</html>
+

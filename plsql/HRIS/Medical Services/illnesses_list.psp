@@ -1,0 +1,189 @@
+<%@ plsql procedure="illnesses_list" %>
+<%@ plsql parameter="p_illness_code" type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_illness_name" type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_rows"         type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_page_no"      type="NUMBER"   default="1"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   08-SEP-14  BD    Passed p_module_id to form url.
+   29-JUN-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(4000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_sql                        VARCHAR2(8000);
+
+
+   TYPE ill_cur IS REF CURSOR;
+   illref          ill_cur;
+   l_illness_code               S004_T08002.illness_code%TYPE;
+   l_illness_name               S004_T08002.illness_name%TYPE;
+   l_remarks                    S004_T08002.remarks%TYPE;
+   l_row_no                     NUMBER(10);
+   l_rows                       NUMBER(10);
+   l_max_rows                   NUMBER(10) := zsi_lib.MaxRowsInList;
+   l_url                        VARCHAR2(32000) := 'Illnesses_list';
+   l_row_count                  NUMBER(10) := 0;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+<%
+ pageheader(p_dgrid=>'Y');
+
+   l_select := 'SELECT illness_code,
+                       illness_name,
+                       remarks ';
+   l_from := ' FROM S004_T08002 ' ;
+   l_where := ' WHERE 1=1';
+
+   IF p_illness_code IS NOT NULL THEN
+      l_where := l_where || ' AND illness_code= ' || p_illness_code;
+   END IF;
+   l_url := l_url ||'?p_illness_code=' || p_illness_code;
+
+   IF p_illness_name IS NOT NULL THEN
+        l_where := l_where || ' AND upper(illness_name) LIKE '|| '''' || '%' || upper(p_illness_name) || '%' || '''' || ' ';
+   END IF;
+   l_url := l_url ||'&p_illness_name=' || p_illness_name;
+
+
+   IF p_page_no = 1 AND p_rows IS NULL THEN
+      l_sql := 'SELECT COUNT(*) ' || l_from || l_where;
+      OPEN illref FOR l_sql;
+      LOOP
+         FETCH illref INTO l_rows;
+         EXIT WHEN illref%NOTFOUND;
+      END LOOP;
+      CLOSE illref;
+   ELSE
+      l_rows := p_rows;
+   END IF;
+   l_url := l_url ||'&p_rows=' || l_rows;
+
+   l_sql := l_select ||', row_number() OVER (ORDER BY illness_code) rn ' || l_from || l_where;
+
+   l_sql := 'SELECT * FROM ( ' || l_sql || ') ' || zsi_lib.GeneratePagingWhere(p_page_no);
+
+%>
+<body>
+<div>
+<% zsi_bs_lib.openModalWindow('modalWindow','Search Illnesses','ill_search_frm','Illnesses_list');
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Code',p_inputName=>'p_illness_code', p_labelSize =>3, p_inputSize =>8, p_inputclass=>'numeric');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Name',p_inputName=>'p_illness_name', p_labelSize =>3, p_inputSize =>8);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.closeModalWindow('submit','Search');
+%>
+</div>
+
+
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+   <tr valign="bottom">
+      <th nowrap align="center" width="50px">Code</th>
+      <th nowrap align="left" width="250px">Description</th>
+      <th width="250px">Remarks</th>
+      <th align="center" width="60px">Delete</th>
+   </tr>
+<%
+   l_dhtmlx_sort := 'str,str,str,na';
+
+   OPEN illref FOR l_sql;
+   LOOP
+      FETCH illref INTO l_illness_code,
+                        l_illness_name,
+                        l_remarks,
+                        l_row_no;
+      EXIT WHEN illref%NOTFOUND;
+      l_row_count := l_row_count + 1;
+
+%>
+   <tr valign="bottom">
+      <td nowrap align="center">
+         <a href="javascript:void(0)" TITLE="Click here to Edit Illness" onClick="parent.attachURL('illnesses_form?p_module_id=<%= l_module_id %>&p_illness_code=<%= l_illness_code %>','Edit Illness &raquo <%=l_illness_code %>', 550, 180)"><%=l_illness_code %></a>
+      </td>
+      <td nowrap align="left"><%=l_illness_name %></td>
+      <td><%=l_remarks %></td>
+      <td><input type="checkbox" name="p_cb" onclick="zsi.table.setCheckBox(this,<%= l_illness_code %>);">
+                         <input type="hidden" name="p_del_ill" value=""></td>
+   </tr>
+<%
+   END LOOP;
+%>
+</table>
+
+<div class="bottomNav">
+   <div class="buttonGroup">
+   <%
+            zsi_bs_lib.Button('btnSearch','Search',p_data_toggle =>'modal',p_data_target =>'#modalWindow');
+            zsi_bs_lib.Button('btnAdd','Add',p_onclick =>'parent.attachURL(''illnesses_form?p_module_id=' || l_module_id || '&p_illness_code='',''Add Illnesses'', 600, 350)');
+            zsi_bs_lib.Button('btnDelete','Delete',p_onclick =>'return checkDelete(''S004_DELETE?p_value=0'');');
+   %>
+   </div>
+<% zsi_lib.ShowPaging(p_page_no,l_rows,l_row_count); %>
+</div>
+
+<script type="text/javascript">
+   $(document).ready(function(){
+      $('.modal-dialog').css('width', '350px');
+   });
+
+   //on window resize
+   $(window).resize(function(){
+       zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+  function checkDelete(l_cmd) {
+    var l_stmt, l_count
+      l_stmt = zsi.table.getCheckBoxesValues("input[name=p_cb]:checked","p_value=","&");
+
+    if (l_stmt!="") {
+        if(confirm("Are you sure you want to delete ALL SELECTED Illnesses?")) {
+          $.post( l_cmd + "&" + l_stmt + "&p_table=S004_T08002&p_field=illness_code", function(d){
+               parent.ShowHideProgressWindow(false);
+               window.location.reload();
+          });
+        }
+     }
+  }
+
+   function gotoPage(p_this){
+       var url = "<%= l_url %>&p_page_no=" + p_this.value;
+       window.location.href = url;
+    };
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

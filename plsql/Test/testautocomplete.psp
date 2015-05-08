@@ -1,0 +1,73 @@
+<%@ plsql procedure="testautocomplete" %>
+<%!
+
+   l_js_path            VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path         VARCHAR2(128) := zsi_lib.StylePath;
+%>
+<%
+
+   pageheader();
+
+%>
+
+<body>
+
+<br />
+<br />
+<%
+   
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Employee Name',p_inputName=>'p_search',p_labelSize =>2, p_inputSize =>4);
+   zsi_bs_lib.CloseFormGroup();
+   
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Employee Name',p_inputName=>'p_search',p_labelSize =>2, p_inputSize =>4);
+   zsi_bs_lib.CloseFormGroup();
+
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Employee Name',p_inputName=>'p_search',p_labelSize =>2, p_inputSize =>4);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.CloseEntryForm;
+
+%>
+<br />
+
+ 
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript">
+
+ 
+
+   $(document).ready(function(){
+   
+      zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_search]"
+      ,url :"employee_active2_json"
+      ,parameter: "p_empl_name"
+      ,onSelectedItem: 
+         function(currentObject,data,i){
+            //$("#p_search").val(data[43]);
+            currentObject.value=data[43];
+            
+         }
+      });    
+      
+      
+      
+      
+   })    
+
+
+
+</script>
+
+
+
+
+</body>
+</html>

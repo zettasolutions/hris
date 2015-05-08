@@ -1,0 +1,162 @@
+<%@ plsql procedure="train_sched_attend_list" %>
+<%@ plsql parameter="p_rt"      type="VARCHAR2" default="NULL"%>
+
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   16-OCT-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+<%
+   pageheader(p_dgrid=>'Y');
+%>
+<body>
+<%
+   zsi_bs_lib.openModalWindow('modalWindow','Training Schedule and Attendees','mc_search_frm','train_sched_attend_list');
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Tran No',p_inputName=>'p_tran_no', p_labelSize =>3, p_inputSize =>2);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Training',p_inputName=>'p_trn_desc', p_labelSize =>3, p_inputSize =>4);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName=>'Training Type', p_inputName=>'p_trn_type_name', p_labelSize=>3, p_inputSize=>4);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName=>'Speaker', p_inputName=>'p_spk_name', p_labelSize=>3, p_inputSize=>4);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName=>'Sponsor', p_inputName=>'p_spsr_name', p_labelSize=>3, p_inputSize=>4);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName=>'Venue', p_inputName=>'p_venu_name', p_labelSize=>3, p_inputSize=>4);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName=>'Travel Type', p_inputName=>'p_travel_desc', p_labelSize=>3, p_inputSize=>4);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Start Date',p_inputName=>'p_start_date', p_labelSize =>3, p_inputSize =>2);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.closeModalWindow('button','Search',p_btn_attributes=>'onclick="LoadData(GetParams());"' );
+
+   l_dhtmlx_sort := 'int,str,int,str,str,str,str,na';
+%>
+
+   <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+      <tr valign="bottom">
+         <th nowrap align="center" width="75px">Tran No</th>
+         <th nowrap align="center" width="75px">Start Date</th>
+         <th nowrap align="center" width="75px">End Date</th>
+         <th nowrap align="left" width="200px">Training</th>
+         <th nowrap align="center" width="150px">Training Type</th>
+         <th nowrap align="left" width="150px">Sponsor</th>
+         <th nowrap align="left"   width="150px">Venue</th>
+         <th nowrap align="center" width="100px">Travel Type</th>         
+         <th nowrap align="left" width="100px">Speaker(s)</th>         
+         <th align="center" width="60px">Delete</th>
+      </tr>
+   </table>
+
+   <div class="bottomNav">
+   <div class="buttonGroup">
+
+<%
+      zsi_bs_lib.Button('btnSearch','Search',p_data_toggle =>'modal',p_data_target =>'#modalWindow');
+      zsi_bs_lib.Button('btnAdd','Add',p_onclick =>'parent.attachURL(''train_sched_attend_form?p_module_id=' || l_module_id || '&p_tran_no='',''Add Training Schedule and Attendees'', 1000, 400);parent.w1.maximize();');
+      zsi_bs_lib.Button('btnDelete','Delete',p_onclick =>'return checkDelete(''train_sched_attend_delete?p_del_c='');');
+%>
+</div>
+   <% zsi_bs_lib.ShowPagingCtrl; %>
+</div>
+
+<script type="text/javascript">
+   /*variable declaration*/
+   var ctrlSel = zsi.control.SelectList;
+   var l_page_rows=0;
+
+   $(document).ready(function(){
+
+       parent.HomeWindow=window;
+   });
+
+
+   //on window resize
+   $(window).resize(function(){
+      zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+   function GetParams(){
+      var l_params="";
+      l_params += '?p_tran_no=' + $("#p_tran_no").val();
+      l_params += '&p_trn_desc=' + $("#p_trn_desc").val();
+      l_params += '&p_trn_type_name=' + $("#p_trn_type_name").val();
+      l_params += '&p_spk_name=' + $("#p_spk_name").val();
+      l_params += '&p_spsr_name=' + $("#p_spsr_name").val();
+      l_params += '&p_venu_name=' + $("#p_venu_name").val();
+      l_params += '&p_travel_desc=' + $("#p_travel_desc").val();
+      l_params += '&p_start_date=' + $("#p_start_date").val();
+      return l_params;
+   }
+   function checkDelete(l_cmd) {
+      var l_stmt, l_count
+      l_stmt = zsi.table.getCheckBoxesValues("input[name=p_cb]:checked","p_del_c=","&");
+
+      if (l_stmt!="") {
+         if(confirm("Are you sure you want to delete ALL SELECTED Training Schedule and Attendees?")) {
+            $.post( l_cmd + "&" + l_stmt, function(d){
+               parent.ShowHideProgressWindow(false);
+               window.location.reload();
+            });
+         }
+      }
+   }
+
+
+   function gotoPage(p_this){
+      var l_params = GetParams() + "&p_rows="+ l_page_rows + "&p_page_no=" + p_this.value;
+      LoadData(l_params );
+   };
+
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   LoadData('');
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid);
+
+   function LoadData(p_params){
+      $.getJSON("train_sched_attend_json" + p_params,onLoadComplete);
+   }
+
+   function onLoadComplete(data){
+      mygrid.clearAll();
+      mygrid.parse(data, "json");
+      l_page_rows=data.page_rows;
+      zsi.page.DisplayRecordPage(data.page_no,data.page_rows,data.row_count);
+      $("#modalWindow").modal('hide');
+   }
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

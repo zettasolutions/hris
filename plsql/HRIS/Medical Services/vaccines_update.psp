@@ -1,0 +1,91 @@
+<%@ plsql procedure="vaccines_update" %>
+<%@ plsql parameter="p_vc_code"     type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_vc_name"     type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_frequency"   type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_remarks"     type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   25-JUL-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+
+
+   l_changed VARCHAR2(1) := 'N';
+   l_rec     S004_T08005%ROWTYPE;
+
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Vaccines </title>
+</head>
+<body>
+<%
+FOR i IN 2..p_vc_code.COUNT LOOP
+   IF p_vc_code(i) IS NULL  AND p_vc_name(i) IS NOT NULL THEN        
+      INSERT INTO S004_T08005 (
+         vaccine_code,
+         vaccine_name,
+         frequency,
+         remarks
+         ,created_by
+         ,date_created)
+      VALUES
+      (  S004_T08005_SQ001.NEXTVAL,
+         p_vc_name(i),
+         p_frequency(i),
+         p_remarks(i)
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+      );
+      ELSIF p_vc_code(i) IS NOT NULL AND p_vc_name(i) IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T08005 WHERE vaccine_code=p_vc_code(i);
+
+      IF zsi_lib.IsChanged(l_rec.vaccine_name, p_vc_name(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.vaccine_name := p_vc_name(i);
+      END IF;
+      IF zsi_lib.IsChanged(l_rec.frequency, TO_NUMBER(p_frequency(i))) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.frequency := p_frequency(i);
+      END IF;
+      IF zsi_lib.IsChanged(l_rec.remarks, p_remarks(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.remarks := p_remarks(i);
+      END IF;
+
+      IF l_changed='Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08005 SET row = l_rec WHERE vaccine_code = p_vc_code(i);
+      END IF;
+
+      END IF;
+   END LOOP;
+END;
+%>
+
+<script type="text/javascript">
+   parent.dhxLayout.cells("b").attachURL("vaccines_list");
+   parent.w1.close();
+</script>

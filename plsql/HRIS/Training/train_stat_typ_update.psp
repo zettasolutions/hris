@@ -1,0 +1,72 @@
+<%@ plsql procedure="train_stat_typ_update" %>
+<%@ plsql parameter="p_trn_status" type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_trn_desc" type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   24-SEP-14  GT    Modified.
+   15-07-14   GF    New
+*/
+--DECLARATION SECTION
+   l_js_path   VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed   VARCHAR2(1) := 'N';
+   l_rec S004_T07004%ROWTYPE;
+   l_date_format VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Train Status Type </title>
+</head>
+<body>
+<%
+FOR i IN 2..p_trn_status.COUNT LOOP
+
+
+   IF p_trn_status(i) IS NULL  AND p_trn_desc(i) IS NOT NULL THEN
+      INSERT INTO S004_T07004 (
+         trn_status,
+         trn_desc
+      )
+      VALUES
+      (  S004_T07004_SQ001.NEXTVAL,
+         p_trn_desc(i)
+   );
+   ELSIF p_trn_status(i) IS NOT NULL AND p_trn_desc(i) IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T07004 WHERE trn_status=p_trn_status(i);
+
+      IF zsi_lib.IsChanged(l_rec.trn_desc, p_trn_desc(i)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.trn_desc := p_trn_desc(i);
+      END IF;
+      
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T07004 SET row = l_rec WHERE trn_status=p_trn_status(i);
+      END IF;      
+
+   END IF;
+END LOOP;
+END;
+%>
+<script type="text/javascript">
+   var ifr = parent.dhxLayout.cells("b").getFrame();
+   ifr.contentWindow.location.reload();
+   parent.w1.close();
+</script>

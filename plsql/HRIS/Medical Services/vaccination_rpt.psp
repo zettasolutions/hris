@@ -1,0 +1,133 @@
+<%@ plsql procedure="vaccination_rpt" %>
+<%@ plsql parameter="p_year"              type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_vaccine_code"      type="NUMBER" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   27-MAR-15  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_rpt_title                  VARCHAR2(1024);   
+   l_sub_amount                 NUMBER:=0;
+   l_ttl_amount                 NUMBER:=0;
+%>
+<%  
+   
+   reportheader(p_output=>'H');
+%>
+<body>
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+
+<table>
+   <tr valign="top">
+      <th align="left"  class="head5">List of Vaccination by Vaccine</th>
+      <th align="right" class="head6">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss AM')) %></th>
+   </tr>
+   <tr valign="top">
+      <th align="left"  class="head6">FOR THE YEAR OF <%= p_year %></th>
+   </tr>   
+</table>
+
+<table class="gridReport">
+
+</table>
+
+<script type="text/javascript">
+
+function LoadData(){
+   var l_url = window.location.href;
+   var l_index = l_url.indexOf("?");   
+   var l_params= l_url.substr(l_index + 1);
+   
+   $.getJSON("vaccination_rpt_json?" + l_params
+      ,onLoadComplete
+   ).fail(function() {
+       $(".loadingStatus").css("display","none");
+       alert("Sorry, the current report cannot display at this moment.");
+   });
+
+}
+
+function onLoadComplete(data){
+   var newdata = zsi.json.groupByColumnIndex(data,0);
+   var jsonGrid = $(".gridReport");
+   jsonGrid.clearGrid();
+   var l_dept_code="";
+   for(var _group in newdata) {
+      var r = ""
+      r +="<tr>";
+        r +="<th colspan='5' align='left'>Vaccine:"   + _group  + " </th>";
+
+   
+      r +="</tr>";  
+               r +="<tr >";
+         
+              r +="<th nowrap align='left'>Tran Date</th>";
+              r +="<th nowrap align='left'>Empl. Name</th>";
+              r +="<th nowrap align='left'>Emp. Type</th>";
+              r +="<th nowrap align='left'>Dept.</th>";
+              r +="<th nowrap align='left'>O.R. No.</th>";
+              r +="<th nowrap align='left'>Amt. Billed</th>";
+            r +="</tr>"; 
+      
+ 
+       var rowItem= newdata[_group]
+       var ctr=0;
+       var l_sub_amount=0;
+         $.each(rowItem,function(){  
+            r +="<tr>";
+                 
+                 r +="<td> "   +  this[1]  + " </td>";  
+                 r +="<td> "   +  unescape(this[2])  + " </td>";
+                 r +="<td> "   +  this[3]  + " </td>"; 
+                 r +="<td> "   +  this[4]  + " </td>"; 
+                 r +="<td> "   +  this[5]  + " </td>"; 
+                 r +="<td align='right'> "   +  this[6]  + " </td>"; 
+            r +="</tr>";
+            ctr++;
+            l_sub_amount := l_sub_amount + parseFloat(this[6]);
+            l_ttl_amount := l_ttl_amount + parseFloat(this[6]);
+         });
+ 
+ 
+       r +="<tr>";
+         r +="<td style='border-bottom:1pt solid #000;font-weight:bold' colspan='5' align='left' >Count per Clearance:"   + ctr  + " </td>";
+         r +="<td style='border-bottom:1pt solid #000;font-weight:bold' align='right' >No. of Vaccinations:"   + ctr  + " </td>";
+       r +="</tr>";  
+
+      jsonGrid.append(r);
+   } 
+   
+   
+   $(".loadingStatus").css("display","none");   
+   window.print();
+   
+}
+
+ 
+//on page loaded
+$(document).ready(function(){    
+   LoadData();
+}); 
+   
+ 
+</script>
+</body>
+</html>

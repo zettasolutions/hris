@@ -1,0 +1,11 @@
+--wrap iname=zsi_lib_hdr
+--wrap iname=zsi_lib_body
+--wrap iname=zsi_bs_lib_hdr
+--wrap iname=zsi_bs_lib_body
+--wrap iname=zsi_dhtmlx_lib_hdr
+--wrap iname=zsi_dhtmlx_lib_body
+--wrap iname=zsi_sessions_lib_hdr
+--wrap iname=zsi_sessions_lib_body
+--wrap iname=zsi_style_css
+--wrap iname=zsi_employee_js
+wrap iname=zsi_lib_js

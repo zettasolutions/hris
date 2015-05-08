@@ -1,0 +1,132 @@
+<%@ plsql procedure="train_travel_rpt_filter"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   15-FEB-15  BD    New
+*/
+   --DECLARATION SECTION
+   l_user                       VARCHAR2(30);
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+
+   l_user_iswrite               NUMBER(1):=0;
+   l_module_id                  s004_modules.module_id%TYPE;
+%>
+<%
+   l_user       := zsi_sessions_lib.GetCookieUser;
+   l_module_id  := zsi_lib.GetModuleID(owa_util.get_procedure);
+   l_user_iswrite := 1;
+   pageheader;
+%>
+<body>
+<form name="frmFilter" action="train_travel_rpt" method="GET" target="_blank">
+<input type="hidden" name="p_module_id" value="<%= l_module_id %>">
+<%
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Travel Type:', p_Name=>'p_travel_type', p_labelSize=>1, p_selectSize=>2);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBox(p_labelName =>'Date From',p_inputName=>'p_start_date',p_inputValue=>NULL,p_labelSize =>1, p_inputSize =>1);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBox(p_labelName =>'Date To',p_inputName=>'p_end_date',p_inputValue=>NULL,p_labelSize =>1, p_inputSize =>1);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+%>
+   <label class=" col-xs-1 control-label">Order By</label>
+   <div class="col-xs-2">
+   <select class="form-control input-sm" id="p_order" name="p_order">
+   <option value="start_date">Training Date</option>
+   <option value="empl_name" selected="selected">Employee Name</option>
+   <option value="trn_desc">Title of Training</option>
+   <option value="venu_name">Venue</option>
+   </select>
+   </div>
+<%
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.CloseEntryForm;
+%>
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_user_iswrite = 1 then
+      zsi_bs_lib.Offset(0);
+      zsi_bs_lib.Button('btnSubmit','Run Report',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+</form>
+<script type="text/javascript">
+   /*variable declaration*/
+   var ctrlSel = zsi.control.SelectList;
+   /*end of declaration*/
+
+   $("form[name=frmFilter]").submit(function(){
+      var ischeckDate = false;
+      if( zsi.form.checkMandatory()!=true) return false;
+      ischeckDate = zsi.form.checkDate(
+                  [   "p_start_date"
+                     ,"p_end_date"
+                  ]
+                  ,
+                  [
+                     "Date From"
+                     ,"Date To"
+                  ]
+      );
+
+      return ischeckDate;
+   });
+
+
+   //on page loaded
+   $(document).ready(function(){
+       zsi.form.markMandatory({
+         "groupNames":[
+               {"names" :
+                     [
+                     "p_travel_type"
+                     ,"p_start_date"
+                     ,"p_end_date"
+                     ]
+               , "type":"S"
+               }
+         ]
+         ,"groupTitles":[
+               {"titles" :
+                     [
+                     "Travel Type"
+                     ,"Date From"
+                     ,"Date To"
+                     ]
+               }
+
+         ]
+      });
+
+
+      ctrlSel("#p_travel_type","","N","travel_types_v","sele_value","displayed_text"," ORDER BY displayed_text");
+
+   });
+
+
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

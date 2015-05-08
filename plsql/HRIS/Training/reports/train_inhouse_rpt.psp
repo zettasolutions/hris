@@ -1,0 +1,92 @@
+<%@ plsql procedure="train_inhouse_rpt" %>
+<%@ plsql parameter="p_start_date"                type="VARCHAR2" %>
+<%@ plsql parameter="p_end_date"                  type="VARCHAR2" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   02-FEB-15  BD    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(3000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_order                      VARCHAR2(1000);
+   l_sql                        VARCHAR2(9000);
+
+   train_inhouse_cur            SYS_REFCURSOR;
+   l_spk_code                   trainingspeakers_v.spk_code%TYPE;
+   l_spk_name                   trainingspeakers_v.spk_name%TYPE;
+   l_start_date                 trainingschedattend_v.start_date%TYPE;
+   l_end_date                   trainingschedattend_v.end_date%TYPE;
+   l_trn_code                   trainingschedattend_v.trn_code%TYPE;
+   l_trn_desc                   trainingschedattend_v.trn_desc%TYPE;
+   l_trn_hours                  trainingschedattend_v.trn_hours%TYPE;
+
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+<%
+   l_select := 'SELECT s.spk_code, s.spk_name, t.start_date, t.end_date, t.trn_code, t.trn_desc, t.trn_hours ';
+   l_from   := '  FROM trainingschedattend_v t, trainingspeakers_v s';
+   l_order  := ' ORDER BY t.start_date, t.end_date, s.spk_code ';
+   l_where  := ' WHERE t.trn_type=2 AND t.tran_no = s.tran_no AND trn_type=2 AND ((t.start_date BETWEEN ''' || TO_DATE(p_start_date,'MM/DD/YYYY') || ''' AND ''' || TO_DATE(p_end_date,'MM/DD/YYYY') || ''') '
+            || ' OR (t.end_date BETWEEN ''' || TO_DATE(p_start_date,'MM/DD/YYYY') || ''' AND ''' || TO_DATE(p_end_date,'MM/DD/YYYY') || ''')) ';
+
+   l_sql    := l_select || l_from || l_where || l_order;
+   reportheader(p_output=>'H');
+%>
+<body onload="window.print();">
+
+<table>
+   <tr valign="top">
+      <td width="400px" align="left"  class="head1">Report on Number of Trainings Conducted by In-house Trainers</td>
+      <td width="200px" align="right" class="head6">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss')) %></td>
+   </tr>
+</table>
+
+<table>
+   <tr valign="bottom">
+<thead>
+      <th nowrap align="left">Speaker Code</th>
+      <th nowrap align="left">Name of Speaker</th>
+      <th nowrap align="left">Date of Training</th>
+      <th nowrap align="left">Training Code</th>
+      <th nowrap align="left">Training Title</th>
+      <th nowrap align="left">Training Hours</th>
+</thead>
+   </tr>
+<%
+OPEN train_inhouse_cur FOR l_sql;
+LOOP
+   FETCH train_inhouse_cur INTO l_spk_code, l_spk_name, l_start_date, l_end_date, l_trn_code, l_trn_desc, l_trn_hours;
+   EXIT WHEN train_inhouse_cur%NOTFOUND;
+   --l_row_count := l_row_count + 1;
+%>
+<tr valign="top">
+   <td align="left"><%= l_spk_code %></td>
+   <td align="left"><%= l_spk_name %></td>
+   <td align="left"><%= l_start_date %> - <%= l_end_date %></td>
+   <td align="left"><%= l_trn_code %></td>
+   <td align="left"><%= l_trn_desc %></td>
+   <td align="left"><%= l_trn_hours %></td>
+</tr>
+<%
+END LOOP;
+CLOSE train_inhouse_cur;
+%>
+</table>
+</body>
+</html>

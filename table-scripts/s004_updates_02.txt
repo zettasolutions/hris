@@ -1,0 +1,8 @@
+set scan off
+spool s004_upd_res.txt
+@@s004_t08000_updated.sql
+@@s004_t08010_services.sql
+@@s004_t08020_services.sql
+@@data_s004_t08000.sql
+spool off
+set scan on

@@ -1,0 +1,225 @@
+<%@ plsql procedure="oncredit_form" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   04-JAN-15  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_ctr                   NUMBER := 0;
+   l_user_iswrite          NUMBER(1):=0;
+
+   CURSOR oc_cur IS
+     SELECT * 
+       FROM oncredit_v
+      WHERE post_status = 0; 
+
+%>
+<%  
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,zsi_lib.GetModuleID(owa_util.get_procedure));
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<form name="frmList" action="oncredit_update" method="POST" >
+<%
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no',p_inputValue=>'');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_invoice_no',p_inputValue=>'');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_invoice_date',p_inputValue=>'');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_id_no',p_inputValue=>'');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_name',p_inputValue=>'');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_amount',p_inputValue=>'');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_post_status',p_inputValue=>'');
+   zsi_bs_lib.OpenEntryForm;   
+      zsi_bs_lib.OpenFormGroup();  
+         zsi_bs_lib.SelectBox(p_labelName=>'Transaction Type',p_Name=>'p_tran_type',  p_labelSize=>2, p_selectSize=>2);
+         zsi_bs_lib.SelectBox(p_labelName=>'Establishment',p_Name=>'p_establishment',   p_labelSize=>2, p_selectSize=>3);
+          zsi_bs_lib.SelectBox(p_labelName=>'Payment Tag',p_Name=>'p_payment_tag',  p_Attributes=>'SelectedValue="' || 1 || '"', p_labelSize=>2, p_selectSize=>1);
+      zsi_bs_lib.CloseFormGroup();
+    zsi_bs_lib.CloseEntryForm; 
+
+%>
+<br />
+ <div style="height:450px; overflow-y:auto;" class="col-xs-12">
+      <table class="table">
+
+         <tr>
+            <th class="col-xs-1" nowrap align="left">Id No.</th>
+            <th class="col-xs-3" nowrap align="left">Employee Name</th>
+            <th class="col-xs-1" nowrap align="left">Invoice#</th>
+            <th class="col-xs-1" nowrap align="right">Invoice Date</th>
+            <th class="col-xs-1" nowrap align="left">Amount</th>
+            <th class="col-xs-1" nowrap style="text-align:center">Post</th>
+
+         </tr>
+      <%
+       FOR i IN oc_cur LOOP
+      %>
+         <tr>               
+             <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no', p_inputValue=>i.tran_no); %>
+                 <input type="text" autocomplete="off" name="p_empl_id_no" id="p_empl_id_no" value="<%= i.id_no %>" class="form-control input-sm"> 
+             </td>    
+             <td><input type="text" autocomplete="off" name="p_empl_name" id="p_empl_name" value="<%= i.empl_name %>" class="form-control input-sm"> </td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_invoice_no',p_inputValue=>i.invoice_no, p_wrapper=>'N');%></td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_invoice_date',p_inputValue=>TO_CHAR(i.invoice_date,l_date_format), p_wrapper=>'N');%></td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_amount',p_inputValue=>zsi_lib.FormatAmount(i.amount,2), p_wrapper=>'N',p_inputclass=>'numeric', p_attributes=>'style="text-align:right"');%></td>
+             <td><% zsi_bs_lib.YesNo(p_field=>'post_status', p_value=>i.post_status, p_mandatory=>'Y');%></td>
+             <td></td>             
+         </tr>
+      <%
+       END LOOP;
+      
+        l_ctr :=0;
+        FOR i IN 1..10 LOOP
+      %>
+         <tr>               
+                     
+             <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no'); %>
+                 <input type="text" autocomplete="off" name="p_empl_id_no" id="p_empl_id_no" class="form-control input-sm"> 
+             </td>    
+             <td><input type="text" autocomplete="off" name="p_empl_name" id="p_empl_name" class="form-control input-sm"> </td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_invoice_no',p_inputValue=>'', p_wrapper=>'N');%></td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_invoice_date',p_inputValue=>'', p_wrapper=>'N');%></td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_amount',p_inputValue=>'', p_wrapper=>'N',p_inputclass=>'numeric',p_attributes=>'style="text-align:right"');%></td>
+             <td><% zsi_bs_lib.YesNo(p_field=>'post_status', p_value=>0, p_mandatory=>'Y');%></td>
+             <td></td>             
+         </tr>
+      <%
+         END LOOP;   
+      %>
+      </table>
+   </div>
+
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+</form>
+
+
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript">
+
+ /*variable declaration*/
+var ctrlSel = zsi.control.SelectList;
+   
+   $(document).ready(function(){
+      dhtmlxWin = new dhtmlXWindows();
+      dhtmlxWin.setImagePath("<%= l_dhtmlx_path %>dhtmlxWindows/codebase/imgs/");
+   
+      new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_id_no]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_id_no"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[0];
+            var td = currentObject.parentNode;
+            $(td).next().children("#p_empl_name").val(unescape(data[43]));            
+         }
+      });    
+      
+     new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_name]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_name"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[43];
+             var td = currentObject.parentNode;
+             $(td).prev().children("#p_empl_id_no").val(data[0]);            
+         }
+      });          
+
+      zsi.form.markMandatory({                  
+         "groupNames":[ 
+              {"names" :
+               [  
+                   "p_empl_id_no"
+                  ,"p_tran_type"
+                  ,"p_amount"
+                  ,"p_establishment"
+                  ,"p_payment_tag"
+               ]
+            ,  "required_one":"N"
+            ,  "type":"M"
+            }
+         ]                     
+         ,"groupTitles":[ 
+           {"titles" :  
+               [                       
+                  "Employee"  
+                  ,"On-credit Type "
+                  ,"Amount"
+                  ,"Establishment"
+                  ,"Payment Tag"
+               ]
+            }           
+         ]
+         ,"required_one_indexes":[1,2,3,4]
+      });
+
+      
+   })    
+
+$("form[name=frmList]").submit(function(){
+   if( zsi.form.checkMandatory()!=true) return false;
+   return true;     
+   var frm = $("form[name=frmList]");
+   
+   $.ajax({
+      type:"POST"
+      ,url:frm.attr("action")
+      ,data:frm.serialize()
+      ,success: function(res){
+        alert("Data has been saved."); 
+      }
+      ,error: function(){        
+        alert("Sorry, the curent transaction is not successfull.");
+      }
+   });
+});
+
+
+ 
+   
+
+//on page loaded
+$(document).ready(function(){
+   //populate list
+ 
+   ctrlSel("#p_tran_type","","N","ON_CREDIT_TYPES_V","sele_value","displayed_text","ORDER BY displayed_text");
+   ctrlSel("#p_establishment","","N","REFERENCE_V","reference_code","reference_desc","ORDER BY reference_desc");
+   ctrlSel("#p_payment_tag","","N","PAYMENT_TAG_V","sele_value","displayed_text","ORDER BY displayed_text");
+   
+});
+
+</script>
+
+</body>
+</html>
+

@@ -1,0 +1,74 @@
+<%@ plsql procedure="train_trainees_update" %>
+<%@ plsql parameter="p_tran_no"       type="VARCHAR2"%>
+<%@ plsql parameter="p_seq_no"        type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_empl_id_no"    type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_cb"            type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   23-OCT-14  GT    New
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_sql                        VARCHAR2(1000);
+   l_changed                    VARCHAR2(1) := 'N';
+
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Training Trainees </title>
+</head>
+<body>
+<%
+FOR i IN 2..p_seq_no.COUNT LOOP
+  
+   IF p_seq_no(i) IS NULL  AND p_empl_id_no(i) IS NOT NULL THEN  
+
+      INSERT INTO S004_T07003_TRAINEES
+      (   seq_no
+         ,empl_id_no
+         ,tran_no
+         ,created_by
+         ,date_created
+         
+      )
+      VALUES
+      (   S004_T07003_SQ001.NEXTVAL
+         ,p_empl_id_no(i)
+         ,p_tran_no
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+
+      );
+      
+    ELSIF p_seq_no(i) IS NOT NULL AND p_empl_id_no(i) IS NULL  THEN
+      
+         DELETE FROM S004_T07003_TRAINEES where seq_no=p_seq_no(i);
+      
+    END IF;
+END LOOP;
+END;
+%>
+
+<script type="text/javascript">
+   window.parent.reload();   
+   window.parent.w1.close();
+</script>

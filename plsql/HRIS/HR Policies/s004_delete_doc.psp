@@ -1,0 +1,44 @@
+<%@ plsql procedure="s004_delete_doc" %>
+<%@ plsql parameter="p_value" type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_table" type="VARCHAR2"%>
+<%@ plsql parameter="p_field" type="VARCHAR2"%>
+
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   29-JUL-14  GT    New.
+*/
+   l_file_name    s004_docs.name%TYPE;
+   l_sql_get      VARCHAR2(256);
+   l_sql_del      VARCHAR2(256);
+%>
+<%
+   l_sql_get := 'SELECT file_name FROM ' || p_table || ' WHERE ' || p_field  || ' = :v ';
+   l_sql_del := 'DELETE FROM ' || p_table || ' WHERE ' || p_field  || ' = :v ';
+
+   IF p_value.COUNT > 0 THEN
+      FOR i IN 1..p_value.COUNT LOOP
+
+         -- Get the file name
+         EXECUTE IMMEDIATE l_sql_get INTO l_file_name USING p_value(i);
+
+         -- delete from the source
+         EXECUTE IMMEDIATE l_sql_del USING p_value(i);
+
+         -- delete from the documents table
+         DELETE FROM S004_DOCS WHERE name=l_file_name;
+      END LOOP;
+   END IF;
+%>

@@ -1,0 +1,172 @@
+<%@ plsql procedure="exam_rtype_exm_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_seq_no"      type="VARCHAR2" DEFAULT='NULL'%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   05-JAN-15  GT    Added MINIMUM/MAXIMUM RESULT AND APE_PRIORITY
+   09-SEP-14  BD    Added security logic.
+   08-JUL-14  GT    Added p_seq_no.
+   04-JUL-14  GT    Modified.
+   01-JUL-14  RN    New.
+*/
+
+   --DECLARATION SECTION
+   l_style_path     VARCHAR2(128) := zsi_lib.StylePath;
+   l_js_path        VARCHAR2(128) := zsi_lib.JSPath;
+   l_title          VARCHAR2(50);
+   l_frmOffset      VARCHAR2(50):='';
+
+   l_rec  S004_T08019_EXAM%ROWTYPE;
+   l_user_iswrite       NUMBER(1):=0;
+%>
+<%
+  pageheader;
+%>
+<body>
+<form name="frmDSList" action="exam_rtype_exams_update" method="POST" >
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_result_type');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_exam_group');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_exam_desc');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_normal_range');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_minimum_result');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_maximum_result');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ape_priority');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_remarks');
+
+
+    IF p_seq_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM S004_T08019_EXAM WHERE seq_no = p_seq_no;
+      zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no',p_inputValue=>p_seq_no);
+
+      zsi_bs_lib.OpenEntryForm;
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.SelectBox(p_labelName=>'Type', p_Name=>'p_result_type', p_labelSize=>3, p_selectSize=>4, p_Attributes=>'SelectedValue="' || l_rec.result_type || '"');
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.SelectBox(p_labelName=>'Group', p_Name=>'p_exam_group', p_labelSize=>3, p_selectSize=>4 , p_Attributes=>'SelectedValue="' || l_rec.exam_group || '"');
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox('Description','p_exam_desc',l_rec.exam_desc, p_labelSize=>3, p_inputSize =>4);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox('Normal Range','p_normal_range',l_rec.normal_range, p_labelSize=>3, p_inputSize =>4);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox('Minimum Result','p_minimum_result',l_rec.minimum_result, p_labelSize=>3, p_inputSize =>1);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox('Maximum Result','p_maximum_result',l_rec.maximum_result, p_labelSize=>3, p_inputSize =>1);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox('APE Priority','p_ape_priority',l_rec.ape_priority, p_labelSize=>3, p_inputSize =>1, p_inputclass=>'numeric');
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox('Remarks','p_remarks',l_rec.remarks, p_labelSize=>3, p_inputSize =>9);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.CloseEntryForm;
+      l_frmOffset:='col-xs-offset-3';
+   ELSE
+%>
+<table class="table">
+   <tr valign="bottom">
+      <th nowrap align="left">Type</th>
+      <th nowrap align="left">Group</th>
+      <th nowrap align="left">Description</th>
+      <th nowrap align="left">Normal Range</th>
+      <th nowrap align="left">Minimum Result</th>
+      <th nowrap align="left">Maximum Result</th>
+      <th nowrap align="left">APE Priority</th>
+      <th>Remarks</th>
+   </tr>
+<%
+   FOR i IN 1..5 LOOP
+%>
+   <tr valign="bottom">
+      <td><input type="hidden" name="p_seq_no" value="">
+          <% zsi_bs_lib.SelectBox(p_Name=>'p_result_type',p_wrapper=>'N'); %>
+      </td>
+      <td><% zsi_bs_lib.SelectBox(p_Name=>'p_exam_group', p_wrapper=>'N'); %></td>
+      <td><input type="text" name="p_exam_desc" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_normal_range" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_minimum_result" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_maximum_result" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_ape_priority" value="" class="form-control input-sm numeric"></td>
+      <td><input type="text" name="p_remarks" value="" class="form-control input-sm"></td>
+   </tr>
+<%
+   END LOOP;
+%>
+</table>
+<%
+   END IF;
+%>
+<div class="buttonGroup <%=l_frmOffset%>">
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+</form>
+<script type="text/javascript">
+/*variable declaration*/
+   var ctrlSel = zsi.control.SelectList;
+
+
+/*end of declaration*/
+
+   $(document).ready(function(){
+         
+      ctrlSel("select[name=p_result_type]","<%=l_rec.result_type%>","N","S004_T08019","result_type","result_desc","ORDER BY result_desc"
+      ,function(){         
+         if(this.value) LoadExamGroup("select[name=p_exam_group]","<%=l_rec.exam_group%>", this.value);                
+      });
+      
+   });
+
+   $("select[name=p_result_type]").change(function(){
+      var objCount = $("select[name=p_exam_group]").length;
+      var p_exam_group;
+      if(objCount>1){
+         p_exam_group= $(this.parentNode).next().children("#p_exam_group");
+      }
+      else{
+         p_exam_group =$("select[name=p_exam_group]");
+      }
+      
+      if(this.value)
+         LoadExamGroup(p_exam_group,"<%=l_rec.exam_group%>", this.value);
+      else 
+         p_exam_group.empty();
+      
+   });
+   
+
+function LoadExamGroup(o,selectedValue, resultTypeValue){
+   ctrlSel(o,selectedValue,"N","S004_T08019_GROUP","seq_no","group_desc","Where result_type=" + resultTypeValue);
+}      
+
+zsi.json.checkValueExist("input[name=p_exam_desc]","S004_T08019_EXAM","exam_desc");   
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

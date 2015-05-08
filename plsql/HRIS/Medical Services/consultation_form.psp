@@ -1,0 +1,773 @@
+<%@ plsql procedure="consultation_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tab"         type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_id_no"       type="NUMBER" default="NULL"   %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   03-JAN-15  GT    Added Complaint, Diagnosis and Treatment
+   30-SEP-14  GT    Added doctor to billing, remove med pres. tab, add med pres. link to illness 
+   09-SEP-14  BD    Added security logic.
+   23-JUL-14  GF    Implement OpenFormGroup, and CloseFormGroup
+                    Implement HTML5 input[type="date"] with Botstrap datepicker.
+   21-JUL-14  BD    Added employee lov
+   18-JUL-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_ctr                   NUMBER := 1;
+   l_where                 VARCHAR2(4000);
+   l_meds_count            NUMBER:=0;
+   l_tab                   VARCHAR2(4000):=p_tab;
+   l_emp_rec               employee_v%ROWTYPE;
+   l_rec                   consultation_v%ROWTYPE;
+   l_empl_id_no            consultation_v.id_no%TYPE := p_id_no;
+   l_tran_date             VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_dep_id                consultation_v.dep_id%TYPE := '';
+   l_empl_type             consultation_v.empl_type%TYPE := '';
+   l_cost_center           consultation_v.cost_center%TYPE := '';
+   l_department            consultation_v.department%TYPE := '';
+   l_group_code            consultation_v.group_code%TYPE := '';
+   l_medplan_type          consultation_v.medplan_type%TYPE := '';
+   l_medplan_code          consultation_v.medplan_code%TYPE := '';
+   l_emp_name              consultation_v.emp_name%TYPE := '';
+   l_emp_type              consultation_v.emp_type%TYPE := '';
+   l_dep_name              consultation_v.dep_name%TYPE := '';
+   l_dept_desc             consultation_v.dept_desc%TYPE := '';
+   l_group_desc            consultation_v.group_desc%TYPE := '';
+   l_cc_desc               consultation_v.cc_desc%TYPE := '';
+   l_job_desc              consultation_v.job_desc%TYPE := '';
+   l_post_status           consultation_v.post_status%TYPE := 0;
+   l_complaint             consultation_v.complaint%TYPE := '';
+   l_diagnosis             consultation_v.diagnosis%TYPE := '';
+   l_treatment             consultation_v.treatment%TYPE := '';
+   l_recom_test             consultation_v.recom_test%TYPE := '';
+   l_post_date             VARCHAR(20) := '';
+   l_remarks               consultation_v.remarks%TYPE := '';
+   l_age_brak_code         consultation_v.age_brak_code%TYPE := '';
+   l_user_iswrite          NUMBER(1):=0;
+   
+   CURSOR l_doc_cur IS
+   SELECT * FROM S004_T08020_DOCTORS_V WHERE tran_no = p_tran_no;
+
+   CURSOR l_ds_cur IS
+   SELECT * FROM S004_T08020_DENTAL_V WHERE tran_no = p_tran_no;
+
+   CURSOR l_ill_cur IS
+   SELECT * FROM S004_T08020_ILLNESS_V WHERE tran_no = p_tran_no;
+
+  CURSOR l_bill_cur IS
+   SELECT * FROM S004_T08020_BILLING_V WHERE tran_no = p_tran_no;
+
+   CURSOR l_ih_cur IS
+   SELECT * FROM S004_T08020_SERVICES_V WHERE tran_no = p_tran_no;
+
+   CURSOR l_lr_cur IS
+   SELECT * FROM S004_T08020_RESULTS_HDR_V WHERE tran_no = p_tran_no;
+
+
+   
+   Function GetActiveTab (p_Tab IN VARCHAR2, p_StateTab IN VARCHAR2) RETURN VARCHAR2
+      IS
+         l_tab VARCHAR2(100) := '';
+      BEGIN
+         IF p_Tab = p_StateTab THEN
+            l_tab := 'active';
+         END IF;
+         RETURN l_tab;
+   END GetActiveTab;
+   
+
+%>
+<%
+   if(l_tab is null) THEN
+      l_tab:='docInfo';
+   END IF;   
+
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   IF p_tran_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM consultation_v WHERE tran_no = p_tran_no;
+      l_empl_id_no      :=l_rec.id_no;
+      l_tran_date       :=to_char(l_rec.tran_date, l_date_format);
+      l_dep_id          :=l_rec.dep_id;
+      l_empl_type       :=l_rec.empl_type;
+      l_cost_center     :=l_rec.cost_center;
+      l_department      :=l_rec.department;
+      l_group_code      :=l_rec.group_code;
+      l_medplan_type    :=l_rec.medplan_type;
+      l_medplan_code    :=l_rec.medplan_code;
+      l_post_status     :=l_rec.post_status;
+      l_post_date       :=to_char(l_rec.post_date, l_date_format);
+      l_emp_name        :=l_rec.emp_name;
+      l_emp_type        :=l_rec.emp_type;
+      l_dep_name        :=l_rec.dep_name;
+      l_dept_desc       :=l_rec.dept_desc;
+      l_group_desc      :=l_rec.group_desc;
+      l_cc_desc         :=l_rec.cc_desc;
+      l_job_desc        :=l_rec.job_desc;
+      l_age_brak_code   :=l_rec.age_brak_code;
+      l_complaint       :=l_rec.complaint; 
+      l_diagnosis       :=l_rec.diagnosis; 
+      l_treatment       :=l_rec.treatment; 
+      l_recom_test      :=l_rec.recom_test;
+   ELSE
+      SELECT * INTO l_emp_rec FROM employee_v WHERE empl_id_no = p_id_no;
+      l_empl_type             :=l_emp_rec.empl_type;
+      l_cost_center           :=l_emp_rec.empl_group_code;
+      l_department            :=l_emp_rec.department;
+      l_group_code            :=l_emp_rec.group_code;
+      l_age_brak_code         :=l_emp_rec.age_brak_code;
+   END IF;
+   pageheader(p_dwin=>'Y');
+
+
+%>
+<body>
+<form name="frmList" action="consultation_update" method="POST" >
+<%
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no',p_inputValue=>p_tran_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_id_no',p_inputValue=>p_id_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_type',p_inputValue=>l_empl_type);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_cost_center',p_inputValue=>l_cost_center);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_department',p_inputValue=>l_department);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_group_code',p_inputValue=>l_group_code);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_age_brak_code',p_inputValue=>l_age_brak_code);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_module_id',p_inputValue=>p_module_id);
+
+
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_doc_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_doctor_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_doc_reference_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_doc_remarks');
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_bill_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_bill_medservice_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_amnt_billed');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_amnt_covered');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_amnt_not_covered');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_or_date');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_or_number');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_issued_by');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_for_refund');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_bill_doctor_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_reference_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_payment_tag');
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ds_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ds_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ds_qty');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ds_rate');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ds_next_visit_date');
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ill_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_illness_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ill_next_visit_date');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ill_remarks');
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ih_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ih_medservice_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ih_systolic');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ih_diastolic');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ih_remarks');
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_lr_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_result_type');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_follow_up_lab_date');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_lr_remarks');
+   
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tab');
+
+
+
+zsi_bs_lib.OpenEntryForm;
+%>
+<div class="row col-xs-12">&nbsp;</div>
+<%
+zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBox(p_labelName =>'Date',p_inputName=>'p_tran_date',p_inputValue=>l_tran_date,p_labelSize =>2, p_inputSize =>4, p_attributes=>'style="width: 110px;"');
+   zsi_bs_lib.YesNo(p_label_name=>'Is Posted?',p_field=>'post_status',p_value=>l_post_status,p_label_size =>2,p_select_size =>1);
+zsi_bs_lib.CloseFormGroup();
+
+
+zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+       zsi_bs_lib.SelectBox(p_labelName=>'Dependent', p_Name=>'p_dep_id', p_labelSize=>2, p_selectSize=>4);
+   zsi_bs_lib.CloseFormGroup();
+
+
+   zsi_bs_lib.OpenFormGroup();
+       zsi_bs_lib.SelectBox(p_labelName=>'Medical Plan Type', p_Name=>'p_medplan_type', p_labelSize=>2, p_selectSize=>4);
+       zsi_bs_lib.SelectBox(p_labelName=>'Medical Plan Code', p_Name=>'p_medplan_code', p_labelSize=>2, p_selectSize=>3);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Complaint',p_inputName=>'p_complaint',p_inputValue=>l_complaint, p_labelSize =>2, p_inputSize =>4);
+      zsi_bs_lib.InputTextBox(p_labelName =>'Diagnosis',p_inputName=>'p_diagnosis',p_inputValue=>l_diagnosis, p_labelSize =>2, p_inputSize =>3);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Treatment',p_inputName=>'p_treatment',p_inputValue=>l_treatment, p_labelSize =>2, p_inputSize =>4);
+      zsi_bs_lib.InputTextBox(p_labelName =>'Remarks',p_inputName=>'p_remarks',p_inputValue=>l_remarks, p_labelSize =>2, p_inputSize =>3);
+   zsi_bs_lib.CloseFormGroup();
+   
+   zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.CloseFormGroup();
+
+
+%>
+<ul class="nav nav-tabs" role="tablist">
+  <li class="<%=GetActiveTab('docInfo',l_tab)%>"><a href="#" id="docInfo">Doctor Details</a></li>
+  <li class="<%=GetActiveTab('billInfo',l_tab)%>"><a href="#" id="billInfo">Billing Details</a></li>
+  <li class="<%=GetActiveTab('dentalInfo',l_tab)%>"><a href="#" id="dentalInfo">Dental Services Details</a></li>
+  <li class="<%=GetActiveTab('illnessInfo',l_tab)%>"><a href="#" id="illnessInfo">Illnesses Details</a></li>
+  <li class="<%=GetActiveTab('inhouseInfo',l_tab)%>"><a href="#" id="inhouseInfo">In-house Details</a></li>
+  <li class="<%=GetActiveTab('labInfo',l_tab)%>"><a href="#" id="labInfo">Lab Results</a></li>
+</ul>
+<div class="tab-pages">
+
+   <div id="docInfo" class="tab <%=GetActiveTab('docInfo',l_tab)%>">
+   <div style="height:300px; overflow-y:auto;" class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-2" nowrap align="left">Doctor</th>
+            <th class="col-xs-2" nowrap align="left">Specialty</th>
+            <th class="col-xs-2" nowrap align="left">Hospital/Clinic</th>
+<% IF l_post_status = 0 AND l_user_iswrite = 1 THEN %>
+            <th class="col-xs-1" nowrap style="text-align:center">Delete</th>
+<% END IF; %>
+         </tr>
+      <%
+        FOR i in l_doc_cur LOOP
+      %>
+         <tr>            
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_doc_seq_no',p_inputValue=>i.seq_no);  %>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_doctor_code', p_wrapper=>'N', p_Attributes=>'SelectedValue="' || i.doctor_code || '"');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_specialty', p_inputValue=>i.doctor_specialty,p_wrapper=>'N', p_attributes=>'disabled');%></td>
+            <td><% zsi_bs_lib.SelectBox(p_Name=>'p_doc_reference_code', p_wrapper=>'N', p_Attributes=>'SelectedValue="' || i.reference_code || '"');%></td>
+<% IF l_post_status = 0 AND l_user_iswrite = 1 THEN %>
+            <td class="col-xs-1" nowrap align="center"><% zsi_bs_lib.ButtonDelete(p_table=>'S004_T08020_DOCTOR',p_Value=>i.seq_no);%></td>
+<% END IF; %>
+        </tr>
+      <%
+
+        END LOOP;
+     IF l_post_status <> 1 THEN
+         FOR i IN 1..5 LOOP
+      %>
+         <tr>            
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_doc_seq_no'); %>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_doctor_code', p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_specialty', p_wrapper=>'N', p_attributes=>'disabled');%></td>
+            <td><% zsi_bs_lib.SelectBox(p_Name=>'p_doc_reference_code', p_wrapper=>'N');%></td>
+            <td></td>
+         </tr>
+      <%
+         END LOOP;
+     END IF;
+     %>
+
+      </table>
+   </div>
+   </div>
+
+   <div id="billInfo" class="tab <%=GetActiveTab('billInfo',l_tab)%>">
+   <div style="height:300px; overflow-y:auto;" class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-2" nowrap align="left">Med Plan Service</th>
+            <th class="col-xs-1" nowrap align="left">Billed</th>
+            <th class="col-xs-1" nowrap align="left">Reimbursement?</th>
+            <th class="col-xs-2" nowrap align="left">Establishment</th>
+            <th class="col-xs-1" nowrap align="left">Payment Tag</th>
+<% IF l_post_status = 0 AND l_user_iswrite = 1 THEN %>
+            <th class="col-xs-1" nowrap style="text-align:center">Delete</th>
+<% END IF; %>
+         </tr>
+      <%
+        FOR i in l_bill_cur LOOP
+      %>
+         <tr>                
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_bill_seq_no',p_inputValue=>i.seq_no); %>
+                <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_amnt_covered',p_inputValue=>zsi_lib.FormatAmount(i.amnt_covered,2));%>
+                <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_amnt_not_covered',p_inputValue=>zsi_lib.FormatAmount(i.amnt_not_covered,2));%>
+                <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_or_date',p_inputValue=>to_char(i.or_date,l_date_format));%>
+                <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_or_number',p_inputValue=>i.or_number);%>
+                <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_issued_by',p_inputValue=>i.issued_by);%>
+                <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_bill_doctor_code');%>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_bill_medservice_code', p_wrapper=>'N', p_Attributes=>'SelectedValue="' || i.medservice_code || '"');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_amnt_billed',p_inputValue=>zsi_lib.FormatAmount(i.amnt_billed,2), p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.YesNo(p_field=>'for_refund',p_wrapper=>'N', p_value=>i.for_refund);%></td>
+            <td><% zsi_bs_lib.SelectBox(p_Name=>'p_reference_code', p_wrapper=>'N', p_Attributes=>'SelectedValue="' || i.reference_code || '"');%></td>
+            <td><% zsi_bs_lib.SelectBox(p_Name=>'p_payment_tag', p_wrapper=>'N', p_Attributes=>'SelectedValue="' || i.payment_tag || '"');%></td>
+            
+<% IF l_post_status = 0 AND l_user_iswrite = 1 THEN %>
+            <td class="col-xs-1" nowrap align="center"><% zsi_bs_lib.ButtonDelete(p_table=>'S004_T08020_BILLING',p_Value=>i.seq_no);%></td>
+<% END IF; %>
+         </tr>
+      <%
+        END LOOP;
+     IF l_post_status <> 1 THEN
+         FOR i IN 1..5 LOOP
+      %>
+         <tr>                
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_bill_seq_no'); %>
+                <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_amnt_covered');%>
+                <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_amnt_not_covered');%>
+                <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_or_date');%>
+                <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_or_number');%>
+                <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_issued_by');%>
+                <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_bill_doctor_code');%>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_bill_medservice_code', p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_amnt_billed', p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.YesNo(p_field=>'for_refund',p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.SelectBox(p_Name=>'p_reference_code', p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.SelectBox(p_Name=>'p_payment_tag', p_wrapper=>'N');%></td>
+            <td></td>
+         </tr>
+      <%
+         END LOOP;
+      END IF;
+      %>
+
+      </table>
+   </div>
+   </div>
+
+   <div id="dentalInfo" class="tab <%=GetActiveTab('dentalInfo',l_tab)%>">
+   <div style="height:300px; overflow-y:auto;" class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-2" nowrap align="left">Dental Service</th>
+            <th class="col-xs-2" nowrap align="left">Charging</th>
+            <th class="col-xs-1" nowrap align="left">Rate</th>
+            <th class="col-xs-1" nowrap align="left">Qty</th>
+            <th class="col-xs-1" nowrap align="left">Total</th>
+            <th class="col-xs-1" nowrap align="left">Next Visit</th>
+<% IF l_post_status = 0 AND l_user_iswrite = 1 THEN %>
+            <th class="col-xs-1" nowrap style="text-align:center">Delete</th>
+<% END IF; %>
+
+         </tr>
+      <%
+        FOR i in l_ds_cur LOOP
+      %>
+         <tr>                
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ds_seq_no',p_inputValue=>i.seq_no);%>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_ds_code', p_wrapper=>'N', p_Attributes=>'SelectedValue="' || i.ds_code || '"');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_type', p_inputValue=>i.ds_type,p_wrapper=>'N', p_attributes=>'disabled');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_rate',p_inputValue=>i.ds_rate, p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_qty',p_inputValue=>i.ds_qty, p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_amount', p_inputValue=>i.ds_amount, p_wrapper=>'N',p_attributes=>'disabled');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_next_visit_date',p_inputValue=>TO_CHAR(i.next_visit,l_date_format), p_wrapper=>'N');%></td>
+<% IF l_post_status = 0 AND l_user_iswrite = 1 THEN %>
+            <td class="col-xs-1" nowrap align="center"><% zsi_bs_lib.ButtonDelete(p_table=>'S004_T08020_DENTAL',p_Value=>i.seq_no);%></td>
+<% END IF; %>
+         </tr>
+      <%
+        END LOOP;
+     IF l_post_status <> 1 THEN
+         FOR i IN 1..5 LOOP
+      %>
+         <tr>
+                
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ds_seq_no');%>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_ds_code', p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_type',   p_wrapper=>'N', p_attributes=>'disabled');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_rate',   p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_qty',    p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_amount', p_wrapper=>'N',p_attributes=>'disabled');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_next_visit_date', p_wrapper=>'N');%></td>
+            <td></td>
+         </tr>
+      <%
+         END LOOP;
+      END IF;
+      %>
+
+      </table>
+   </div>
+   </div>
+
+   <div id="illnessInfo" class="tab <%=GetActiveTab('illnessInfo',l_tab)%>">
+   <div style="height:300px; overflow-y:auto;" class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-2" nowrap align="left">Illness</th>
+            <th class="col-xs-1" nowrap align="left">Next Visit</th>           
+            <th class="col-xs-7" nowrap align="left">Remarks</th>
+            <th class="col-xs-1" nowrap style="text-align:center">Meds</th>
+<% IF l_post_status = 0 AND l_user_iswrite = 1 THEN %>
+            <th class="col-xs-1" nowrap style="text-align:center">Delete</th>
+<% END IF; %>
+         </tr>
+      <%
+        FOR i in l_ill_cur LOOP
+           l_where := 'illness_seqno = ' || i.seq_no;
+           l_meds_count   :=  zsi_lib.GetCount('*','S004_T08020_MEDS',l_where);
+
+      %>
+         <tr>                
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ill_seq_no',p_inputValue=>i.seq_no); %>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_illness_code', p_wrapper=>'N', p_Attributes=>'SelectedValue="' || i.illness_code || '"');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ill_next_visit_date',p_inputValue=>TO_CHAR(i.next_visit,l_date_format), p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ill_remarks',p_inputValue=>i.remarks, p_wrapper=>'N');%></td>
+            <td align="center"><a id="aMedCount<%= i.seq_no %>" href="javascript:void(0)" TITLE="Click here to Edit Medicine Prescriptions" onClick="attachURL('illness_meds_form?p_illness_id=<%= i.seq_no %>&p_tran_no=<%=p_tran_no %>&p_post_status=<%= l_post_status %>&p_user_iswrite=<%= l_user_iswrite %>','Add/Edit Medicine Prescriptions For &raquo <%=l_emp_name %>', 1200, 350)"><%=l_meds_count %></a></td>
+<% IF l_post_status = 0 AND l_user_iswrite = 1 THEN %>
+            <td class="col-xs-1" nowrap align="center"><% zsi_bs_lib.ButtonDelete(p_table=>'S004_T08020_ILLNESS',p_Value=>i.seq_no);%></td>
+<% END IF; %>
+         </tr>
+      <%
+        END LOOP;
+     IF l_post_status <> 1 THEN
+         FOR i IN 1..5 LOOP
+      %>
+         <tr>                
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ill_seq_no'); %>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_illness_code', p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ill_next_visit_date', p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ill_remarks', p_wrapper=>'N');%></td>
+            <td align="center"><a id="aMedCount" href="javascript:void(0)" TITLE="Click here to Edit Medicine Prescriptions" onClick="attachURL('illness_meds_form?p_illness_id=&p_tran_no=<%=p_tran_no %>&p_post_status=<%= l_post_status %>&p_user_iswrite=<%= l_user_iswrite %>','Add/Edit Medicine Prescriptions For &raquo <%=l_emp_name %>', 1200, 350)"></a></td>
+            <td></td>
+         </tr>
+      <%
+         END LOOP;
+     END IF;
+      %>
+
+      </table>
+   </div>
+   </div>
+
+
+   <div id="inhouseInfo" class="tab <%=GetActiveTab('inhouseInfo',l_tab)%>">
+   <div style="height:300px; overflow-y:auto;" class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-2" nowrap align="left">Med Plan Service</th>
+            <th class="col-xs-2" nowrap align="left">Systolic</th>
+            <th class="col-xs-2" nowrap align="left">Diastolic</th>
+            <th class="col-xs-6" nowrap align="left">Remarks</th>
+<% IF l_post_status = 0 AND l_user_iswrite = 1 THEN %>
+            <th class="col-xs-1" nowrap style="text-align:center">Delete</th>
+<% END IF; %>
+         </tr>
+      <%
+        FOR i in l_ih_cur LOOP
+      %>
+         <tr>                
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ih_seq_no',p_inputValue=>i.seq_no); %>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_ih_medservice_code', p_wrapper=>'N', p_Attributes=>'SelectedValue="' || i.medservice_code || '"');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ih_systolic',p_inputValue=>i.systolic, p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ih_diastolic',p_inputValue=>i.diastolic, p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ih_remarks',p_inputValue=>i.remarks, p_wrapper=>'N');%></td>
+<% IF l_post_status = 0 AND l_user_iswrite = 1 THEN %>
+            <td class="col-xs-1" nowrap align="center"><% zsi_bs_lib.ButtonDelete(p_table=>'S004_T08020_SERVICES',p_Value=>i.seq_no);%></td>
+<% END IF; %>
+         </tr>
+      <%
+         END LOOP;
+     IF l_post_status <> 1 THEN
+        FOR i IN 1..5 LOOP
+      %>
+         <tr>
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ih_seq_no'); %>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_ih_medservice_code', p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ih_systolic', p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ih_diastolic', p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ih_remarks', p_wrapper=>'N');%></td>
+            <td></td>
+         </tr>
+      <%
+         END LOOP;
+      END IF;
+      %>
+      </table>
+   </div>
+   </div>
+
+   <div id="labInfo" class="tab <%=GetActiveTab('labInfo',l_tab)%>">
+   <div style="height:300px; overflow-y:auto;" class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-4" nowrap align="left">Result Type</th>
+            <th class="col-xs-1" nowrap align="left">Follow-up Date</th>
+            <th class="col-xs-4" nowrap align="left">Remarks</th>
+            <th class="col-xs-1" nowrap align="left">Result</th>
+<% IF l_post_status = 0 AND l_user_iswrite = 1 THEN %>
+           <th class="col-xs-0" nowrap style="text-align:center">Delete</th>
+<% END IF; %>
+         </tr>
+      <%
+        FOR i in l_lr_cur LOOP
+      %>
+         <tr>                
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_lr_seq_no',p_inputValue=>i.seq_no); %>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_result_type', p_wrapper=>'N', p_Attributes=>'SelectedValue="' || i.result_type || '"');%></td>    
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_follow_up_lab_date',p_inputValue=>TO_CHAR(i.follow_up_lab, l_date_format), p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_lr_remarks', p_inputValue=>i.remarks, p_wrapper=>'N');%></td>
+            <td align="center"><a id="aResult<%= i.seq_no %>" href="javascript:void(0)" TITLE="Click here to Edit Laboratory Results" onClick="attachURL('lab_results_form?p_hdr_seq_no=<%= i.seq_no %>&p_post_status=<%= l_post_status %>&p_user_iswrite=<%= l_user_iswrite %>','Edit Lab Results For &raquo <%=l_emp_name %>', 1350, 600);w1.maximize();">Lab Result</a></td>
+<% IF l_post_status = 0 AND l_user_iswrite = 1 THEN %>
+            <td class="col-xs-1" nowrap align="center"><% zsi_bs_lib.ButtonDelete(p_table=>'S004_T08020_RESULT_HDR',p_Value=>i.seq_no);%></td>
+<% END IF; %>
+         </tr>
+      <%
+         END LOOP;
+     IF l_post_status <> 1 THEN
+        FOR i IN 1..5 LOOP
+      %>
+         <tr>
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_lr_seq_no'); %><% zsi_bs_lib.SelectBox(p_Name=>'p_result_type', p_wrapper=>'N');%></td>    
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_follow_up_lab_date',p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_lr_remarks',p_wrapper=>'N');%></td>
+            <td align="left"><a id="aResult" href="javascript:void(0)" TITLE="Click here to Edit Laboratory Results" onClick="attachURL('lab_results_form?p_hdr_seq_no=&p_post_status=<%= l_post_status %>&p_user_iswrite=<%= l_user_iswrite %>','Edit Lab Result For &raquo <%=l_emp_name %>', 1200, 350)"></a></td>
+            <td></td>
+         </tr>
+      <%
+         END LOOP;
+      END IF;
+      %>
+      </table>
+   </div>
+   </div>
+<% zsi_bs_lib.CloseEntryForm; %>
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_post_status = 0 AND l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+</form>
+
+<script type="text/javascript" src="zsi_employee_js"></script>
+<script type="text/javascript">
+
+$("form[name=frmList]").submit(function(){
+   if( zsi.form.checkMandatory()!=true) return false;
+   return true;
+});
+
+
+//on page loaded
+$(document).ready(function(){
+      
+      zsi.form.markMandatory({                  
+         "groupNames":[ 
+            {"names" :
+               [    
+                   "p_tran_date"
+                  ,"p_empl_id_no"
+                  ,"p_medplan_type"
+                  ,"p_medplan_code"
+               ]
+            ,  "required_one":"N"
+            ,  "type":"S"
+            }
+           ,{"names" :
+               [  
+                   "p_doctor_code"
+               ]
+            ,  "required_one":"N"
+            ,  "type":"M"
+            }         
+           ,{"names" :  
+               [  
+                   "p_bill_medservice_code"
+                  ,"p_amnt_billed"
+               ]
+            ,  "required_one":"N"
+            ,  "type":"M"
+            }
+           ,{"names" :
+               [  
+                   "p_ds_code"
+               ]
+            ,  "required_one":"N"
+            ,  "type":"M"
+            }
+           ,{"names" :
+               [  
+                  "p_illness_code"
+               ]
+            ,  "required_one":"N"
+            ,  "type":"M"
+            }
+           ,{"names" :
+               [  
+                   "p_ih_medservice_code"
+               ]
+            ,  "required_one":"N"
+            ,  "type":"M"
+            }
+           ,{"names" :  
+               [  
+                  ,"p_result_type"
+               ]
+            ,  "required_one":"N"
+            ,  "type":"M"
+            }         
+
+         ]                     
+         ,"groupTitles":[ 
+         
+            {"titles" : 
+               [         
+                   "Tran Date"
+                  ,"Employee Id or Name"
+                  ,"Medecine Plan Type"
+                  ,"Medecine Plan Code"
+               ]
+            }
+           ,{"titles" :  
+               [                       
+                   "Doctor Code"
+               ]
+            }
+           ,{"titles" :  
+               [                       
+                   "Med Plan Service"
+                  ,"Billed"   
+               ]
+            }         
+           ,{"titles" :  
+               [                       
+                  "Dental Service"  
+               ]
+            }           
+           ,{"titles" :  
+               [                       
+                  "Illness"  
+               ]
+            }
+           ,{"titles" :  
+               [                       
+                   "Med Plan Service"   
+               ]
+            }
+           ,{"titles" :  
+               [                       
+                 ,"Result Type"
+               ]
+            }
+
+         ]
+         ,"required_one_indexes":[1,2,3,4,5,6,7]
+      });
+ 
+ 
+
+   //populate list
+   ctrlSel("#p_dep_id","<%=l_dep_id%>","N","S004_T01029","emde_dependent_id","emde_dependent_name","Where emde_id_no=<%=NVL(l_empl_id_no,0)%>" );
+   ctrlSel("#p_medplan_type","<%=l_medplan_type%>","N","medplan_types_v","sele_value","displayed_text","ORDER BY displayed_text");
+   ctrlSel("#p_medplan_code","<%=l_medplan_code%>","N","medplan_code_mc_v","sele_value","displayed_text","ORDER BY displayed_text");
+   ctrlSel("select[id=p_bill_medservice_code]","","N","medservice_code_v","sele_value","displayed_text","ORDER BY displayed_text");
+
+   ctrlSel("select[id=p_doctor_code]","","N","doctors_v","doctor_code","doctor_name","ORDER BY doctor_name");
+//   ctrlSel("select[id=p_bill_doctor_code]","","N","doctors_v","doctor_code","doctor_name","ORDER BY doctor_name");
+   ctrlSel("select[id=p_doc_reference_code]","","N","S004_T08004","reference_code","reference_desc","ORDER BY reference_desc");
+   ctrlSel("select[id=p_payment_tag]","","N","PAYMENT_TAG_V","sele_value","displayed_text","ORDER BY displayed_text");
+
+   ctrlSel("select[id=p_ds_code]","","N","S004_T08009","ds_code","ds_desc"," ORDER BY ds_desc");
+
+   ctrlSel("select[id=p_reference_code]","","N","S004_T08004","reference_code","reference_desc","ORDER BY reference_desc");
+
+   ctrlSel("select[id=p_illness_code]","","N","S004_T08002","illness_code","illness_name","ORDER BY illness_name");
+
+   ctrlSel("select[id=p_ih_medservice_code]","","N","medservice_code_v","sele_value","displayed_text","ORDER BY description");
+
+   ctrlSel("select[id=p_result_type]","","N","S004_T08019","result_type","result_desc","ORDER BY result_Type");
+
+
+   $("select[id=p_doctor_code]").change(function(){
+      var td =  $(this.parentNode).next();
+      var p_specialty  = td.children("#p_specialty");
+      $.getJSON("doctor_specialty_json?p_doctor_code=" + this.value,function(data){
+         p_specialty.val(data.doctor_specialty);
+      });
+   });
+
+   $("select[id=p_ds_code]").change(function(){
+      var td =  $(this.parentNode).next();
+      var td2=  td.next();
+      var p_ds_type  = td.children("#p_ds_type");
+      var p_ds_rate  = td2.children("#p_ds_rate");
+      $.getJSON("dental_services_json?p_ds_code=" + this.value,function(data){
+         p_ds_type.val(data.dstype);
+         p_ds_rate.val(data.ds_rate);
+      });
+   });
+   $("input[id=p_ds_rate],input[id=p_ds_qty]").keyup(function(){
+      var p_ds_rate;
+      var p_ds_qty;
+      var p_ds_amount;
+
+      if(this.id =="p_ds_rate"){
+         p_ds_rate = $(this);
+         p_ds_qty = $(this.parentNode).next().children("#p_ds_qty");
+         p_ds_amount =  $(this.parentNode).next().next().children("#p_ds_amount");
+
+      }
+      else if(this.id =="p_ds_qty"){
+
+         p_ds_rate = $(this.parentNode).prev().children("#p_ds_rate");
+         p_ds_qty  = $(this);
+         p_ds_amount = $(this.parentNode).next().children("#p_ds_amount");
+
+      }
+
+      p_ds_amount.val( compute(p_ds_rate.val() ,  p_ds_qty.val() ));
+
+
+      function compute(rate,qty){
+         var result = (rate * qty);
+         if(isNaN(result)) result=0;
+         return (result.toFixed(2));
+      }
+
+   });
+
+
+
+   $("#p_empl_id_no").blur(function(){
+      if(this.value) ctrlSel("#p_dep_id","<%=l_dep_id%>","N","S004_T01029","emde_dependent_id","emde_dependent_name","Where emde_id_no=" + this.value );
+   });
+
+
+   
+
+});
+
+   /*refresh meds count in Illness detail tab. */
+   function countIllnessMeds(p_Id){
+      var l_condition ="where illness_seqno=" + p_Id;
+      $.get("zsi_lib.count_records?p_table=S004_T08020_MEDS&p_condition=" + l_condition + "&p_t=" + new Date().getTime(), function( data ) {
+          $("#aMedCount"  + p_Id).text(data); 
+      });        
+
+   }
+
+</script>
+
+</body>
+</html>
+

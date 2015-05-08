@@ -1,0 +1,117 @@
+<%@ plsql procedure="train_budget_update" %>
+<%@ plsql parameter="p_tran_no"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tran_year"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_empl_id_no"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_empl_name"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_budget_type"             type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_conv_code"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_budget_amt"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_remarks"                 type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   20-OCT-14  GT    Modified
+   01-AUG-14  GT    New
+*/
+--DECLARATION SECTION
+   l_js_path         VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed         VARCHAR2(1) := 'N';
+   l_rec             S004_T07013%ROWTYPE;
+   l_date_format     VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+   l_budget_amt      NUMBER;
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Training Budget </title>
+</head>
+<body>
+<%
+   l_budget_amt       := TO_NUMBER(TRIM(REPLACE(p_budget_amt,',','')));
+   
+   IF p_tran_no IS NULL  AND p_empl_id_no IS NOT NULL  THEN
+      INSERT INTO S004_T07013 (
+          tran_no
+         ,tran_year
+         ,id_no
+         ,budget_type
+         ,conv_code
+         ,budget_amt
+         ,remarks
+         ,created_by
+         ,date_created
+      )
+      VALUES
+      (  S004_T07013_SQ001.NEXTVAL 
+         ,p_tran_year
+         ,p_empl_id_no
+         ,p_budget_type
+         ,p_conv_code
+         ,l_budget_amt
+         ,p_remarks
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+   );
+   ELSIF p_tran_no IS NOT NULL  AND p_empl_id_no IS NOT NULL  THEN
+
+
+      SELECT * INTO l_rec FROM S004_T07013 WHERE tran_no=p_tran_no;
+
+      IF zsi_lib.IsChanged(l_rec.tran_year, TO_NUMBER(p_tran_year)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.tran_year := p_tran_year;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.id_no, TO_NUMBER(p_empl_id_no)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.id_no := p_empl_id_no;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.budget_type, p_budget_type) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.budget_type := p_budget_type;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.conv_code, TO_NUMBER(p_conv_code)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.conv_code := p_conv_code;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.budget_amt, TO_NUMBER(l_budget_amt)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.budget_amt := l_budget_amt;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.remarks,p_remarks) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.remarks := p_remarks;
+      END IF;
+
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T07013 SET row = l_rec WHERE tran_no=p_tran_no;
+      END IF;
+
+   END IF;
+END;
+%>
+<script type="text/javascript">
+   var ifr = parent.dhxLayout.cells("b").getFrame();
+   ifr.contentWindow.location.reload();
+   parent.w1.close();
+</script>

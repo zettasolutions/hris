@@ -1,0 +1,193 @@
+<%@ plsql procedure="med_maintenance_update" %>
+<%@ plsql parameter="p_tran_no"       type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tran_date"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_empl_id_no"    type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_age_brak_code" type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_empl_type"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_cost_center"   type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_department"    type="VARCHAR2" default="NULL"%> 
+<%@ plsql parameter="p_group_code"    type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_medplan_code"  type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_medplan_type"  type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_released_date" type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_allowed_amt"   type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_seq_no"        type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_meds_code"     type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_meds_dosage"   type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_meds_qty"      type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_post_status"   type="VARCHAR2" default="NULL"%>
+<%!                                       
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   16-JAN-15  GT    Added allowed_amt
+   25-DEC-14  GT    Modified
+   02-AUG-14  GT    New
+*/
+--DECLARATION SECTION
+   l_js_path         VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed         VARCHAR2(1) := 'N';
+   l_rec             S004_T08015%ROWTYPE;
+   l_rec_dtl         S004_T08015_dtl%ROWTYPE;
+   l_date_format     VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+   l_tran_date       DATE;
+   l_released_date   DATE;
+   l_post_date       DATE;
+   l_tran_year       NUMBER;
+   l_ledger_no       S004_T08010.ldgr_no%TYPE;
+   l_tran_no         S004_T08015.tran_no%TYPE;
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Medicine Maintenance </title>
+</head>
+<body>
+<%
+   l_tran_date    := TO_DATE(p_tran_date,l_date_format);
+   l_released_date:= TO_DATE(p_released_date,l_date_format);
+   l_tran_year := EXTRACT(YEAR FROM TO_DATE(p_tran_date,l_date_format));
+   
+   IF p_post_status = 1 then
+      l_post_date := SYSDATE;
+   ELSE 
+      l_post_date := NULL;
+   END IF;
+   
+   IF p_tran_no IS NULL  AND p_empl_id_no IS NOT NULL THEN
+      SELECT S004_T08015_SQ001.NEXTVAL INTO l_tran_no FROM DUAL;      
+
+      INSERT INTO S004_T08015 (
+          tran_no                  
+         ,tran_date             
+         ,id_no       
+         ,age_brak_code
+         ,empl_type             
+         ,cost_center           
+         ,department            
+         ,group_code            
+         ,medplan_code          
+         ,medplan_type   
+         ,released_date
+         ,allowed_amt
+         ,post_status           
+         ,post_date
+         ,created_by
+         ,date_created
+      )
+      VALUES
+      (   l_tran_no
+         ,l_tran_date    
+         ,p_empl_id_no        
+         ,p_age_brak_code
+         ,p_empl_type    
+         ,p_cost_center  
+         ,p_department   
+         ,p_group_code   
+         ,p_medplan_code 
+         ,p_medplan_type 
+         ,l_released_date 
+         ,p_allowed_amt
+         ,p_post_status
+         ,l_post_date    
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+       ); 
+       FOR i in 2..p_seq_no.COUNT LOOP
+          INSERT INTO S004_T08015_DTL
+          (
+            seq_no
+           ,tran_no
+           ,meds_code
+           ,meds_dosage
+           ,meds_qty
+           ,created_by
+           ,date_created
+          )
+          VALUES
+          (
+            S004_T08015_DTL_SQ001.NEXTVAL
+           ,l_tran_no
+           ,p_meds_code(i)
+           ,p_meds_dosage(i)
+           ,p_meds_qty(i)         
+           ,zsi_sessions_lib.GetCookieUser
+           ,SYSDATE
+         ); 
+       END LOOP;
+   ELSIF p_tran_no IS NOT NULL AND p_empl_id_no IS NOT NULL THEN
+
+      SELECT * INTO l_rec FROM S004_T08015 WHERE tran_no=p_tran_no;
+
+      IF zsi_lib.IsChanged(l_rec.tran_date, l_tran_date) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.tran_date := l_tran_date;
+      END IF;
+     
+      IF zsi_lib.IsChanged(l_rec.post_status, TO_NUMBER(p_post_status)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.post_status := p_post_status;
+         l_rec.post_date := l_post_date;
+      END IF;
+                      
+      IF zsi_lib.IsChanged(l_rec.released_date, l_released_date) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.released_date := l_released_date;
+      END IF;
+      
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08015 SET row = l_rec WHERE tran_no=p_tran_no;
+      END IF;
+      
+      l_changed :='N';
+      FOR i in 2..p_seq_no.COUNT LOOP
+         SELECT * INTO l_rec_dtl FROM S004_T08015_DTL where seq_no = p_seq_no(i);
+         IF zsi_lib.IsChanged(l_rec_dtl.meds_qty, TO_NUMBER(p_meds_qty(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_rec_dtl.meds_qty := p_meds_qty(i);
+         END IF;        
+         IF l_changed = 'Y' THEN
+            l_rec_dtl.modified_by := zsi_sessions_lib.GetCookieUser;
+            l_rec_dtl.date_modifIed := SYSDATE;
+            UPDATE S004_T08015_DTL SET row = l_rec_dtl WHERE seq_no=p_seq_no(i);
+         END IF;
+      END LOOP;
+   END IF;   
+END;
+%>
+<script type="text/javascript">
+   parent.parent.parent.HomeWindow.LoadData("?p_id_no=<%=p_empl_id_no %>");
+   parent.LoadData("?p_id_no=<%=p_empl_id_no %>");
+   parent.w1.close();
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

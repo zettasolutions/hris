@@ -1,0 +1,302 @@
+<%@ plsql procedure="illness_topN_graph" %>
+<%@ plsql parameter="p_topN"        type="NUMBER"     default="3" %>
+<%@ plsql parameter="p_et"          type="VARCHAR2"   default="NULL"%>
+<%@ plsql parameter="p_cmonth"      type="NUMBER" %>
+<%@ plsql parameter="p_cyear"       type="NUMBER" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   06-FEB-14  GF    added css:display none for amchart text
+   17-NOV-14  BD    New
+*/
+--DECLARATION SECTION
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_amchart_path               VARCHAR2(128);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+
+   l_select                     VARCHAR2(1000);
+   l_from                       VARCHAR2(500);
+   l_where                      VARCHAR2(1000);
+   l_group                      VARCHAR2(1000);
+   l_sql                        VARCHAR2(5000);
+   illness_cur                  SYS_REFCURSOR;
+   l_illness_code               s004_t08010_illness_v.illness_code%type;
+   l_illness_name               s004_t08010_illness_v.illness_name%type;
+   l_illness_name_arr           zsi_lib.VC2_255_ARR;
+   l_illness_code_arr           zsi_lib.NUM_ARR;
+   l_age_bracket_code_arr       zsi_lib.NUM_ARR;
+   l_age_bracket_desc_arr       zsi_lib.VC2_255_ARR;
+   l_count                      NUMBER(10) := 0;
+   l_rank                       NUMBER(10) := 0;
+   l_comma                      VARCHAR2(1);
+   l_chart_data                 VARCHAR2(32000);
+   l_ctr                        NUMBER(10) := 0;
+   l_td_count                   NUMBER(1) := 0;
+   l_tr_open                    VARCHAR2(1) := 'N';
+   l_ctr2                       NUMBER(10) := 0;
+   l_ctr3                       NUMBER(10) := 0;
+   l_dept_ill_age_count         NUMBER(10);
+   l_total_count_arr            zsi_lib.NUM_ARR;
+
+   CURSOR age_bracket_cur IS
+      SELECT sele_value as age_bracket, description as  age_bracket_desc
+        FROM age_bracket_v
+       ORDER BY description;
+
+   CURSOR dept_cur IS
+      SELECT ccnt_cd, ccnt_deptname, ccnt_abbrv
+        FROM ccnt_dept_v
+       ORDER BY ccnt_deptname;
+
+/*
+   CURSOR dept_illness_cur(p_department IN VARCHAR2, p_illness_code IN NUMBER, p_age_bracket IN VARCHAR2)  IS
+      SELECT department, age_bracket, COUNT(*) as ab_count
+        FROM s004_t08010_illness_v t, employee_v e
+       WHERE t.id_no = e.empl_id_no
+         AND TO_CHAR(t.tran_date,'mm') = p_cmonth
+         AND t.tran_year = p_cyear
+         AND t.illness_code = p_illness_code
+         AND e.emp_grouping = DECODE(p_et,NULL,e.emp_grouping,p_et)
+       GROUP BY department, age_bracket
+       ORDER BY department, age_bracket;
+*/
+
+   CURSOR age_bracket_illness_cur(p_illness_code IN VARCHAR2, p_age_bracket IN VARCHAR2) IS
+      SELECT t.age_bracket, COUNT(*) as ab_count
+        FROM s004_t08010_illness_v t, employee_v e
+       WHERE t.id_no = e.empl_id_no
+         AND TO_CHAR(t.tran_date,'mm') = p_cmonth
+         AND t.tran_year = p_cyear
+         AND t.illness_code = p_illness_code
+         AND e.age_brak_code = p_age_bracket
+         AND e.emp_grouping = DECODE(p_et,NULL,e.emp_grouping,p_et)
+       GROUP BY t.age_bracket
+       ORDER BY t.age_bracket;
+
+   PROCEDURE OpenTR IS
+      l_td_break_ctr NUMBER(1) := 3;
+   BEGIN
+      l_td_count := l_td_count + 1;
+      IF l_tr_open = 'N' AND MOD(l_td_count,l_td_break_ctr)=1 THEN
+         l_tr_open := 'Y';
+         htp.p('<tr>');
+      ELSIF l_tr_open = 'Y' AND l_td_count>l_td_break_ctr AND MOD(l_td_count,l_td_break_ctr)<>0 THEN
+         htp.p('</tr>');
+         htp.p('<tr>');
+      END IF;
+   END;
+
+   PROCEDURE CloseTR IS
+   BEGIN
+      IF l_tr_open = 'Y' THEN
+         l_tr_open := 'N';
+         htp.p('</tr>');
+      END IF;
+   END;
+
+%>
+<%
+   pageheader(p_amchart=>'Y');
+
+   l_select := 'SELECT t.illness_code, t.illness_name, COUNT(*) count_emp ';
+   l_from   := ' FROM s004_t08010_illness_v t, employee_v e ';
+   l_where  := ' WHERE t.id_no = e.empl_id_no '
+            || ' AND TO_CHAR(t.tran_date,''mm'') = ' || p_cmonth
+            || ' AND t.tran_year = ' || p_cyear;
+   l_group  := ' GROUP BY t.illness_code, t.illness_name ORDER BY 2 DESC ';
+
+   IF p_et IS NOT NULL THEN
+      l_where := l_where || ' AND UPPER(e.emp_grouping) = ''' || UPPER(p_et) || '''';
+   END IF;
+
+   l_sql := l_select || l_from || l_where || l_group;
+   l_sql := 'SELECT illness_code, illness_name, count_emp, topN FROM (SELECT illness_code, illness_name, count_emp, DENSE_RANK() OVER(ORDER BY count_emp DESC) as topN FROM (' || l_sql || ')) WHERE topN <= ' || p_topN || ' ORDER BY topN DESC ';
+%>
+<body onload="window.print();">
+<style>
+   #chartdiv1 div div a,#chartdiv2 div div a,#chartdiv3 div div a{
+      display:none !important;
+   }
+ }
+</style>
+<script type="text/javascript">
+   var chartData1 = [];
+<%
+   OPEN illness_cur FOR l_sql;
+   LOOP
+      FETCH illness_cur INTO l_illness_code, l_illness_name, l_count, l_rank;
+      EXIT WHEN illness_cur%NOTFOUND;
+      l_ctr := l_ctr + 1;
+      l_illness_code_arr(l_ctr) := l_illness_code;
+      l_illness_name_arr(l_ctr) := l_illness_name;
+      l_comma := NULL;
+      l_chart_data := NULL;
+      l_ctr2 := 0;
+      FOR a IN age_bracket_cur LOOP
+         l_ctr2 := l_ctr2 + 1;
+         l_age_bracket_code_arr(l_ctr2) := a.age_bracket;
+         l_age_bracket_desc_arr(l_ctr2) := a.age_bracket_desc;
+         FOR al IN age_bracket_illness_cur (l_illness_code,a.age_bracket) LOOP
+            l_chart_data := l_chart_data || l_comma
+                         || '{'
+                         || ' "cgroup": "' || al.age_bracket || '",'
+                         || ' "cvalue": "' || al.ab_count || '"'
+                         || '} ';
+            l_comma := ',';
+         END LOOP;
+      END LOOP;
+%>
+   var chartData<%= l_ctr %> = [<%= l_chart_data %>];
+<%
+
+   END LOOP;
+%>
+   AmCharts.ready(function () {
+<%
+   FOR i IN 1..l_ctr LOOP
+%>
+       renderBarChart(chartData<%= i %>,"chartdiv<%= i %>","<%= NVL(l_illness_name_arr(i),'Undefined') %>");
+<%
+   END LOOP;
+%>
+   });
+
+  function renderBarChart(sChartData,sChartDiv,sTitle) {
+      // SERIAL CHART
+      oChart = new AmCharts.AmSerialChart(AmCharts.themes.light);
+      oChart.dataProvider = sChartData;
+      oChart.categoryField = "cname";
+      //oChart.rotate = true;
+      //oChart.depth3D = 5;
+      //oChart.angle = 5;
+      oChart.fontFamily = "Verdana";
+      oChart.fontSize = 10;
+      oChart.startDuration = 1;
+      oChart.plotAreaBorderColor = "#000000";
+      oChart.plotAreaBorderAlpha = 0.2;
+      oChart.addTitle(sTitle,10);
+
+      // AXES
+      // category
+      var categoryAxis = oChart.categoryAxis;
+      categoryAxis.gridPosition = "start";
+      categoryAxis.gridAlpha = 0;
+      categoryAxis.fillAlpha = 1;
+      categoryAxis.labelRotation = 15;
+
+      // value
+      var valueAxis = new AmCharts.ValueAxis();
+      valueAxis.gridAlpha = 0.2;
+      valueAxis.fillAlpha = 1;
+      valueAxis.fillColor = "#F5F5F0"
+      oChart.addValueAxis(valueAxis);
+
+      // graph
+      var graph = new AmCharts.AmGraph();
+      graph.urlField = "clink";
+      graph.urlTarget = "_blank";
+      graph.valueField = "cvalue";
+      graph.type = "column";
+      graph.balloonText = "[[category]]:[[value]]";
+      //graph.fillColors = "#99D6D6"
+      graph.fillAlphas = 1;
+      //graph.lineAlpha = 0.2;
+      //graph.lineColor = "#000000";
+      graph.lineThickness = 1;
+      graph.gradientOrientation = "horizontal";
+      oChart.addGraph(graph);
+
+      oChart.creditsPosition = "top-right";
+
+      // WRITE
+      oChart.write(sChartDiv);
+   }
+
+
+</script>
+<table cellpadding=1 cellspacing=1 border=0 WIDTH="100%">
+<%
+   FOR i IN 1..l_ctr LOOP
+      OpenTR;
+%>
+      <td width="200px" align="center">
+         <div id="chartdiv<%= i %>" style="width: 100%; height: 200px; border-style:solid; border-width:1px; border-color:#c0c0c0;"></div>
+      </td>
+<%
+   END LOOP;
+   CloseTR;
+%>
+</table>
+<br>
+
+
+<%
+   <<ILLNESSES>>
+   FOR i IN 1..l_ctr LOOP
+%>
+
+<table border="1">
+   <tr>
+      <th align="left" rowspan="2">Dept</th>
+      <th class="alignCenter" colspan="<%= l_ctr2 %>"><%= NVL(l_illness_name_arr(i),'Undefined') %></th>
+   </tr>
+   <tr>
+<%
+      FOR j IN 1..l_ctr2 LOOP
+%>
+      <th class="alignCenter">(<%= TRIM(NVL(l_age_bracket_desc_arr(j),'---')) %>)</th>
+<%
+      END LOOP;
+%>
+   </tr>
+<%
+      <<DEPARTMENTS>>
+      FOR d IN dept_cur LOOP
+%>
+   <tr>
+      <td><%= d.ccnt_abbrv %></td>
+<%
+         <<AGE_BRACKETS>>
+         FOR j IN 1..l_ctr2 LOOP
+            l_dept_ill_age_count := NULL;
+            BEGIN
+               SELECT COUNT(*) as dept_ill_age_count
+                 INTO l_dept_ill_age_count
+                 FROM s004_t08010_illness_v t, employee_v e
+                WHERE t.id_no = e.empl_id_no
+                  AND TO_CHAR(t.tran_date,'mm') = p_cmonth
+                  AND t.tran_year = p_cyear
+                  AND t.illness_code = l_illness_code_arr(i)
+                  AND e.department = d.ccnt_cd
+                  AND e.age_brak_code = l_age_bracket_code_arr(j)
+                  AND e.emp_grouping = DECODE(p_et,NULL,e.emp_grouping,p_et);
+               IF l_dept_ill_age_count = 0 THEN
+                  l_dept_ill_age_count := NULL;
+               END IF;
+            END;
+%>
+      <td align="center"><%= l_dept_ill_age_count %></td>
+<%
+         END LOOP AGE_BRACKETS;
+      END LOOP DEPARTMENTS;
+%>
+   </tr>
+</table>
+<%
+   END LOOP ILLNESSES;
+%>
+
+</body>
+</html>
+

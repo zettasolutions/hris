@@ -1,0 +1,221 @@
+<%@ plsql procedure="medacquired_clinic_update" %>
+<%@ plsql parameter="p_tran_no"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tran_date"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_empl_id_no"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_age_brak_code"           type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_empl_type"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_cost_center"             type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_department"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_group_code"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_meds_code"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_medicine "               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_meds_qty"                type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_treatment_for"           type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_treatment_desc"          type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_post_status"             type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_empl_name"               type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   10-MAR-15  GT    Added p_medicine, p_treatment_desc
+   28-JAN-15  GT    Modified
+   01-AUG-14  GT    New
+*/
+--DECLARATION SECTION
+   l_js_path         VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed         VARCHAR2(1) := 'N';
+   l_rec             S004_T08016%ROWTYPE;
+   l_date_format     VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+   l_tran_date       DATE;
+   l_post_date       DATE;
+   l_tran_month      DATE;
+   l_my_debit        NUMBER:=0;
+   l_my_credit       NUMBER:=0;
+   l_balance         NUMBER:=0;  
+%>
+<%
+BEGIN
+   l_tran_date := TO_DATE(p_tran_date,l_date_format);
+
+   IF p_post_status = 1 then
+      l_post_date := SYSDATE;
+   ELSE 
+      l_post_date := NULL;
+   END IF;
+   
+   IF p_tran_no IS NULL  AND p_tran_date IS NOT NULL THEN
+      INSERT INTO S004_T08016 (
+          tran_no
+         ,tran_date
+         ,id_no
+         ,age_brak_code
+         ,empl_type
+         ,cost_center
+         ,department
+         ,group_code
+         ,meds_code
+         ,meds_qty
+         ,treatment_for
+         ,post_status
+         ,post_date
+         ,created_by
+         ,date_created
+      )
+      VALUES
+      (  S004_T08016_SQ001.NEXTVAL 
+         ,l_tran_date
+         ,p_empl_id_no
+         ,p_age_brak_code
+         ,p_empl_type
+         ,p_cost_center
+         ,p_department
+         ,p_group_code
+         ,p_meds_code
+         ,p_meds_qty
+         ,p_treatment_for
+         ,p_post_status
+         ,l_post_date
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+   );
+   ELSIF p_tran_no IS NOT NULL AND p_tran_date IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T08016 WHERE tran_no=p_tran_no;
+
+      IF zsi_lib.IsChanged(l_rec.tran_date, l_tran_date) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.tran_date := l_tran_date;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.id_no, TO_NUMBER(p_empl_id_no)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.id_no := p_empl_id_no;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.age_brak_code, TO_NUMBER(p_age_brak_code)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.age_brak_code := p_age_brak_code;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.empl_type, p_empl_type) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.empl_type := p_empl_type;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.cost_center, p_cost_center) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.cost_center := p_cost_center;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.department, p_department) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.department := p_department;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.group_code, p_group_code) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.group_code := p_group_code;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.meds_code, TO_NUMBER(p_meds_code)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.meds_code := p_meds_code;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.meds_qty, TO_NUMBER(p_meds_qty)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.meds_qty := p_meds_qty;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.treatment_for, TO_NUMBER(p_treatment_for)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.treatment_for := p_treatment_for;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.post_status, TO_NUMBER(p_post_status)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.post_status := p_post_status;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.post_date, l_post_date) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.post_date := l_post_date;
+      END IF;
+
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08016 SET row = l_rec WHERE tran_no=p_tran_no;
+      END IF;
+   END IF;
+   IF p_post_status = 1 then
+      INSERT INTO S004_T08008 
+      (   ldgr_no               
+         ,tran_no               
+         ,tran_date             
+         ,meds_code   
+         ,treatment_for
+         ,credit_qty             
+         ,post_date             
+         ,created_by
+         ,date_created
+      )
+      VALUES
+      (  S004_T08008_SQ001.NEXTVAL 
+         ,p_tran_no
+         ,l_tran_date
+         ,p_meds_code
+         ,p_treatment_for
+         ,p_meds_qty
+         ,SYSDATE
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+      );
+      
+       INSERT INTO S004_T08010
+      (   ldgr_no               
+         ,tran_no               
+         ,tran_date   
+         ,tran_year
+         ,id_no
+         ,age_brak_code
+         ,empl_type
+         ,cost_center
+         ,department
+         ,group_code
+         ,medplan_type
+         ,medplan_code
+         ,created_by
+         ,date_created
+      )
+      VALUES
+      (  S004_T08010_SQ001.NEXTVAL 
+         ,p_tran_no
+         ,l_tran_date
+         ,EXTRACT(YEAR FROM l_tran_date)
+         ,p_empl_id_no
+         ,p_age_brak_code
+         ,p_empl_type
+         ,p_cost_center
+         ,p_department
+         ,p_group_code
+         ,1
+         ,2
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+      );
+    
+   END IF;  
+END;
+%>

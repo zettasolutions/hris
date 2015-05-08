@@ -1,0 +1,43 @@
+<%@ plsql procedure="pagefooter" %>
+<%!
+   /*
+   =======================================================================
+   *
+   * Copyright (c) 2014 ZettaSolutions,Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+   */
+
+   /* Modification History
+   Date       By    History
+   ---------  ----  ------------------------------------------------------------------------
+   Jun-25-14  BD    Used s004_lib for the paths.
+   Jun-21-14  GF    New
+   */
+
+   l_js_path        VARCHAR2(128) := zsi_lib.JSPath;
+%>
+
+<style>
+body{
+
+   background:gray;
+   color:white !important;
+}
+</style>
+<section id="footer" class="container-full">
+ <div id="copyright" class="pull-left">
+   &copy;&nbsp;2014&nbsp;MCWD - HRIS
+ </div>
+<div id="poweredby" class="pull-right">
+   Powered by : <a href="http://www.zetta-solutions.net">ZettaSolutions, Inc </a>
+</div>
+</section>
+
+  <script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>
+

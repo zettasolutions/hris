@@ -1,0 +1,138 @@
+<%@ plsql procedure="curr_medplan_exp_graph" %>
+<%@ plsql parameter="p_cmonth"      type="NUMBER" %>
+<%@ plsql parameter="p_cyear"       type="NUMBER" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   20-NOV-14  BD    New
+*/
+--DECLARATION SECTION
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_amchart_path               VARCHAR2(128);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+
+   l_ctr                        NUMBER(10) := 0;
+   l_amnt_billed                NUMBER;
+   l_comma                      VARCHAR2(1);
+   l_chart_data                 VARCHAR2(32000);
+
+   l_medplan_desc_arr            zsi_lib.VC2_255_ARR;
+   l_medplan_exp                 zsi_lib.NUM_ARR;
+
+   CURSOR med_plan_code_cur IS
+      SELECT sele_value, description
+        FROM medplan_code_v
+       ORDER BY displayed_text;
+%>
+<%
+   pageheader(p_amchart=>'Y');
+%>
+<body>
+
+<script type="text/javascript">
+<%
+   FOR m IN med_plan_code_cur LOOP
+      l_ctr := l_ctr + 1;
+      BEGIN
+         SELECT SUM(amnt_billed)
+           INTO l_amnt_billed
+           FROM s004_t08010_billing b,
+                s004_t08010 a
+          WHERE b.ldgr_no = a.ldgr_no
+            AND b.tran_year = p_cyear
+            AND TO_CHAR(b.tran_date,'mm') = p_cmonth
+            AND a.medplan_code = m.sele_value;
+      END;
+      l_chart_data := l_chart_data || l_comma
+                   || '{'
+                   || ' "cgroup": "' || m.description || '",'
+                   || ' "cvalue": "' || l_amnt_billed || '"'
+                   || '} ';
+      l_comma := ',';
+
+      l_medplan_desc_arr(l_ctr) := m.description;
+      l_medplan_exp(l_ctr) := l_amnt_billed;
+
+   END LOOP;
+%>
+   var chartData = [<%= l_chart_data %>];
+
+   AmCharts.ready(function () {
+       renderGYRPieChart(chartData,"chartdiv","Current Medical Plan Expenses for <%= TO_CHAR(TO_DATE(p_cmonth ||'/01/' || p_cyear,'mm/dd/yyyy'),'Month YYYY') %>");
+   });
+
+   function renderGYRPieChart(sChartData,sChartDiv,sTitle) {
+      // PIE CHART
+      var oChart = new AmCharts.AmPieChart;
+      oChart.dataProvider = sChartData;
+      oChart.titleField = "cgroup";
+      oChart.valueField = "cvalue";
+      oChart.colorField = "color";
+      //oChart.outlineColor = "#a9a9a9";
+      oChart.outlineColor = "#000000";
+      oChart.outlineAlpha = 0.3;
+      oChart.outlineThickness = 1.5;
+      oChart.labelText = "[[title]]: [[percents]]%";
+      oChart.fontFamily = "Verdana";
+      oChart.fontSize = 10;
+      oChart.addTitle(sTitle,14);
+      oChart.sequencedAnimation = true;
+      oChart.startEffect = "elastic";
+      oChart.radius = "50%";
+      oChart.labelRadius = 2;
+      oChart.startDuration = 0;
+      oChart.depth3D = 30;
+      oChart.angle = 45;
+
+      oChart.creditsPosition = "bottom-right";
+
+      // WRITE
+      oChart.write(sChartDiv);
+   }
+
+
+</script>
+<table cellpadding=5 cellspacing=5 border=0 WIDTH="100%">
+   <tr>
+      <td width="68%">
+         <table cellpadding=1 cellspacing=1 border=0 WIDTH="100%">
+            <tr>
+               <td width="100%" align="center">
+                  <div id="chartdiv" style="width: 100%; height: 600px; border-style:solid; border-width:1px; border-color:#c0c0c0;"></div>
+               </td>
+            </tr>
+         </table>
+      </td>
+      <td>&nbsp;</td>
+      <td width="30%" valign="top">
+         <br />
+         <table cellpadding=1 cellspacing=1 border=1 WIDTH="100%">
+<%
+   FOR i IN 1..l_ctr LOOP
+%>
+            <tr>
+               <td><%= l_medplan_desc_arr(i) %></td>
+               <td align="right"><%= l_medplan_exp(i) %></td>
+            </tr>
+<%
+   END LOOP;
+%>
+         </table>
+      </td>
+   </tr>
+</table>
+
+</body>
+</html>
+

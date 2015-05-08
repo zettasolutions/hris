@@ -1,0 +1,78 @@
+<%@ plsql procedure="annual_train_budget_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   05-NOV-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_year                  NUMBER := EXTRACT(YEAR FROM SYSDATE);
+   l_user_iswrite          NUMBER(1):=0;
+
+%>
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,zsi_lib.GetModuleID(owa_util.get_procedure));
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<h4><center>Generation of Annual Training and Convention Budget</center></h4>
+</br>
+<form name="frmList" method="POST" >
+<%
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Year',p_inputName=>'p_year',p_inputValue=>l_year,p_labelSize =>5, p_inputSize =>1);
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Generate',p_type =>'button');
+   END IF;
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+%>
+</form>
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+<script type="text/javascript">
+   $(document).ready(function(){    
+     $(".loadingStatus").css("display","none");
+   });
+   
+$("#btnSubmit").click(function(){
+   $(".loadingStatus").css("display","block");   
+   $.ajax({
+      type:"POST"
+      ,url:"annual_train_budget"
+      ,data:$("#p_year").serialize()
+      ,success: function(res){
+         $(".loadingStatus").css("display","none");
+         alert("Annual Training Budget Generation Complete."); 
+      }
+      ,error: function(){        
+          $(".loadingStatus").css("display","none");
+       alert("Sorry, the curent transaction is not successfull.");
+      }
+   });
+   
+});  
+</script>
+</body>
+</html>
+

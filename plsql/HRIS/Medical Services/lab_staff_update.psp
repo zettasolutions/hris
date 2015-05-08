@@ -1,0 +1,93 @@
+<%@ plsql procedure="lab_staff_update" %>
+<%@ plsql parameter="p_lab_staff_code"  type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_lab_staff_name"  type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_lab_designation" type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_remarks"         type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   02-NOV-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+
+
+   l_changed VARCHAR2(1) := 'N';
+   l_rec     S004_T08022%ROWTYPE;
+
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Lab Staffs </title>
+</head>
+<body>
+<%
+FOR i IN 2..p_lab_staff_code.COUNT LOOP
+   IF p_lab_staff_code(i) IS NULL  AND p_lab_staff_name(i) IS NOT NULL THEN        
+      INSERT INTO S004_T08022 (
+         lab_staff_code,
+         lab_staff_name,
+         lab_designation,
+         remarks
+         ,created_by
+         ,date_created)
+      VALUES
+      (  S004_T08022_SQ001.NEXTVAL,
+         p_lab_staff_name(i),
+         p_lab_designation(i),
+         p_remarks(i)
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+);
+      ELSIF p_lab_staff_code(i) IS NOT NULL AND p_lab_staff_name(i) IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T08022 WHERE lab_staff_code=p_lab_staff_code(i);
+
+      IF zsi_lib.IsChanged(l_rec.lab_staff_name, p_lab_staff_name(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.lab_staff_name := p_lab_staff_name(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.lab_designation, p_lab_designation(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.lab_designation := p_lab_designation(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.remarks, p_remarks(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.remarks := p_remarks(i);
+      END IF;
+
+      IF l_changed='Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08022 SET row = l_rec WHERE lab_staff_code = p_lab_staff_code(i);
+      END IF;
+
+      END IF;
+   END LOOP;
+END;
+%>
+
+<script type="text/javascript">
+   parent.dhxLayout.cells("b").attachURL("lab_staff_list");
+   parent.w1.close();
+</script>

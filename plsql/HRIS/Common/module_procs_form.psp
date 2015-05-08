@@ -1,0 +1,162 @@
+<%@ plsql procedure="module_procs_form" %>
+<%@ plsql parameter="p_module_id" type="NUMBER"   default="NULL"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   02-MAR-15  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path    VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_style_path     VARCHAR2(128) := zsi_lib.StylePath;
+   l_js_path        VARCHAR2(128) := zsi_lib.JSPath;
+   l_title          VARCHAR2(50);
+   l_frmOffset      VARCHAR2(50):='';
+   l_user_iswrite   NUMBER(1):=0;
+   l_dhtmlx_sort    VARCHAR2(1024);
+   l_dhtmlx_filter  VARCHAR2(1024);
+
+   CURSOR l_proc_cur IS
+   SELECT * 
+     FROM module_procs_v 
+    WHERE module_id = p_module_id;
+
+  CURSOR mod_cur IS
+      SELECT m.*
+        FROM hris_modules_v m
+       WHERE module_name IS NULL 
+         AND NOT EXISTS (SELECT p.proc_id FROM S004_MODULE_PROCS p WHERE p.proc_id = m.module_id AND module_id = p_module_id)
+       ORDER BY m.module_url asc;
+%>
+<%
+  pageheader(p_dgrid=>'Y');
+%>
+<body >
+<form id="frmList" name="frmList">
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_module_proc_id');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_module_id', p_inputValue=>p_module_id);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_proc_id');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_table_view');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_type');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_cb');
+
+   l_dhtmlx_sort := 'na,str,na';
+   l_dhtmlx_filter := '&nbsp;,#text_filter, &nbsp;';
+%>
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="410px" id="gridbox1">
+   <tr>
+      <th nowrap align="left" width="30px">&nbsp;</th>
+      <th nowrap align="left" width="350px">Procedure Name</th>
+      <th nowrap align="left" width="350px">Table/View</th>
+   </tr>
+<%
+   FOR i IN l_proc_cur LOOP
+%>
+   <tr valign="bottom">
+
+      <td align="center">
+          <input type="hidden" name="p_proc_id" value="<%= i.proc_id %>">
+          <input type="checkbox" CHECKED name="p_cb" onclick="zsi.table.setCheckBox(this,'<%= i.proc_id %>');"></td>
+      <td><input type="hidden" name="p_module_proc_id" value="<%= i.module_proc_id %>"><%= upper(i.module_url) %></td>
+      <td><input type="text" name="p_table_view" size="50px"  value="<%= i.table_view %>" autocomplete="off">
+          <input type="hidden" name="p_type" value="<%= i.type %>">
+      </td>
+   </tr>
+<%
+   END LOOP;
+
+
+   FOR i IN mod_cur LOOP
+%>
+   <tr valign="bottom">
+
+      <td align="center">
+          <input type="hidden" name="p_proc_id" value="">
+          <input type="checkbox" name="p_cb" onclick="zsi.table.setCheckBox(this,'<%= i.module_id %>');">
+       </td>
+       <td><input type="hidden" name="p_module_proc_id" value=""><%= upper(i.module_url) %></td>
+       <td><input type="text" name="p_table_view" size="50px"  value="" autocomplete="off">
+           <input type="hidden" name="p_type" value="">
+       </td>
+   </tr>
+<%
+   END LOOP;
+
+
+%>
+</table>
+</form>
+<div class="buttonGroup <%=l_frmOffset%>">
+
+<%
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'button');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+%>
+</div>
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type='text/javascript'>
+   $(document).ready(function(){    
+     $(".loadingStatus").css("display","none");
+     
+           new zsi.search({
+            column_names : ["Object Name", "Type"] 
+           ,column_indexes : [0,1] 
+           ,input:"input[name=p_table_view]"
+           ,url :"table_view_json"
+           ,parameter: "p_tv_name"
+           ,onSelectedItem: 
+              function(currentObject,data,i){            
+                 currentObject.value=data[0];
+                 var td = currentObject.parentNode;
+                 $("input[name=p_type]").val(data[1]);          
+              }
+      });  
+     
+   });
+   
+$("#btnSubmit").click(function(){
+   $.ajax({
+      type:"POST"
+      ,url:"module_procs_update"
+      ,data:$("#frmList").serialize()
+      ,success: function(res){        
+         parent.dhxLayout.cells("b").attachURL("hris_modules_list");
+         window.location.reload();
+      }
+   });
+   
+});  
+
+    var mygrid = dhtmlXGridFromTable("gridbox1");
+    mygrid.setSkin("light");
+    mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+    mygrid.setEditable(false);
+    mygrid.lockRow(0, true);
+    mygrid.enableLightMouseNavigation(true);
+    mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+    mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+    mygrid.attachHeader("<%= l_dhtmlx_filter %>");
+    mygrid.setSizes();
+    zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+
+</script>
+</body>
+</html>

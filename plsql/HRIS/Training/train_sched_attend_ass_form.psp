@@ -1,0 +1,192 @@
+<%@ plsql procedure="train_sched_attend_ass_form" %>
+<%@ plsql parameter="p_tran_no"        type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_spk_seq_no"     type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_module_id"      type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tab"            type="VARCHAR2" default="NULL"%>
+
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   04-DEC-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path  VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path      VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path   VARCHAR2(128) := zsi_lib.StylePath;
+   l_frmOffset    VARCHAR2(50):='';
+   l_user_iswrite NUMBER(1):=0;
+   l_sel          VARCHAR2(50):='';
+   l_id_no        TrainingTrainees_V.empl_id_no%TYPE;
+   l_tp_count     NUMBER := 0;
+   l_ctr          NUMBER := 0;
+   l_prev_seq_no  NUMBER := 0;
+   
+   
+CURSOR assess_cur IS
+SELECT * 
+  FROM S004_T07017
+ WHERE assessment_type=100  
+ ORDER BY assessment_code;
+
+CURSOR spk_sa_cur IS
+SELECT * 
+  FROM TrainingAssessments_V
+ WHERE spk_code= p_spk_seq_no
+ ORDER BY seq_no, assessment_code;
+
+%>
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   pageheader(p_dwin=>'Y');
+   
+%>
+<body>
+<form name="frmList" action="train_sched_attend_ass_update" method="POST" >
+<div style="height:540px; overflow-y:auto;" class="col-xs-12">
+<%
+   SELECT COUNT(*) INTO l_tp_count FROM S004_T07003_TRAINEES WHERE tran_no = p_tran_no;
+   
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no', p_inputValue=>p_tran_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_module_id', p_inputValue=>p_module_id);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tab', p_inputValue=>p_tab);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_spk_seq_no', p_inputValue=>p_spk_seq_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no', p_inputValue=>''); 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_speaker_assess_seq_no', p_inputValue=>''); 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_assessment_code', p_inputValue=>''); 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_rating', p_inputValue=>''); 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_id_no', p_inputValue=>''); 
+  
+   FOR i IN spk_sa_cur LOOP  
+   l_ctr := l_ctr + 1;
+      IF l_prev_seq_no <> i.seq_no THEN
+         l_prev_seq_no := i.seq_no;
+         l_id_no := i.id_no;
+%>
+   <table class="table">
+<%            
+            zsi_bs_lib.OpenEntryForm;
+               zsi_bs_lib.OpenFormGroup();
+                  zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no', p_inputValue=>i.seq_no);
+                  zsi_bs_lib.SelectBox(p_labelName=>'Participant/Trainee', p_Name=>'p_id_no', p_labelSize=>2, p_selectSize=>3, p_Attributes=>'SelectedValue="' || l_id_no || '"');
+               zsi_bs_lib.CloseFormGroup();
+            zsi_bs_lib.CloseEntryForm;
+
+%> 
+   <tr>
+      <th class="col-xs-1" nowrap align="left">Code</th>
+      <th class="col-xs-2" nowrap align="left">Type</th>
+      <th class="col-xs-3" nowrap align="left">Description</th>
+      <th class="col-xs-1" nowrap align="left">Rating</th>
+      <th class="col-xs-2" nowrap align="left">Max Assessment</th>
+      <th class="col-xs-2" nowrap align="left">Min Assessment</th>
+   </tr>
+<% 
+      END IF; 
+%>   
+   <tr>
+      <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_assessment_code', p_inputValue=>i.assessment_code); %>
+          <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_speaker_assess_seq_no', p_inputValue=>i.speaker_assess_seq_no); %>
+          <%= i.assessment_code%></td>
+      <td><%= i.assessment_desc %></td>
+      <td><%= i.assessment_desc2 %></td>
+      <td><SELECT name="p_rating"><option></option>
+<%      
+         FOR j IN 1..10 LOOP
+            l_sel := '';
+            IF j= i.rating THEN 
+               l_sel := 'selected="selected"';
+            END IF;
+%>      
+         <option <%=l_sel %> value=<%=j%>><%=j%></option>
+<% 
+         END LOOP; 
+%>
+      </select></td>
+      <td><%= i.max_assessment %></td>
+      <td><%= i.min_assessment %></td>
+   </tr>
+<%
+   END LOOP;
+%>
+   </table>
+<%
+   l_id_no := '';   
+   WHILE l_ctr < l_tp_count LOOP
+%>
+   <table class="table">
+<%
+         zsi_bs_lib.OpenEntryForm;
+            zsi_bs_lib.OpenFormGroup();
+               zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no', p_inputValue=>'');
+               zsi_bs_lib.SelectBox(p_labelName=>'Participant/Trainee', p_Name=>'p_id_no', p_labelSize=>2, p_selectSize=>3);
+            zsi_bs_lib.CloseFormGroup();
+         zsi_bs_lib.CloseEntryForm;
+%> 
+   <tr>
+      <th class="col-xs-1" nowrap align="left">Code</th>
+      <th class="col-xs-2" nowrap align="left">Type</th>
+      <th class="col-xs-3" nowrap align="left">Description</th>
+      <th class="col-xs-1" nowrap align="left">Rating</th>
+      <th class="col-xs-2" nowrap align="left">Max Assessment</th>
+      <th class="col-xs-2" nowrap align="left">Min Assessment</th>
+   </tr>
+<% 
+   FOR i IN assess_cur LOOP
+%>
+   <tr>
+      <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_speaker_assess_seq_no', p_inputValue=>''); %>
+          <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_assessment_code', p_inputValue=>i.seq_no); %>
+          <%= i.assessment_code%></td>          
+      <td><%= i.assessment_desc %></td>
+      <td><%= i.assessment_desc2 %></td>
+      <td><SELECT name="p_rating"><option></option>
+<%      
+         FOR j IN 1..10 LOOP
+%>      
+         <option value=<%=j%>><%=j%></option>
+<% 
+         END LOOP; 
+%>
+      </select></td>
+      <td><%= i.max_assessment %></td>
+      <td><%= i.min_assessment %></td>
+   </tr>
+<%  
+      END LOOP;
+%>
+   </table>
+<% 
+   l_ctr := l_ctr + 1;
+   END LOOP; 
+%>
+</div>
+   <div class="buttonGroup <%=l_frmOffset%>">
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+</form>
+<script type="text/javascript">
+
+ /*variable declaration*/
+var ctrlSel = zsi.control.SelectList;
+$(document).ready(function(){
+   ctrlSel("select[id=p_id_no]","<%=l_id_no%>","N","TrainingTrainees_V","empl_id_no","empl_name","WHERE tran_no=<%=p_tran_no%> ORDER BY empl_name");
+});
+</script>   
+</body>
+</html>

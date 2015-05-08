@@ -1,0 +1,285 @@
+<% owa_util.mime_header('application/javascript');%>
+<%@ plsql procedure="zsi_pdf_js" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+Date       By    History
+---------  ----  -------------------------------------------------------------------------------------------
+31-JAN-15  GF    Started
+
+
+-------------------------------[HOW TO USE]----------------------------------
+sample#1:
+
+   zsi.pdf.dhtmlx_json_to_pdf({
+      filename       : "json_report.pdf"
+     ,column_headers : ["ID", "Name","Address"]
+     ,cols_index     : [0,43,9]     
+     ,cols_loc_x     : [10,25,120]       
+     ,line_start     : 10 
+     ,line_stop      : 67
+     ,limit_char_width  : 205
+     ,line_height    : 4
+     ,char_width     : 1.7721 
+     ,json_data      : data   
+     ,target_iframe_id  : "preview_pane"
+     //,auto_download   : false
+     ,onInit           :  
+         function(info){        
+            var _doc = new jsPDF();
+            var _title="List of Employees";
+            var _runDate="February 1 2015 8:00am";
+            _doc.setFontSize(12);
+            _doc.setFontType("bold");
+            _doc.text(10, info.line_start,_title );
+            _doc.setFontSize(8);
+            _doc.setFontType("normal");
+            _doc.text(160, info.line_start, _runDate);
+            return _doc;
+         }
+
+   });
+
+sample#2:
+
+   zsi.pdf.html_table_to_pdf({
+      filename       : "report.pdf"
+     ,cols_loc_x     : [10,25,120]
+     ,line_start     : 10 
+     ,line_stop      : 67
+     ,limit_char_width  : 205
+     ,line_height    : 4
+     ,char_width     : 1.7721   
+   });    
+
+Events:
+1.onInit(doc,currentLine)
+2.onBeforePrint(doc,currentLine)
+3.onAfterPrint (doc,currentLine)
+
+
+-------------------------------[END OF DOCS]----------------------------------
+*/
+
+
+%>
+if(!zsi) var zsi = new function(){};
+zsi.pdf = new function(){};
+
+zsi.pdf.dhtmlx_json_to_pdf = function(info){   
+
+   var _currentLine=info.line_start;
+   
+   
+   var doc = null;
+   
+   if(info.onInit)   
+      doc = info.onInit(info);
+   else
+      doc = new jsPDF();
+   
+   
+   if(info.onBeforePrint){
+      info.onBeforePrint(doc,_currentLine);
+   }
+   
+   var _lineCounter=0;   
+   var _rows = info.json_data.rows;
+
+   _currentLine+=info.line_height;
+   
+   function printColumnHeaders(){
+      for(var i=0; i<info.column_headers.length;i++){
+         doc.setFontSize(10);
+         doc.setFontType("bold");
+         doc.text(info.cols_loc_x[i], _currentLine,info.column_headers[i] );
+         doc.line(10, _currentLine + 1, 200, _currentLine + 1); 
+      }
+   }   
+
+   printColumnHeaders();
+
+   for(var y=0;y<_rows.length;y++){
+   
+      var _Extraline=0;
+      _currentLine+=info.line_height;     
+      
+      for(var x=0;x<info.cols_index.length;x++){
+
+            var _text = _rows[y].data[ info.cols_index[x] ];
+            var _limitWidth=0;
+            
+            if(info.cols_loc_x[x + 1]) 
+               _limitWidth = info.cols_loc_x[x + 1] - info.cols_loc_x[x];
+            else 
+               _limitWidth = info.limit_char_width - info.cols_loc_x[x];
+
+            var _lineWords = SeparateLineText(_text, _limitWidth / info.char_width);
+            
+            doc.setFontType("normal");
+            doc.setFont("helvetica");
+            doc.setFontSize(8);
+            
+            var _colExtraLine=0;
+            
+            for(var i=0;i<_lineWords.length;i++){
+               if(i>0) _colExtraLine = _colExtraLine +info.line_height;
+               doc.text(info.cols_loc_x[x], (_currentLine + _colExtraLine),_lineWords[i]  );               
+            }
+            
+            if(_colExtraLine > _Extraline) {
+               _Extraline = _colExtraLine;
+               _lineCounter = _lineCounter + (_Extraline / info.line_height);
+            }
+      
+      }
+      _currentLine = (_currentLine + _Extraline);
+        _Extraline=0;
+
+       if(  _lineCounter >= info.line_stop  ) {
+          _currentLine=info.line_start
+          doc.addPage();
+          printColumnHeaders();
+          _lineCounter=0;
+          
+       }
+       _lineCounter++;   
+   
+   }//end-of-y
+   
+   
+   if(info.onAfterPrint){
+      info.onAfterPrint(doc,_currentLine);
+   }
+         
+   var _pdf_uri_str= doc.output('datauristring');
+   if (info.auto_download)
+      doc.save(info.filename);
+   else
+      $('#' + info.target_iframe_id).attr('src', _pdf_uri_str);
+}
+   
+zsi.pdf.html_table_to_pdf = function(info){   
+   var _title=$('.rpt-title').html();
+   var _runDate=$('.rpt-rundate').html();
+   var _columnsName = GetColumnHeaders();
+   var _currentLine=info.line_start;
+   
+   function GetColumnHeaders(){
+      var _col_names=[];
+      $("table.rpt-content thead tr th").each(function(){
+         _col_names.push(this.textContent);
+      });
+   return _col_names;
+   }
+   
+   function printColumnHeaders(){
+      for(var i=0; i<_columnsName.length;i++){
+         doc.setFontSize(10);
+         doc.setFontType("bold");
+         doc.text(info.cols_loc_x[i], _currentLine,_columnsName[i] );
+         doc.line(10, _currentLine + 1, 200, _currentLine + 1); 
+
+      }
+   }   
+
+   var doc = new jsPDF();
+
+   doc.setFontSize(12);
+   doc.setFontType("bold");
+   doc.text(10, _currentLine,_title );
+
+   doc.setFontSize(8);
+   doc.setFontType("normal");
+   doc.text(160, _currentLine, _runDate);
+   
+   _currentLine+=5;
+   printColumnHeaders();
+
+   var trContent=$("table.rpt-content tbody tr");
+   var _lineCounter=0;
+   
+
+   trContent.each(function(){
+      
+      var _trExtraline=0;
+      _currentLine+=info.line_height;
+
+         $(this).children("td").each(function(){
+            var _col_index  = $(this).index();
+            var _text = this.textContent;
+            var _limitWidth=0;
+            
+            if(info.cols_loc_x[_col_index + 1]) 
+               _limitWidth = info.cols_loc_x[_col_index + 1] - info.cols_loc_x[_col_index];
+            else 
+               _limitWidth = info.limit_char_width - info.cols_loc_x[_col_index];
+
+            var _lineWords = SeparateLineText(_text, _limitWidth / info.char_width);
+            
+            doc.setFontType("normal");
+            doc.setFont("helvetica");
+            doc.setFontSize(8);
+            
+            var _tdExtraLine=0;
+            
+            for(var i=0;i<_lineWords.length;i++){
+               if(i>0) _tdExtraLine = _tdExtraLine +info.line_height;
+               doc.text(info.cols_loc_x[_col_index], (_currentLine + _tdExtraLine),_lineWords[i]  );               
+            }
+            
+            if(_tdExtraLine > _trExtraline) {
+               _trExtraline = _tdExtraLine;
+               _lineCounter = _lineCounter + (_trExtraline / info.line_height);
+            }
+            
+         }); //end-of-td
+         
+         _currentLine = (_currentLine + _trExtraline);
+         _trExtraline=0;
+
+       if(  _lineCounter >= info.line_stop  ) {
+          _currentLine=info.line_start
+          doc.addPage();
+          printColumnHeaders();
+          _lineCounter=0;
+          
+       }
+       _lineCounter++;
+   });//end-of-tr
+   
+   doc.save(info.filename);
+}
+
+
+function SeparateLineText(text,limit){   
+   var _arrWords= text.split(' ');
+   var _arrResult=[];
+   
+   var _countChar=0;     
+   var _tmpText="";
+   for(var i=0;i<_arrWords.length;i++){
+      
+      if ( _countChar  + _arrWords[i].length  > limit){            
+          _countChar=0; 
+          _arrResult.push(_tmpText.slice(0,-1));
+          _tmpText="";         
+      }
+      _countChar +=_arrWords[i].length + 1;          
+      _tmpText += _arrWords[i] + " ";
+   }
+   
+   if(_tmpText!="") _arrResult.push(_tmpText.slice(0,-1)); 
+   
+   return _arrResult;
+}
+

@@ -1,0 +1,37 @@
+properties: panel(optional),grid(optional),input,url,parameter,column_names,column_indexes,min_characters(optional)
+events    : onLoadComplete(optional),onRequestFailed(optional),onSelectedItem
+
+Example:
+
+css:
+   .SearchPanel{
+      border: 1pt solid #a6a6a6;
+      height: 250px;
+      overflow-y: scroll;
+      width: 300px;
+      position: absolute;
+      display:none;
+   }
+   .SearchPanel table tr.active td{background-color:#4285F4; color:#fff;}
+   .SearchPanel table tr:hover td{ background-color:#94bcff;}
+   .SearchPanel tbody tr:nth-child(even) {background: #e5f2f8}
+   .SearchPanel tbody tr:nth-child(odd) {background: #fff}
+
+javascript:
+
+   zsi.search.init({
+       panel = {id:"panel", class:"SearchPanel"}   //optional
+      ,grid = {id:"grid", class:"SearchGrid"}         //optional
+      ,column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"#p_search"
+      ,url :"employees_json"
+      ,parameter: "p_empl_name"
+      ,min_characters:2                                 //optional
+      ,onLoadComplete : function(data){}         //optional
+      ,onRequestFailed: function(){}                //optional      
+      ,onSelectedItem: 
+         function(data,i){
+              $("#p_search").val(data[43]);
+         }
+   });    

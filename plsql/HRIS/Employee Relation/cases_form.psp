@@ -1,0 +1,322 @@
+<%@ plsql procedure="cases_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tab"         type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   07-NOV-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_rec                   cases_v%ROWTYPE;
+   l_tran_no               cases_v.tran_no%TYPE := '';
+   l_tran_year             cases_v.tran_year%TYPE := EXTRACT(YEAR FROM SYSDATE);
+   l_seq_no                cases_v.seq_no%TYPE := '';
+   l_pi_date               cases_v.pi_date%TYPE := '';
+   l_case_no               cases_v.case_no%TYPE := '';
+   l_case_type             cases_v.case_type%TYPE := '';
+   l_case_type_desc        cases_v.case_type_desc%TYPE := '';
+   l_charges               cases_v.charges%TYPE := '';
+   l_respondents           cases_v.respondents%TYPE := '';
+   l_remarks               cases_v.remarks%TYPE := '';
+   l_tab                   VARCHAR2(4000):=p_tab;
+   l_hb_count              NUMBER := 0;
+
+   l_user_iswrite       NUMBER(1):=0;
+   
+   CURSOR r_cur IS
+      SELECT * FROM RESPONDENTS_V
+      WHERE tran_no = p_tran_no;
+
+   CURSOR s_cur IS
+      SELECT * FROM S004_T08800_STATUS
+      WHERE tran_no = p_tran_no;
+
+   Function GetActiveTab (p_Tab IN VARCHAR2, p_StateTab IN VARCHAR2) RETURN VARCHAR2
+      IS
+         l_tab VARCHAR2(100) := '';
+      BEGIN
+         IF p_Tab = p_StateTab THEN
+            l_tab := 'active';
+         END IF;
+         RETURN l_tab;
+   END GetActiveTab;
+
+%>
+<%
+   if(l_tab is null) THEN
+      l_tab:='rInfo';
+   END IF;   
+
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   IF p_tran_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM cases_v WHERE tran_no = p_tran_no;
+      l_tran_no              :=l_rec.tran_no;
+      l_tran_year            :=l_rec.tran_year;
+      l_seq_no               :=l_rec.seq_no;
+      l_pi_date              :=l_rec.pi_date;
+      l_case_no              :=l_rec.case_no;
+      l_case_type            :=l_rec.case_type;
+      l_case_type_desc       :=l_rec.case_type_desc;
+      l_charges              :=l_rec.charges;
+      l_respondents          :=l_rec.respondents;
+      l_remarks              :=l_rec.remarks;
+   END IF;
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<form name="frmList" action="cases_update" method="POST" >
+<%
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no',p_inputValue=>l_tran_no);
+
+
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Year',p_inputName=>'p_tran_year',p_inputValue=>l_tran_year,p_labelSize =>2, p_inputSize =>1);
+      zsi_bs_lib.InputTextBox(p_labelName =>'Seq. No',p_inputName=>'p_seq_no',p_inputValue=>l_seq_no,p_labelSize =>2, p_inputSize =>1, p_attributes=>'disabled');
+      zsi_bs_lib.InputTextBox(p_labelName =>'P.I. Date',p_inputName=>'p_pi_date',p_inputValue=>to_char(l_pi_date,'mm/dd/yyyy'),p_labelSize =>2, p_inputSize =>2);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.SelectBox(p_labelName=>'Case Type', p_Name=>'p_case_type', p_labelSize=>2, p_selectSize=>4);
+      zsi_bs_lib.InputTextBox(p_labelName =>'Case No',p_inputName=>'p_case_no',p_inputValue=>l_case_no,p_labelSize =>2, p_inputSize =>2);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+          zsi_bs_lib.InputTextBoxArea(p_labelName =>'Charges',p_inputName=>'p_charges',p_labelSize =>2, p_inputValue=>l_charges, p_inputSize =>8, p_attributes=>'rows="2"');
+   zsi_bs_lib.CloseFormGroup();
+ 
+   zsi_bs_lib.OpenFormGroup();
+          zsi_bs_lib.InputTextBoxArea(p_labelName =>'Respondents',p_inputName=>'p_respondents',p_labelSize =>2, p_inputValue=>l_respondents, p_inputSize =>8, p_attributes=>'rows="2"');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+          zsi_bs_lib.InputTextBoxArea(p_labelName =>'Remarks',p_inputName=>'p_remarks',p_labelSize =>2, p_inputValue=>l_remarks, p_inputSize =>8, p_attributes=>'rows="2"');
+   zsi_bs_lib.CloseFormGroup();
+
+  zsi_bs_lib.CloseEntryForm;
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_r_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_id_no');
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_s_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_date_endorsed');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_status');
+
+%>
+<ul class="nav nav-tabs" role="tablist">
+  <li class="<%=GetActiveTab('rInfo',l_tab)%>"><a href="#" id="rInfo">Respondent(s)</a></li>
+  <li class="<%=GetActiveTab('sInfo',l_tab)%>"><a href="#" id="sInfo">Status</a></li>
+</ul>
+
+<div class="tab-pages">
+
+   <div id="rInfo" class="tab <%=GetActiveTab('rInfo',l_tab)%>">
+   <div style="height:200px; overflow-y:auto;" class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-1" nowrap align="left">Id No.</th>
+            <th class="col-xs-4" nowrap align="left">Employee Name</th>
+            <th class="col-xs-1" nowrap style="text-align:center">Delete</th>
+
+         </tr>
+      <%
+        FOR i in r_cur LOOP
+      %>
+         <tr>   
+             <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_r_seq_no',p_inputValue=>i.seq_no); %>  
+                 <input type="text" autocomplete="off" value="<%=i.id_no%>" name="p_id_no" id="p_id_no" class="form-control input-sm">                 
+             </td>
+             <td><input type="text" autocomplete="off" value="<%=i.empl_name%>" name="p_resp_name" id="p_resp_name" class="form-control input-sm"> </td>
+             <td class="col-xs-1" nowrap align="center">
+<% 
+            IF l_user_iswrite = 1 THEN 
+               zsi_bs_lib.ButtonDelete(p_table=>'S004_T08800_RESPONDENTS',p_Value=>i.seq_no);
+            END IF; 
+%>
+             </td>
+         </tr>
+      <%
+        END LOOP;
+        FOR i IN 1..5 LOOP
+      %>
+         <tr>               
+                     
+             <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_r_seq_no'); %>
+                   <input type="text" autocomplete="off" name="p_id_no" id="p_id_no" class="form-control input-sm"> 
+             </td>
+             <td><input type="text" autocomplete="off" name="p_resp_name" id="p_resp_name" class="form-control input-sm"></td>           
+             <td></td>             
+         </tr>
+      <%
+         END LOOP;
+      %>
+      </table>
+   </div>
+   </div>
+
+   <div id="sInfo" class="tab <%=GetActiveTab('sInfo',l_tab)%>">
+   <div style="height:200px; overflow-y:auto;" class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-4" nowrap align="left">Date Endorsed</th>
+            <th class="col-xs-4" nowrap align="left">Status</th>
+            <th class="col-xs-1" nowrap align="left">#Handled By</th>
+            <th class="col-xs-1" nowrap style="text-align:center">Delete</th>
+
+         </tr>
+      <%
+        FOR i in s_cur LOOP
+           SELECT COUNT(*) INTO l_hb_count FROM S004_T08800_HANDLEDBY WHERE status_seq_no =i.seq_no;
+      %>
+         <tr>   
+             <td>
+                 <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_s_seq_no',p_inputValue=>i.seq_no);  %>
+                 <input type="text" name="p_date_endorsed" value="<%=to_char(i.date_endorsed, l_date_format)%>" id="p_date_endorsed" class="form-control input-sm">                   
+             </td>                  
+             <td><input type="text" name="p_status" value="<%=i.status%>" id="p_status" class="form-control input-sm"></td>
+             <td align="center"><a id="aHBCount<%= i.seq_no %>" href="javascript:void(0)" TITLE="Click here to Edit Handled By" onClick="attachURL('cases_stat_hb_form?p_status_seq_no=<%= i.seq_no %>&p_tran_no=<%=p_tran_no %>&p_user_iswrite=<%= l_user_iswrite %>','Add/Edit Handlers For Status Dated &raquo <%=to_char(i.date_endorsed, l_date_format)%>', 1200, 550)"><%=l_hb_count %></a></td>
+             <td class="col-xs-1" nowrap align="center">
+<% 
+            IF l_user_iswrite = 1 THEN 
+               zsi_bs_lib.ButtonDelete(p_table=>'S004_T08800_STATUS',p_Value=>i.seq_no);
+            END IF; 
+%>
+             </td>
+         </tr>
+      <%
+        END LOOP;
+        FOR i IN 1..5 LOOP
+      %>
+         <tr>               
+             <td class="col-xs-4">
+                 <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_s_seq_no'); %>
+                 <input type="text" name="p_date_endorsed" value="" id="p_date_endorsed" class="form-control input-sm">
+             </td>
+             <td><input type="text" name="p_status" value="" id="p_status" class="form-control input-sm"></td>
+             <td></td>
+             <td></td>
+         </tr>
+      <%
+         END LOOP;
+      %>
+      </table>
+   </div>
+   </div>
+
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+</form>
+<script type="text/javascript" src="zsi_employee_js"></script>
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript">
+var ctrlSel = zsi.control.SelectList;
+
+   $("form[name=frmList]").submit(function(){
+      if( zsi.form.checkMandatory()!=true) return false;
+   }); 
+                      
+   //on page loaded
+   $(document).ready(function(){
+
+         new zsi.search({
+          column_names : ["Id","Employee Name"] 
+         ,column_indexes : [0,43] 
+         ,input:"input[name=p_id_no]"
+         ,url :"employee_search_json"
+         ,parameter: "p_empl_id_no"
+         ,onSelectedItem: 
+            function(currentObject,data,i){            
+               currentObject.value=data[0];
+               
+               var td = currentObject.parentNode;
+                $(td).next().children("#p_resp_name").val(unescape(data[43]));
+               
+            
+            }
+         });    
+      
+         new zsi.search({
+          column_names : ["Id","Employee Name"] 
+         ,column_indexes : [0,43] 
+         ,input:"input[name=p_resp_name]"
+         ,url :"employee_search_json"
+         ,parameter: "p_empl_name"
+         ,onSelectedItem: 
+            function(currentObject,data,i){            
+               currentObject.value=data[43];
+               
+               var td = currentObject.parentNode;
+                $(td).prev().children("#p_id_no").val(unescape(data[0]));
+               
+            
+            }
+         });    
+         
+      zsi.form.markMandatory({       
+         "groupNames":[ 
+               {"names" :  [  
+                            "p_tran_year"
+                           ,"p_case_type"
+                           ,"p_case_no"
+                           ,"p_charges"
+                           ]
+               ,  "type":"S"
+               }             
+         ]      
+         ,"groupTitles":[          
+               {"titles" :  
+                           [                       
+                            "Transaction Year"
+                           ,"Case Type"
+                           ,"Case No"
+                           ,"Charges "
+                           ]
+               }
+
+         ]
+      });
+
+      ctrlSel("#p_case_type","<%=l_case_type%>","N","case_types_v","sele_value","displayed_text","");
+
+   });
+
+   function countStatusHB(p_Id){
+      var l_condition ="where status_seq_no=" + p_Id;
+      $.get("zsi_lib.count_records?p_table=S004_T08800_HANDLEDBY&p_condition=" + l_condition + "&p_t=" + new Date().getTime(), function( data ) {
+          $("#aHBCount"  + p_Id).text(data); 
+      });        
+
+   }
+</script>
+
+
+</body>
+</html>
+

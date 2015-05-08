@@ -1,0 +1,93 @@
+<%@ plsql procedure="dental_services_update" %>
+<%@ plsql parameter="p_ds_code" type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ds_desc" type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ds_type" type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ds_rate" type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_remarks" type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   05-AUG-14  GT    Used S004_T08009_SQ001.NEXTVAL.
+   25-JUL-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+
+
+   l_changed VARCHAR2(1) := 'N';
+   l_rec     S004_T08009%ROWTYPE;
+
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Dental Services </title>
+</head>
+<body>
+<%
+FOR i IN 2..p_ds_code.COUNT LOOP
+   IF p_ds_code(i) IS NULL  AND p_ds_desc(i) IS NOT NULL THEN
+      INSERT INTO S004_T08009 (
+          ds_code
+         ,ds_desc
+         ,ds_type
+         ,ds_rate
+         ,remarks)
+      VALUES
+      (  S004_T08009_SQ001.NEXTVAL
+         ,p_ds_desc(i)
+         ,p_ds_type(i)
+         ,REPLACE(p_ds_rate(i),',','')
+         ,p_remarks(i)
+      );
+      ELSIF p_ds_code(i) IS NOT NULL AND p_ds_desc(i) IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T08009 WHERE ds_code=p_ds_code(i);
+
+      IF zsi_lib.IsChanged(l_rec.ds_desc, p_ds_desc(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.ds_desc := p_ds_desc(i);
+      END IF;
+      IF zsi_lib.IsChanged(l_rec.ds_type, TO_NUMBER(p_ds_type(i))) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.ds_type := p_ds_type(i);
+      END IF;
+      IF zsi_lib.IsChanged(l_rec.ds_rate, TO_NUMBER(REPLACE(p_ds_rate(i),',',''))) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.ds_rate := REPLACE(p_ds_rate(i),',','');
+      END IF;
+      IF zsi_lib.IsChanged(l_rec.remarks, p_remarks(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.remarks := p_remarks(i);
+      END IF;
+
+      IF l_changed='Y' THEN
+         UPDATE S004_T08009 SET row = l_rec WHERE ds_code = p_ds_code(i);
+      END IF;
+
+      END IF;
+   END LOOP;
+END;
+%>
+
+<script type="text/javascript">
+   parent.dhxLayout.cells("b").attachURL("dental_services_list");
+   parent.w1.close();
+</script>

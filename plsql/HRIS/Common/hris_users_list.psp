@@ -1,0 +1,174 @@
+<%@ plsql procedure="hris_users_list" %>
+<%@ plsql parameter="p_user_name"       type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_rows"            type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_page_no"         type="NUMBER"   default="1"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   08-SEP-14  BD    Passed p_module_id to form url.
+   25-AUG-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(3000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_sql                        VARCHAR2(8000);
+   TYPE ds_cur IS REF CURSOR;
+   dsref          ds_cur;
+   l_user_name                  hris_users_v.user_name%TYPE;
+   l_description                hris_users_v.description%TYPE;
+   l_is_lock                    VARCHAR2(1);
+   l_module_count               NUMBER:= 0;
+   l_row_no                     NUMBER(10);
+   l_rows                       NUMBER(10);
+   l_max_rows                   NUMBER(10) := zsi_lib.MaxRowsInList;
+   l_url                        VARCHAR2(32000) := 'hris_users_list';
+   l_row_count                  NUMBER(10) := 0;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+<%
+   pageheader(p_dgrid=>'Y');
+%>
+<%
+
+   l_select := 'SELECT user_name,
+                       description,
+                       is_lock,
+                       module_count ';
+   l_from   := '  FROM hris_users_v ';
+   l_where  := ' WHERE 1=1';
+
+
+   IF p_user_name IS NOT NULL THEN
+      l_where := l_where ||' AND UPPER(user_name) LIKE '|| '''' || '%' ||  UPPER(p_user_name) || '%' || '''' || ' ';
+   END IF;
+   l_url := l_url ||'?p_user_name=' || p_user_name;
+
+   IF p_page_no = 1 AND p_rows IS NULL THEN
+      l_sql := 'SELECT COUNT(*) ' || l_from || l_where;
+      OPEN dsref FOR l_sql;
+      LOOP
+         FETCH dsref INTO l_rows;
+         EXIT WHEN dsref%NOTFOUND;
+      END LOOP;
+      CLOSE dsref;
+   ELSE
+      l_rows := p_rows;
+   END IF;
+   l_url := l_url ||'&p_rows=' || l_rows;
+
+   l_sql := l_select ||', row_number() OVER (ORDER BY user_name) rn ' || l_from || l_where;
+
+   l_sql := 'SELECT * FROM ( ' || l_sql || ') ' || zsi_lib.GeneratePagingWhere(p_page_no);
+
+
+
+
+%>
+<body>
+ <%
+   zsi_bs_lib.openModalWindow('modalWindow','HRIS USER','ds_search_frm','hris_users_list');
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Name',p_inputName=>'p_user_name', p_labelSize =>3, p_inputSize =>9);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.closeModalWindow('submit','Search');
+%>
+
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+   <tr valign="bottom">
+      <th nowrap align="center" width="250px">User Name</th>
+      <th nowrap align="left" width="250px">Description</th>
+      <th nowrap align="center" width="50px">Is Lock</th>
+      <th nowrap align="center" width="75px">Modules</th>
+   </tr>
+<%
+   l_dhtmlx_sort := 'str,str,str,int';
+
+   OPEN dsref FOR l_sql;
+   LOOP
+      FETCH dsref INTO l_user_name,
+                       l_description,
+                       l_is_lock,
+                       l_module_count,
+                       l_row_no;
+      EXIT WHEN dsref%NOTFOUND;
+      l_row_count := l_row_count + 1;
+%>
+   <tr valign="bottom">
+      <td nowrap align="left"><%=l_user_name %></td>
+      <td nowrap align="left"><%=l_description %></td>
+      <td nowrap align="center"><%=l_is_lock %></td>
+      <td nowrap align="center">
+         <a href="javascript:void(0)" TITLE="Click here to Edit HRIS USER" onClick="parent.attachURL('hris_user_modules_form?p_module_id=<%= l_module_id %>&p_user_name=<%= l_user_name %>','Add/Edit Module For User &raquo <%=l_user_name %>', 650, 500)"><%=l_module_count %></a>
+      </td>
+
+   </tr>
+<%
+   END LOOP;
+%>
+</table>
+
+<div class="bottomNav">
+   <div class="buttonGroup">
+   <%
+            zsi_bs_lib.Button('btnSearch','Search',p_data_toggle =>'modal',p_data_target =>'#modalWindow');
+   %>
+   </div>
+<% zsi_lib.ShowPaging(p_page_no,l_rows,l_row_count); %>
+</div>
+
+<script type="text/javascript">
+   /*variable declaration*/
+   var ctrlSel = zsi.control.SelectList;
+   /*end of declaration*/
+
+   $(document).ready(function(){
+      $('.modal-dialog').css('width', '450px');
+
+      ctrlSel("#p_user_name","","N","hris_users_v","user_name","user_name","");
+   });
+
+   //on window resize
+   $(window).resize(function(){
+       zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+
+
+   function gotoPage(p_this){
+       var url = "<%= l_url %>&p_page_no=" + p_this.value;
+       window.location.href = url;
+
+    };
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+
+</script>
+
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

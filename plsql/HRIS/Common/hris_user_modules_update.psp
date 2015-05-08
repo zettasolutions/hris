@@ -1,0 +1,81 @@
+<%@ plsql procedure="hris_user_modules_update" %>
+<%@ plsql parameter="p_user_name"       type="VARCHAR2"%>
+<%@ plsql parameter="p_user_module_id"  type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_module_id"       type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_is_write"        type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_cb"              type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   25-AUG-14  GT    New
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_sql                        VARCHAR2(1000);
+   l_changed                    VARCHAR2(1) := 'N';
+
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update HRIS User Modules </title>
+</head>
+<body>
+<%
+FOR i IN 2..p_user_module_id.COUNT LOOP
+  
+   IF p_user_module_id(i) IS NULL  AND p_user_name IS NOT NULL and p_module_id(i) IS NOT NULL THEN  
+
+      INSERT INTO S004_USER_MODULES
+      (   user_module_id
+         ,module_id
+         ,user_name
+         ,is_write
+         ,created_by
+         ,date_created
+         
+      )
+      VALUES
+      (   S004_USER_MODULES_SQ001.NEXTVAL
+         ,p_module_id(i)
+         ,p_user_name
+         ,p_is_write(i)
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+
+      );
+      
+    ELSIF p_user_module_id(i) IS NOT NULL  AND p_user_name IS NOT NULL and p_module_id(i) IS NOT NULL THEN  
+
+        UPDATE s004_user_modules SET is_write = p_is_write(i) where user_module_id=p_user_module_id(i);
+           
+    ELSIF p_user_module_id(i) IS NOT NULL AND p_module_id(i) IS NULL  THEN
+      
+         DELETE FROM s004_user_modules where user_module_id=p_user_module_id(i);
+      
+    END IF;
+END LOOP;
+END;
+%>
+
+<script type="text/javascript">
+   parent.dhxLayout.cells("b").attachURL("hris_users_list");
+   parent.w1.close();
+</script>

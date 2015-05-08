@@ -1,0 +1,253 @@
+<%@ plsql procedure="accident_cases_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_id_no"       type="NUMBER" default="NULL"   %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-SEP-14  BD    Added security logic.
+   26-JUL-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_emp_rec               employee_v%ROWTYPE;
+   l_rec                   accident_cases_v%ROWTYPE;
+   l_tran_date             VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_empl_id_no            accident_cases_v.id_no%TYPE := '';
+   l_empl_type             accident_cases_v.emp_type%TYPE := '';
+   l_cost_center           accident_cases_v.cost_center%TYPE := '';
+   l_department            accident_cases_v.department%TYPE := '';
+   l_group_code            accident_cases_v.group_code%TYPE := '';
+   l_accident_date         accident_cases_v.accident_date%TYPE := '';
+   l_accident_time         accident_cases_v.accident_time%TYPE := '';
+   l_manhour_lost          accident_cases_v.manhour_lost%TYPE := '';
+   l_sick_leave            accident_cases_v.sick_leave%TYPE := '';
+   l_accident_location     accident_cases_v.accident_location%TYPE := '';
+   l_current_activity      accident_cases_v.current_activity%TYPE := '';
+   l_accident_description  accident_cases_v.accident_description%TYPE := '';
+   l_accident_cause_acts   accident_cases_v.accident_cause_acts%TYPE := '';
+   l_accident_cause_cond   accident_cases_v.accident_cause_cond%TYPE := '';
+   l_direct_superior       accident_cases_v.direct_superior%TYPE := '';
+   l_post_status           accident_cases_v.post_status%TYPE := 0;
+   l_post_date             VARCHAR(20) := '';
+   l_remarks               accident_cases_v.remarks%TYPE := '';
+   l_emp_name              accident_cases_v.emp_name%TYPE := '';
+   l_emp_type              accident_cases_v.emp_type%TYPE := '';
+   l_dept_desc             accident_cases_v.dept_desc%TYPE := '';
+   l_group_desc            accident_cases_v.group_desc%TYPE := '';
+   l_cc_desc               accident_cases_v.cc_desc%TYPE := '';
+   l_job_desc              accident_cases_v.job_desc%TYPE := '';
+   l_age_brak_code         accident_cases_v.age_brak_code%TYPE := '';
+   l_amount                accident_cases_v.amount%TYPE := '';
+   l_user_iswrite          NUMBER(1):=0;
+
+%>
+<%
+
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   IF p_tran_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM accident_cases_v WHERE tran_no = p_tran_no;
+      l_empl_id_no            :=l_rec.id_no;
+      l_tran_date             :=to_char(l_rec.tran_date, l_date_format);
+      l_empl_type             :=l_rec.empl_type;
+      l_cost_center           :=l_rec.cost_center;
+      l_department            :=l_rec.department;
+      l_group_code            :=l_rec.group_code;
+      l_accident_date         :=l_rec.accident_date;
+      l_accident_time         :=l_rec.accident_time;
+      l_manhour_lost          :=l_rec.manhour_lost;
+      l_sick_leave            :=l_rec.sick_leave;
+      l_accident_location     :=l_rec.accident_location;
+      l_current_activity      :=l_rec.current_activity;
+      l_accident_description  :=l_rec.accident_description;
+      l_accident_cause_acts   :=l_rec.accident_cause_acts;
+      l_accident_cause_cond   :=l_rec.accident_cause_cond;
+      l_direct_superior       :=l_rec.direct_superior;
+      l_remarks               :=l_rec.remarks;
+      l_post_status           :=l_rec.post_status;
+      l_post_date             :=to_char(l_rec.post_date, l_date_format);
+      l_emp_name              :=l_rec.emp_name;
+      l_emp_type              :=l_rec.emp_type;
+      l_dept_desc             :=l_rec.dept_desc;
+      l_group_desc            :=l_rec.group_desc;
+      l_cc_desc               :=l_rec.cc_desc;
+      l_job_desc              :=l_rec.job_desc;
+      l_age_brak_code         :=l_rec.age_brak_code;
+      l_amount                :=l_rec.amount;
+   ELSE
+      SELECT * INTO l_emp_rec FROM employee_v WHERE empl_id_no = p_id_no;
+      l_empl_type             :=l_emp_rec.empl_type;
+      l_cost_center           :=l_emp_rec.empl_group_code;
+      l_department            :=l_emp_rec.department;
+      l_group_code            :=l_emp_rec.group_code;
+      l_age_brak_code         :=l_emp_rec.age_brak_code;
+   END IF;
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<form name="frmList" action="accident_cases_update" method="POST" >
+<%
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no',p_inputValue=>p_tran_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_id_no',p_inputValue=>p_id_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_type',p_inputValue=>l_empl_type);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_cost_center',p_inputValue=>l_cost_center);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_department',p_inputValue=>l_department);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_group_code',p_inputValue=>l_group_code);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_age_brak_code',p_inputValue=>l_age_brak_code);
+
+
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Date',p_inputName=>'p_tran_date',p_inputValue=>l_tran_date,p_labelSize =>4, p_inputSize =>1);
+      zsi_bs_lib.YesNo(p_label_name=>'Is Posted?',p_field=>'post_status',p_value=>l_post_status,p_label_size =>2,p_select_size =>1);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+        zsi_bs_lib.SelectBox(p_labelName=>'Direct Supervisor', p_Name=>'p_direct_superior', p_labelSize=>4, p_selectSize=>4);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Accident Date',p_inputName=>'p_accident_date',p_inputValue=>TO_CHAR(l_accident_date,l_date_format), p_labelSize =>4, p_inputSize =>1 );
+      zsi_bs_lib.InputTextBox(p_labelName =>'Accident Time',p_inputName=>'p_accident_time',p_inputValue=>l_accident_time, p_labelSize =>2, p_inputSize =>1);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Man Hours Lost',p_inputName=>'p_manhour_lost',p_inputValue=>l_manhour_lost, p_labelSize =>4, p_inputSize =>1, p_attributes=>'onkeypress="(zsi.form.checkNumber(this,''.''))"');
+      zsi_bs_lib.InputTextBox(p_labelName =>'Sick Leave',p_inputName=>'p_sick_leave',p_inputValue=>l_sick_leave, p_labelSize =>2, p_inputSize =>1, p_attributes=>'onkeypress="(zsi.form.checkNumber(this,''.''))"');
+   zsi_bs_lib.CloseFormGroup();
+   
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Amount',p_inputName=>'p_amount',p_inputValue=>l_amount, p_labelSize =>4, p_inputSize =>1, p_attributes=>'onkeypress="(zsi.form.checkNumber(this,''.''))"');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Accident Location',p_inputName=>'p_accident_location',p_inputValue=>l_accident_location, p_labelSize =>4, p_inputSize =>4);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Activity at the time',p_inputName=>'p_current_activity',p_inputValue=>l_current_activity, p_labelSize =>4, p_inputSize =>4);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+     zsi_bs_lib.InputTextBoxArea(p_labelName =>'Description of the Accident',p_inputName=>'p_accident_description',p_labelSize =>4, p_inputValue=>l_accident_description, p_inputSize =>4, p_attributes=>'rows="2"');
+   zsi_bs_lib.CloseFormGroup();
+   
+   zsi_bs_lib.OpenFormGroup();
+     zsi_bs_lib.InputTextBoxArea(p_labelName =>'Describe any unsafe acts',p_inputName=>'p_accident_cause_acts',p_labelSize =>4, p_inputValue=>l_accident_cause_acts, p_inputSize =>4, p_attributes=>'rows="2"');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+     zsi_bs_lib.InputTextBoxArea(p_labelName =>'Describe any unsafe condition',p_inputName=>'p_accident_cause_cond',p_labelSize =>4, p_inputValue=>l_accident_cause_cond, p_inputSize =>4, p_attributes=>'rows="2"');
+   zsi_bs_lib.CloseFormGroup();
+   
+   zsi_bs_lib.OpenFormGroup();
+     zsi_bs_lib.InputTextBoxArea(p_labelName =>'Remarks',p_inputName=>'p_remarks',p_labelSize =>4, p_inputValue=>l_remarks, p_inputSize =>4, p_attributes=>'rows="2"');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.CloseEntryForm;
+
+%>
+
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_post_status = 0 AND l_user_iswrite = 1 THEN
+      zsi_bs_lib.Offset(4);
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+</form>
+
+
+<script type="text/javascript" src="zsi_employee_js"></script>
+<script type="text/javascript">
+
+   $("form[name=frmList]").submit(function(){
+      var ischeckDate = false;
+      if( zsi.form.checkMandatory()!=true) return false;
+      ischeckDate = zsi.form.checkDate(
+                  [   "p_tran_date"
+                     ,"p_accident_date"
+                  ]
+                  ,
+                  [
+                     "Transaction Date"
+                     ,"Accident Date"
+                  ]
+      );
+
+      return ischeckDate;
+   }); 
+
+
+
+   //on page loaded
+   $(document).ready(function(){
+
+       zsi.form.markMandatory({       
+         "groupNames":[ 
+               {"names" : 
+                     [  
+                      "p_tran_date"
+                     ,"p_direct_superior"
+                     ,"p_accident_date"
+                     ]
+               , "type":"S"
+               }             
+         ]      
+         ,"groupTitles":[ 
+               {"titles" :  
+                     [                       
+                      "Transaction Date"
+                     ,"Direct Supervisor"
+                     ,"Accident Date"
+                     ]
+               }
+
+         ]
+      });
+ 
+
+
+      //populate list
+      ctrlSel("#p_direct_superior","<%=l_direct_superior%>","N","employee_active_v","empl_id_no","empl_name"," ORDER BY empl_name" );
+   });
+
+
+
+
+    $("#p_manhour_lost,#p_sick_leave,#p_amount").keypress(function(event){
+
+       return zsi.form.checkNumber(event,'.,');
+
+
+    });
+
+    $("#p_manhour_lost,#p_sick_leave,#p_amount").blur(function(){
+          var obj= this;
+        zsi.form.checkNumberFormat(this);
+
+   });
+
+
+</script>
+
+</body>
+</html>
+

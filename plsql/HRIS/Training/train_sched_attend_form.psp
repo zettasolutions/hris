@@ -1,0 +1,723 @@
+<%@ plsql procedure="train_sched_attend_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tab"         type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   19-OCT-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_ctr                   NUMBER := 0;
+   l_where                 VARCHAR2(4000);
+
+   l_rec                   TrainingSchedAttend_V%ROWTYPE;
+   l_tran_no               TrainingSchedAttend_V.tran_no%TYPE := '';
+   l_trf_tranno            TrainingSchedAttend_V.trf_tranno%TYPE := '';
+   l_trn_code              TrainingSchedAttend_V.trn_code%TYPE := '';   
+   l_trn_type              TrainingSchedAttend_V.trn_type%TYPE := '';   
+   l_venu_code             TrainingSchedAttend_V.venu_code%TYPE := '';  
+   l_spsr_code             TrainingSchedAttend_V.spsr_code%TYPE := '';  
+   l_trn_days              TrainingSchedAttend_V.trn_days%TYPE := '';  
+   l_trn_hours             TrainingSchedAttend_V.trn_hours%TYPE := '';  
+   l_trn_status            TrainingSchedAttend_V.trn_status%TYPE := ''; 
+   l_conv_code             TrainingSchedAttend_V.conv_code%TYPE := '';  
+   l_reg_fee               TrainingSchedAttend_V.reg_fee%TYPE := '';    
+   l_travel_type           TrainingSchedAttend_V.travel_type%TYPE := '';
+   l_id_no                 TrainingTrainees_V.empl_id_no%TYPE;
+   l_sel                   VARCHAR2(50):='';
+   l_start_date            varchar2(20);
+   l_end_date              varchar2(20);
+   l_remarks               TrainingSchedAttend_V.remarks%TYPE := '';
+   l_user_iswrite          NUMBER(1):=0;
+   l_tab                   VARCHAR2(4000):=p_tab;
+   l_ttl_tcost             NUMBER :=0;
+   l_ttl_reg_fee           NUMBER :=0;
+   l_ttl_travel_cost       NUMBER :=0;
+   l_ttl_act_cost          NUMBER :=0;
+   l_tp_count              NUMBER := 0;
+   l_ta_count              NUMBER := 0;
+   l_prev_seq_no           NUMBER := 0;
+   
+
+   CURSOR l_spk_cur IS
+   SELECT * FROM TrainingSpeakers_V WHERE tran_no = p_tran_no;
+
+   CURSOR l_cost_cur IS
+   SELECT * FROM TrainingCosting_V WHERE tran_no = p_tran_no;
+   
+   CURSOR l_tt_cur IS
+   SELECT * FROM TrainingTrainees_V WHERE tran_no = p_tran_no;
+
+   CURSOR assess_cur IS
+   SELECT * 
+     FROM S004_T07017
+    WHERE assessment_type=200  
+    ORDER BY assessment_code;
+
+   CURSOR l_ta_cur IS
+   SELECT * 
+     FROM TrainingAssessments_V
+    WHERE tran_no = p_tran_no
+      AND trainee_assess_seq_no IS NOT NULL
+    ORDER BY seq_no, trainee_assess_seq_no;
+
+   Function GetActiveTab (p_Tab IN VARCHAR2, p_StateTab IN VARCHAR2) RETURN VARCHAR2
+      IS
+         l_tab VARCHAR2(100) := '';
+      BEGIN
+         IF p_Tab = p_StateTab THEN
+            l_tab := 'active';
+         END IF;
+         RETURN l_tab;
+   END GetActiveTab;
+
+%>
+<%
+   if(l_tab is null) THEN
+      l_tab:='spkrInfo';
+   END IF;   
+   
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   IF p_tran_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM TrainingSchedAttend_V WHERE tran_no = p_tran_no;
+      l_tran_no      :=l_rec.tran_no;    
+      l_trf_tranno   :=l_rec.trf_tranno;
+      l_trn_code     :=l_rec.trn_code;   
+      l_trn_type     :=l_rec.trn_type;   
+      l_venu_code    :=l_rec.venu_code;  
+      l_spsr_code    :=l_rec.spsr_code;  
+      l_trn_days     :=l_rec.trn_days;   
+      l_trn_hours    :=l_rec.trn_hours;  
+      l_trn_status   :=l_rec.trn_status; 
+      l_trn_type     :=l_rec.trn_type;   
+      l_conv_code    :=l_rec.conv_code;  
+      l_reg_fee      :=l_rec.reg_fee;    
+      l_travel_type  :=l_rec.travel_type;
+      l_start_date   :=to_char(l_rec.start_date, l_date_format);
+      l_end_date     :=to_char(l_rec.end_date, l_date_format);
+      l_remarks      :=l_rec.remarks;
+   END IF;
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<form name="frmList" action="train_sched_attend_update" method="POST" >
+<%
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no',p_inputValue=>p_tran_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_module_id',p_inputValue=>p_module_id);
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_spk_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_spk_code');
+   
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_cost_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_item_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_item_amount');
+     
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tt_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_id_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_name');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tt_reg_fee');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_reg_fee_charge_to');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_travel_cost');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_travel_cost_charge_to');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_with_certificate');
+
+zsi_bs_lib.OpenEntryForm;
+%>
+<div class="row col-xs-12">&nbsp;</div>
+<%
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'TRF Tran No', p_Name=>'p_trf_tranno', p_labelSize=>1, p_selectSize=>2);
+      zsi_bs_lib.InputTextBox(p_labelName =>'Start Date',p_inputName=>'p_start_date',p_inputValue=>l_start_date,p_labelSize =>1, p_inputSize =>1);
+      zsi_bs_lib.InputTextBox(p_labelName =>'End Date',p_inputName=>'p_end_date',p_inputValue=>l_end_date,p_labelSize =>1, p_inputSize =>1);
+      zsi_bs_lib.InputTextBox(p_labelName =>'No. Days',p_inputName=>'p_trn_days',p_inputValue=>l_trn_days,p_labelSize =>1, p_inputSize =>1);
+      zsi_bs_lib.InputTextBox(p_labelName =>'No. Hours',p_inputName=>'p_trn_hours',p_inputValue=>l_trn_hours,p_labelSize =>1, p_inputSize =>1);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Training', p_Name=>'p_trn_code', p_labelSize=>1, p_selectSize=>11);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Training Type', p_Name=>'p_trn_type', p_labelSize=>1, p_selectSize=>2);
+      zsi_bs_lib.SelectBox(p_labelName=>'Convention', p_Name=>'p_conv_code', p_labelSize=>1, p_selectSize=>3);
+      zsi_bs_lib.SelectBox(p_labelName=>'Travel Type', p_Name=>'p_travel_type', p_labelSize=>1, p_selectSize=>1);
+      zsi_bs_lib.InputTextBox(p_labelName =>'Reg. Fee',p_inputName=>'p_reg_fee',p_inputValue=>zsi_lib.FormatAmount(l_reg_fee,2),p_labelSize =>1, p_inputSize =>1, p_attributes=>'disabled');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Venue', p_Name=>'p_venu_code', p_labelSize=>1, p_selectSize=>5);
+      zsi_bs_lib.SelectBox(p_labelName=>'Sponsor', p_Name=>'p_spsr_code', p_labelSize=>1, p_selectSize=>5);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+       zsi_bs_lib.InputTextBoxArea(p_labelName =>'Remarks',p_inputName=>'p_remarks',p_labelSize =>1, p_inputValue=>l_remarks, p_inputSize =>5, p_attributes=>'rows="1"');
+   zsi_bs_lib.CloseFormGroup();
+%>
+<ul class="nav nav-tabs" role="tablist">
+  <li class="<%=GetActiveTab('spkrInfo',l_tab)%>"><a href="#" id="spkrInfo">Speaker(s)</a></li>
+  <li class="<%=GetActiveTab('costInfo',l_tab)%>"><a href="#" id="costInfo">Training Cost</a></li>
+  <li class="<%=GetActiveTab('tpInfo',l_tab)%>"><a href="#" id="tpInfo">Participant(s)</a></li>
+  <li class="<%=GetActiveTab('taInfo',l_tab)%>"><a href="#" id="taInfo">Training Assessment(s)</a></li>
+</ul>
+
+<div class="tab-pages">
+
+   <div id="spkrInfo" class="tab <%=GetActiveTab('spkrInfo',l_tab)%>">
+   <div style="height:350px; overflow-y:auto;" class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-4" nowrap align="left">Speaker</th>
+            <th class="col-xs-2" nowrap align="left">Type</th>
+            <th class="col-xs-1" nowrap align="left">Assessment</th>
+            <th class="col-xs-1" nowrap style="text-align:center">Delete</th>
+         </tr>
+      <%
+        l_ctr := 0;
+        FOR i in l_spk_cur LOOP
+      %>
+         <tr>            
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_spk_seq_no',p_inputValue=>i.seq_no);  %>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_spk_code', p_wrapper=>'N', p_Attributes=>'SelectedValue="' || i.spk_code || '"');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_spk_type_desc', p_inputValue=>i.spk_type_desc,p_wrapper=>'N', p_attributes=>'disabled');%></td>
+            <td><a href="javascript:void(0)" TITLE="Click here to Edit Assessment" onClick="attachURL('train_sched_attend_ass_form?p_tran_no=<%=p_tran_no%>&p_spk_seq_no=<%= i.seq_no %>&p_module_id=<%=p_module_id%>&p_tab=spkrInfo','Add/Edit Assessment for Speaker <%=i.spk_name %>', 1350, 700);w1.maximize();">Assessment</a></td>    
+            <td class="col-xs-1" nowrap align="center"><% zsi_bs_lib.ButtonDelete(p_table=>'S004_T07003_SPEAKER',p_Value=>i.seq_no);%></td>
+        </tr>
+      <%
+        l_ctr := l_ctr + 1;
+        END LOOP;
+        FOR i IN 1..5 LOOP
+      %>
+         <tr>            
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_spk_seq_no'); %>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_spk_code', p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_spk_type_desc', p_wrapper=>'N', p_attributes=>'disabled');%></td>
+            <td></td>
+            <td></td>
+         </tr>
+      <%
+         END LOOP;
+     %>
+      <tr><td>Speaker(s) &raquo<%= l_ctr %></td></tr>
+      </table>
+   </div>
+   </div>
+
+   <div id="costInfo" class="tab <%=GetActiveTab('costInfo',l_tab)%>">
+   <div style="height:350px; overflow-y:auto;" class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-2" nowrap align="left">Training Item</th>
+            <th class="col-xs-1" nowrap align="left">Amount</th>
+            <th class="col-xs-0" nowrap style="text-align:center">Delete</th>
+         </tr>
+      <%
+        FOR i in l_cost_cur LOOP
+        l_ttl_tcost := l_ttl_tcost + i.item_amount;
+      %>
+         <tr>                
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_cost_seq_no',p_inputValue=>i.seq_no); %>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_item_code', p_wrapper=>'N', p_Attributes=>'SelectedValue="' || i.item_code || '"');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_item_amount',p_inputValue=>zsi_lib.FormatAmount(i.item_amount,2), p_wrapper=>'N',p_attributes=>'style="text-align:right"');%></td>
+            <td class="col-xs-1" nowrap align="center"><% zsi_bs_lib.ButtonDelete(p_table=>'S004_T07003_COSTING',p_Value=>i.seq_no);%></td>
+         </tr>
+      <%
+        END LOOP;
+         FOR i IN 1..5 LOOP
+      %>
+         <tr>                
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_cost_seq_no'); %>
+                <% zsi_bs_lib.SelectBox(p_Name=>'p_item_code', p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_item_amount',p_inputValue=>'', p_wrapper=>'N',p_attributes=>'style="text-align:right"');%></td>
+            <td></td>
+         </tr>
+      <%
+         END LOOP;
+      %>
+      <tr>
+      <td>Total Amount</td>
+      <td align="right"><%=zsi_lib.FormatAmount(l_ttl_tcost,2)%></td>
+      </tr>
+      </table>
+   </div>
+   </div>
+
+   <div id="tpInfo" class="tab <%=GetActiveTab('tpInfo',l_tab)%>">
+   <div style="height:350px; overflow-y:auto;" class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-1" nowrap align="left">Id No.</th>
+            <th class="col-xs-2" nowrap align="left">Employee Name</th>
+            <th class="col-xs-1" nowrap align="right">Reg. Fee</th>
+            <th class="col-xs-1" nowrap align="left">Charge To</th>
+            <th class="col-xs-1" nowrap align="right">Travel Cost</th>
+            <th class="col-xs-1" nowrap align="left">Charge To</th>
+            <th class="col-xs-1" nowrap align="right">Actual Cost</th>
+            <th class="col-xs-1" nowrap align="left">Certificate?</th>
+            <th class="col-xs-1" nowrap style="text-align:center">Delete</th>
+
+         </tr>
+      <%
+        l_ctr :=0;
+        FOR i in l_tt_cur LOOP
+        l_ttl_reg_fee := l_ttl_reg_fee + i.reg_fee;
+        l_ttl_travel_cost := l_ttl_travel_cost + i.travel_cost;
+        l_ttl_act_cost := l_ttl_act_cost + i.actual_cost;
+      %>
+         <tr>   
+             <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tt_seq_no',p_inputValue=>i.seq_no); %>  
+                 <input type="text" autocomplete="off" value="<%=i.empl_id_no%>" name="p_empl_id_no" id="p_empl_id_no" class="form-control input-sm"> 
+             </td>
+             <td><input type="text" autocomplete="off" value="<%=i.empl_name%>" name="p_empl_name" id="p_empl_name" class="form-control input-sm"> </td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_tt_reg_fee',p_inputValue=>zsi_lib.FormatAmount(i.reg_fee,2), p_wrapper=>'N', p_attributes=>'style="text-align:right"');%></td>
+             <td><% zsi_bs_lib.SelectBox(p_Name=>'p_reg_fee_charge_to', p_wrapper=>'N', p_Attributes=>'SelectedValue="' || i.reg_fee_charge_to || '"');%></td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_travel_cost',p_inputValue=>zsi_lib.FormatAmount(i.travel_cost,2), p_wrapper=>'N', p_attributes=>'style="text-align:right"');%></td>
+             <td><% zsi_bs_lib.SelectBox(p_Name=>'p_travel_cost_charge_to', p_wrapper=>'N', p_Attributes=>'SelectedValue="' || i.travel_cost_charge_to || '"');%></td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_actual_cost',p_inputValue=>zsi_lib.FormatAmount(i.actual_cost,2), p_wrapper=>'N', p_attributes=>'style="text-align:right" , disabled');%></td>
+             <td><% zsi_bs_lib.YesNo(p_field=>'with_certificate',p_value=>i.with_certificate );%></td>
+            <td class="col-xs-1" nowrap align="center"><% zsi_bs_lib.ButtonDelete(p_table=>'S004_T07003_TRAINEES',p_Value=>i.seq_no);%></td>
+         </tr>
+      <%
+        l_ctr := l_ctr + 1;
+        END LOOP;
+        FOR i IN 1..5 LOOP
+      %>
+         <tr>               
+                     
+             <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tt_seq_no'); %>
+                 <input type="text" autocomplete="off" name="p_empl_id_no" id="p_empl_id_no" class="form-control input-sm"> 
+             </td>    
+             <td><input type="text" autocomplete="off" name="p_empl_name" id="p_empl_name" class="form-control input-sm"> </td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_tt_reg_fee',p_inputValue=>'', p_wrapper=>'N',p_attributes=>'style="text-align:right"');%></td>
+             <td><% zsi_bs_lib.SelectBox(p_Name=>'p_reg_fee_charge_to', p_wrapper=>'N');%></td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_travel_cost',p_inputValue=>'', p_wrapper=>'N',p_attributes=>'style="text-align:right"');%></td>
+             <td><% zsi_bs_lib.SelectBox(p_Name=>'p_travel_cost_charge_to', p_wrapper=>'N');%></td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_actual_cost',p_inputValue=>'', p_wrapper=>'N', p_attributes=>'style="text-align:right", disabled');%></td>
+             <td><% zsi_bs_lib.YesNo(p_field=>'with_certificate');%></td>
+             <td></td>             
+         </tr>
+      <%
+         END LOOP;   
+      %>
+      <tr>
+         <td>Participants &raquo<%= l_ctr %></td>
+         <td></td>
+         <td style="text-align:right"><%= zsi_lib.FormatAmount(l_ttl_reg_fee,2) %></td>
+         <td></td>
+         <td style="text-align:right"><%= zsi_lib.FormatAmount(l_ttl_travel_cost,2) %></td>
+         <td></td>
+         <td style="text-align:right"><%= zsi_lib.FormatAmount(l_ttl_act_cost,2) %></td>
+
+      </tr>
+      </table>
+   </div>
+   </div>
+     
+   <div id="taInfo" class="tab <%=GetActiveTab('taInfo',l_tab)%>">
+   <div style="height:350px; overflow-y:auto;" class="col-xs-12">
+<%  
+    zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no', p_inputValue=>''); 
+    zsi_bs_lib.InputHiddenBox(p_inputName=>'p_rating', p_inputValue=>''); 
+    zsi_bs_lib.InputHiddenBox(p_inputName=>'p_trainee_assess_seq_no', p_inputValue=>''); 
+    zsi_bs_lib.InputHiddenBox(p_inputName=>'p_assessment_code', p_inputValue=>''); 
+    zsi_bs_lib.InputHiddenBox(p_inputName=>'p_id_no', p_inputValue=>''); 
+    zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tab');
+   
+   SELECT COUNT(*) INTO l_tp_count FROM S004_T07003_TRAINEES WHERE tran_no = p_tran_no;
+
+   l_ctr :=0;
+   FOR i IN l_ta_cur LOOP  
+      IF l_prev_seq_no <> i.seq_no THEN
+         l_prev_seq_no := i.seq_no;
+         l_id_no := i.id_no;
+         l_ctr := l_ctr + 1;
+%>
+   <table class="table">
+<%
+         zsi_bs_lib.OpenEntryForm;
+            zsi_bs_lib.OpenFormGroup();
+               zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no', p_inputValue=>i.seq_no);
+               zsi_bs_lib.SelectBox(p_labelName=>'Participant/Trainee', p_Name=>'p_id_no', p_labelSize=>2, p_selectSize=>3, p_Attributes=>'SelectedValue="' || l_id_no || '"');
+            zsi_bs_lib.CloseFormGroup();
+         zsi_bs_lib.CloseEntryForm;
+%> 
+   <tr>
+      <th class="col-xs-1" nowrap align="left">Code</th>
+      <th class="col-xs-1" nowrap align="left">Type</th>
+      <th class="col-xs-2" nowrap align="left">Description</th>
+      <th class="col-xs-1" nowrap align="left">Rating</th>
+      <th class="col-xs-2" nowrap align="left">Max Assessment</th>
+      <th class="col-xs-2" nowrap align="left">Ave Assessment</th>
+      <th class="col-xs-2" nowrap align="left">Min Assessment</th>
+   </tr>
+<% 
+      END IF; 
+%>   
+   <tr>
+      <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_assessment_code', p_inputValue=>i.assessment_code);  %>         
+          <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_trainee_assess_seq_no', p_inputValue=>i.trainee_assess_seq_no); %>
+          <%= i.assessment_seq_no %></td>
+      <td><%= i.assessment_desc %></td>
+      <td><%= i.assessment_desc2 %></td>
+      <td><SELECT name="p_rating"><option></option>
+<%      
+         FOR j IN 1..10 LOOP
+            l_sel := '';
+            IF j= i.rating THEN 
+               l_sel := 'selected="selected"';
+            END IF;
+%>      
+         <option <%=l_sel %> value=<%=j%>><%=j%></option>
+<% 
+         END LOOP; 
+%>
+      </select></td>
+      <td><%= i.max_assessment %></td>
+      <td><%= i.ave_assessment %></td>
+      <td><%= i.min_assessment %></td>
+   </tr>
+<%
+   END LOOP;
+%>
+   </table>
+<%
+   l_id_no := '';   
+   WHILE l_ctr < l_tp_count LOOP
+%>
+   <table class="table">
+<%  
+         zsi_bs_lib.OpenEntryForm;
+            zsi_bs_lib.OpenFormGroup();
+               zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no', p_inputValue=>''); 
+               zsi_bs_lib.SelectBox(p_labelName=>'Participant/Trainee', p_Name=>'p_id_no', p_labelSize=>2, p_selectSize=>3);
+            zsi_bs_lib.CloseFormGroup();
+         zsi_bs_lib.CloseEntryForm;
+%> 
+   <tr>
+      <th class="col-xs-1" nowrap align="left">Code</th>
+      <th class="col-xs-1" nowrap align="left">Type</th>
+      <th class="col-xs-2" nowrap align="left">Description</th>
+      <th class="col-xs-1" nowrap align="left">Rating</th>
+      <th class="col-xs-2" nowrap align="left">Max Assessment</th>
+      <th class="col-xs-2" nowrap align="left">Ave Assessment</th>
+      <th class="col-xs-2" nowrap align="left">Min Assessment</th>
+   </tr>
+<% 
+   FOR i IN assess_cur LOOP
+%>
+   <tr>
+      <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_assessment_code', p_inputValue=>i.seq_no);  %>
+          <% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_trainee_assess_seq_no', p_inputValue=>''); %>
+          <%= i.assessment_code %>
+      </td>
+      <td><%= i.assessment_desc %></td>
+      <td><%= i.assessment_desc2 %></td>
+      <td><SELECT name="p_rating"><option></option>
+<%      
+         FOR j IN 1..10 LOOP
+%>      
+         <option value=<%=j%>><%=j%></option>
+<% 
+         END LOOP; 
+%>
+      </select></td>
+      <td><%= i.max_assessment %></td>
+      <td><%= i.ave_assessment %></td>
+      <td><%= i.min_assessment %></td>
+   </tr>
+<%  
+      END LOOP;
+%>
+   </table>
+<% 
+   l_ctr := l_ctr + 1;
+   END LOOP; 
+%>
+   </table>
+   </div>
+   </div>   
+<% zsi_bs_lib.CloseEntryForm; %>
+<div class="col-xs-12 buttonGroup">
+<%
+   IF  l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+</form>
+
+
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript">
+
+ /*variable declaration*/
+var ctrlSel = zsi.control.SelectList;
+   
+   $(document).ready(function(){
+      p_conv_code=$("#p_conv_code");
+      p_conv_code.attr("readonly",true);
+      $("#p_trn_type").change(function(){
+        if ($("#p_trn_type").val() != 5) {
+           $("#p_conv_code").val('');
+           $("#p_conv_code").attr('readonly', true);
+        } else {
+        $("#p_conv_code").attr('readonly', false);
+        }
+        
+      });
+   
+   
+      new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_id_no]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_id_no"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[0];
+            var td = currentObject.parentNode;
+            $(td).next().children("#p_empl_name").val(unescape(data[43]));            
+         }
+      });    
+      
+     new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_name]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_name"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[43];
+             var td = currentObject.parentNode;
+             $(td).prev().children("#p_empl_id_no").val(data[0]);            
+         }
+      });          
+
+      zsi.form.markMandatory({                  
+         "groupNames":[ 
+            {"names" :
+               [    
+                   "p_start_date"
+                  ,"p_end_date"
+                  ,"p_trn_days"
+                  ,"p_trn_hours"
+                  ,"p_trn_code"
+                  ,"p_trn_type"
+                  ,"p_travel_type"
+                  ,"p_venu_code"
+                  ,"p_spsr_code"
+               ]
+            ,  "required_one":"N"
+            ,  "type":"S"
+            }
+           ,{"names" :
+               [  
+                   "p_spk_code"
+               ]
+            ,  "required_one":"N"
+            ,  "type":"M"
+            }         
+           ,{"names" :  
+               [  
+                   "p_item_code"
+                  ,"p_item_amount"
+               ]
+            ,  "required_one":"N"
+            ,  "type":"M"
+            }
+           ,{"names" :
+               [  
+                   "p_empl_id_no"
+                  ,"p_tt_reg_fee"
+                  ,"p_reg_fee_charge_to"
+                  ,"p_travel_cost_charge_to"
+                  ,"p_with_certificate"
+               ]
+            ,  "required_one":"N"
+            ,  "type":"M"
+            }
+         ]                     
+         ,"groupTitles":[ 
+         
+            {"titles" : 
+               [         
+                   "Start Date"
+                  ,"End Date"
+                  ,"Training Days"
+                  ,"Training Hours"
+                  ,"Training Code"
+                  ,"Training Type"
+                  ,"Travel"
+                  ,"Venue"
+                  ,"Sponsor"
+               ]
+            }
+           ,{"titles" :  
+               [                       
+                   "Speaker"
+               ]
+            }
+           ,{"titles" :  
+               [                       
+                   "Training Item"
+                  ,"Amount"   
+               ]
+            }         
+           ,{"titles" :  
+               [                       
+                  "Participant/Trainee"  
+                  ,"Reg. Fee"
+                  ,"Reg. Fee Charge To"
+                  ,"Travel Cost Charge To"
+                  ,"With Certificate?"
+               ]
+            }           
+         ]
+         ,"required_one_indexes":[1,2,3,4]
+      });
+
+      
+   })    
+
+function attachURL(winURL,winTitle,winWidth,winHeight) {
+//var w1;
+   if (dhtmlxWin.isWindow("w1")) w1.close();
+   //w1 = dhtmlxWin.createWindow("w1", 20, 50, winWidth, winHeight); // x,y,width,height
+   var w = $(document).width();
+   var x = (w - winWidth) / 2;
+   var h = $(document).height();
+   var y = (h - winHeight) / 2;
+   w1 = dhtmlxWin.createWindow("w1", x, y, winWidth, winHeight); // x,y,width,height
+   w1.setModal(true);
+   w1.button("close").enable();
+   w1.button("minmax1").enable();
+   w1.button("minmax2").enable();
+   w1.button("park").hide();
+   w1.setText(winTitle);
+   w1.attachURL(winURL);
+}
+
+
+$("form[name=frmList]").submit(function(){
+   
+   if (!p_conv_code.attr("readonly")){
+      if (!p_conv_code.val()) {
+         alert('Select convention code');
+         p_conv_code.focus();
+         return false;
+      }
+   }      
+   
+   if( zsi.form.checkMandatory()!=true) return false;
+   return true;     
+   var frm = $("form[name=frmList]");
+   
+   $.ajax({
+      type:"POST"
+      ,url:frm.attr("action")
+      ,data:frm.serialize()
+      ,success: function(res){
+        alert("Data has been saved."); 
+      }
+      ,error: function(){        
+        alert("Sorry, the curent transaction is not successfull.");
+      }
+   });
+});
+
+
+    $("input[id=p_travel_cost],input[id=p_tt_reg_fee]").keypress(function(event){
+   
+         return zsi.form.checkNumber(event,'.,');
+      });
+   
+     $("input[id=p_travel_cost],input[id=p_tt_reg_fee]").blur(function(){
+          var obj= this;
+          zsi.form.checkNumberFormat(this);
+   
+   });
+   
+   $("input[id=p_tt_reg_fee],input[id=p_travel_cost]").keyup(function(){
+      var p_tt_reg_fee;
+      var p_travel_cost;
+      var p_actual_cost;
+      
+      if(this.id =="p_tt_reg_fee"){
+         p_tt_reg_fee = $(this);
+         p_travel_cost = $(this.parentNode).next().next().children("#p_travel_cost");
+         p_actual_cost =  $(this.parentNode).next().next().next().next().children("#p_actual_cost");
+      }
+      else if(this.id =="p_travel_cost"){
+         p_travel_cost  = $(this);
+         p_tt_reg_fee = $(this.parentNode).prev().prev().children("#p_tt_reg_fee");
+         p_actual_cost = $(this.parentNode).next().next().children("#p_actual_cost");
+      }
+      p_actual_cost.val( compute( p_tt_reg_fee.val(), p_travel_cost.val() ));
+      
+      function removedComma(v) {
+         var s = " "+ v +" ";
+         s = s.replace(",","");
+         return Number(s);
+      }
+
+      function compute(reg_fee,travel_cost){
+         var result = (removedComma(reg_fee)+ removedComma(travel_cost));
+         if (result<0) result=0;
+         if (isNaN(result)) result=0;
+         return (result.toFixed(2));
+      }      
+   });
+
+
+//on page loaded
+$(document).ready(function(){
+   //populate list
+   ctrlSel("#p_trf_tranno","<%=l_trf_tranno%>","N","TRF_Status800_v","trf_tranno","trf_tran_no","ORDER BY trf_tran_no");
+   ctrlSel("#p_trn_code","<%=l_trn_code%>","N","S004_T07000","trn_code","trn_desc","ORDER BY trn_desc");
+   ctrlSel("#p_trn_type","<%=l_trn_type%>","N","S004_T07007","trn_type","type_name","ORDER BY type_name");
+   ctrlSel("#p_conv_code","<%=l_conv_code%>","N","S004_T07010","conv_code","conv_desc","ORDER BY conv_desc");
+   ctrlSel("#p_venu_code","<%=l_venu_code%>","N","S004_T07009","venu_code","venu_name","ORDER BY venu_name");
+   ctrlSel("#p_travel_type","<%=l_travel_type%>","N","travel_types_v","sele_value","displayed_text","ORDER BY displayed_text");
+   ctrlSel("#p_spsr_code","<%=l_spsr_code%>","N","S004_T07008","spsr_code","spsr_name","ORDER BY spsr_name");
+   
+   ctrlSel("select[id=p_spk_code]","","N","S004_T07011","spk_code","spk_name","ORDER BY spk_name");
+   ctrlSel("select[id=p_item_code]","","N","S004_T07001","trn_item_code","trn_item_desc","");
+   ctrlSel("select[id=p_reg_fee_charge_to]","","N","charge_to_v","sele_value","displayed_text","");
+   ctrlSel("select[id=p_travel_cost_charge_to]","","N","charge_to_v","sele_value","displayed_text","");
+   
+   $("select[id=p_spk_code]").change(function(){
+      var td =  $(this.parentNode).next();
+      var p_spk_type_desc  = td.children("#p_spk_type_desc");
+      $.getJSON("speaker_type_json?p_spk_code=" + this.value,function(data){
+         p_spk_type_desc.val(data.spk_type_desc);
+      });
+   });
+
+});
+
+</script>
+
+</body>
+</html>
+

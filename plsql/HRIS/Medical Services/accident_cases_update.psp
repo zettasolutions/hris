@@ -1,0 +1,241 @@
+<%@ plsql procedure="accident_cases_update" %>
+<%@ plsql parameter="p_tran_no"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tran_date"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_empl_id_no"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_age_brak_code"           type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_empl_type"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_group_code"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_cost_center"             type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_department"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_accident_date"           type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_accident_time"           type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_manhour_lost"            type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_sick_leave"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_accident_location"       type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_current_activity"        type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_accident_description"    type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_accident_cause_acts"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_accident_cause_cond"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_direct_superior"         type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_remarks"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_post_status"             type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_amount"                  type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   24-MAR-15  GT    Added p_amount
+   26-JUL-14  GT    New
+*/
+--DECLARATION SECTION
+   l_js_path         VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed         VARCHAR2(1) := 'N';
+   l_rec             S004_T08013%ROWTYPE;
+   l_date_format     VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+   l_tran_date       DATE;
+   l_accident_date   DATE;
+   l_post_date       DATE;
+   l_amount          NUMBER;
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Accident Cases </title>
+</head>
+<body>
+<%
+l_tran_date := TO_DATE(p_tran_date,l_date_format);
+l_accident_date := TO_DATE(p_accident_date,l_date_format);
+l_amount := TO_NUMBER(TRIM(REPLACE(p_amount,',','')));
+
+   IF p_post_status = 1 then
+      l_post_date := SYSDATE;
+   ELSE
+      l_post_date := NULL;
+   END IF;
+
+   IF p_tran_no IS NULL  AND p_tran_date IS NOT NULL AND p_empl_id_no IS NOT NULL THEN
+      INSERT INTO S004_T08013 (
+          tran_no
+         ,tran_date
+         ,id_no
+         ,age_brak_code
+         ,empl_type
+         ,cost_center
+         ,department
+         ,group_code
+         ,accident_date
+         ,accident_time
+         ,manhour_lost
+         ,sick_leave
+         ,amount
+         ,accident_location
+         ,current_activity
+         ,accident_description
+         ,accident_cause_acts
+         ,accident_cause_cond
+         ,direct_superior
+         ,remarks
+         ,post_status
+         ,post_date
+         ,created_by
+         ,date_created
+      )
+      VALUES
+      (  S004_T08013_SQ001.NEXTVAL
+         ,l_tran_date
+         ,p_empl_id_no
+         ,p_age_brak_code
+         ,p_empl_type
+         ,p_cost_center
+         ,p_department
+         ,p_group_code
+         ,l_accident_date
+         ,p_accident_time
+         ,p_manhour_lost
+         ,p_sick_leave
+         ,l_amount
+         ,p_accident_location
+         ,p_current_activity
+         ,p_accident_description
+         ,p_accident_cause_acts
+         ,p_accident_cause_cond
+         ,p_direct_superior
+         ,p_remarks
+         ,p_post_status
+         ,l_post_date
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+   );
+   ELSIF p_tran_no IS NOT NULL AND p_tran_no IS NOT NULL AND p_empl_id_no IS NOT NULL THEN
+
+      SELECT * INTO l_rec FROM S004_T08013 WHERE tran_no=p_tran_no;
+
+      IF zsi_lib.IsChanged(l_rec.tran_date, l_tran_date) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.tran_date := p_tran_date;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.id_no, TO_NUMBER(p_empl_id_no)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.id_no := p_empl_id_no;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.age_brak_code, TO_NUMBER(p_age_brak_code)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.age_brak_code := p_age_brak_code;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.empl_type, p_empl_type) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.empl_type := p_empl_type;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.cost_center, p_cost_center) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.cost_center := p_cost_center;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.department, p_department) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.department := p_department;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.group_code, p_group_code) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.group_code := p_group_code;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.accident_date, l_accident_date) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.accident_date := p_accident_date;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.accident_time, p_accident_time) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.accident_time := p_accident_time;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.manhour_lost, TO_NUMBER(p_manhour_lost)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.manhour_lost := p_manhour_lost;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.sick_leave, TO_NUMBER(p_sick_leave)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.sick_leave := p_sick_leave;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.amount, l_amount) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.amount := l_amount;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.accident_location, p_accident_location) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.accident_location := p_accident_location;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.current_activity, p_current_activity) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.current_activity := p_current_activity;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.accident_description, p_accident_description) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.accident_description := p_accident_description;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.accident_cause_acts, p_accident_cause_acts) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.accident_cause_acts := p_accident_cause_acts;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.accident_cause_cond, p_accident_cause_cond) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.accident_cause_cond := p_accident_cause_cond;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.direct_superior, TO_NUMBER(p_direct_superior)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.direct_superior := p_direct_superior;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.remarks, p_remarks) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.remarks := p_remarks;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.post_status, TO_NUMBER(p_post_status)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.post_status := p_post_status;
+         l_rec.post_date := l_post_date;
+      END IF;
+
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08013 SET row = l_rec WHERE tran_no=p_tran_no;
+      END IF;
+
+   END IF;
+END;
+%>
+<script type="text/javascript">
+   parent.parent.parent.HomeWindow.LoadData("?p_id_no=<%=p_empl_id_no %>");
+   parent.LoadData("?p_id_no=<%=p_empl_id_no %>");
+   parent.w1.close();
+</script>

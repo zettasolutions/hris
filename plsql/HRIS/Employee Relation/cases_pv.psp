@@ -1,0 +1,116 @@
+<%@ plsql procedure="cases_pv" %>
+<%@ plsql parameter="p_tran_no"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_case_type"   type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_case_no"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_respondents" type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_Criteria"    type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_print"       type="VARCHAR2" default="'P'"%>
+
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   11-DEC-14  GT    New
+*/
+--DECLARATION SECTION
+l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+%>
+<!DOCTYPE html>
+<head>
+   <title>Employee List</title>
+   <link rel="stylesheet" type="text/css" href="zsi_style_css">
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+   <script type="text/javascript" src="<%= l_js_path %>jquery-1.11.1.min.js"></script>
+   <script type="text/javascript" src="zsi_lib_js"></script>
+</head>
+<body>
+
+<div class="reportTitle">Employee List</div>
+<div class="reportcriteria">Criteria: <%=p_Criteria %></div>
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+<table class="gridReport fullWidth" >
+<tr valign="bottom">
+   <th >Tran No</th>   
+   <th >Year</th>   
+   <th >Seq No</th>
+   <th >Case Type</th>
+   <th >Case No</th>
+   <th >Charges</th>   
+   <th >Group Resp.</th>   
+   <th >Respondent(s)</th>   
+   <th >Handled By</th>   
+   <th >Status</th>   
+</tr>
+
+</table>
+ 
+
+
+<script type="text/javascript">
+
+function LoadData(){
+   var l_params="";
+   l_params += "p_tran_no=<%=p_tran_no%>";    
+   l_params += "&p_case_type=<%=p_case_type%>";  
+   l_params += "&p_case_no=<%=p_case_no%>";   
+   l_params += "&p_respondents=<%=p_respondents%>";   
+   l_params += "&p_print=<%=p_print%>"; 
+   
+   
+   $.getJSON(
+      "cases_inq_json?" + l_params,onLoadComplete
+   ).fail(function() {
+      alert("Sorry, the current report cannot display at this moment.");
+   }).always(function(){
+      $(".loadingStatus").css("display","none");
+   });
+
+}
+
+function onLoadComplete(data){    
+   var jsonGrid = $(".gridReport");
+   jsonGrid.clearGrid();
+   $.each(data.rows, function () {
+      var r = ""
+      r += "<tr>";
+      r += "<td>" + this.data[0]   + "</td>";
+      r += "<td>" + this.data[1]   + "</td>";
+      r += "<td>" + this.data[2]   + "</td>";
+      r += "<td>" + this.data[3]   + "</td>";
+      r += "<td>" + this.data[4]   + "</td>";
+      r += "<td>" + this.data[5]   + "</td>";
+      r += "<td>" + unescape(this.data[6])    + "</td>";
+      r += "<td>" + unescape(this.data[7])  + "</td>";
+      r += "<td>" + unescape(this.data[8])  + "</td>";
+      r += "<td>" + this.data[9]   + "</td>";
+      r += "</tr>";   
+      jsonGrid.append(r);
+   });    
+}
+
+ 
+//on page loaded
+$(document).ready(function(){    
+   LoadData();
+}); 
+   
+   
+</script>
+</body>
+
+</html>

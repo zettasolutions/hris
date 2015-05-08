@@ -1,0 +1,169 @@
+<%@ plsql procedure="train_item_list" %>
+<%@ plsql parameter="p_trn_item_code"     type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_trn_item_desc"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_rows"              type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_page_no"           type="NUMBER"   default="1"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   08-SEP-14  BD    Passed p_module_id to form url.
+   15-07-14         New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(3000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_sql                        VARCHAR2(8000);
+   TYPE ti_cur IS REF CURSOR;
+   tiref              ti_cur;
+   l_trn_item_code              S004_T07001.trn_item_code%TYPE;
+   l_trn_item_desc              S004_T07001.trn_item_desc%TYPE;
+   l_remarks                    S004_T07001.remarks%TYPE;
+   l_row_no                     NUMBER(10);
+   l_rows                       NUMBER(10);
+   l_max_rows                   NUMBER(10) := zsi_lib.MaxRowsInList;
+   l_url                        VARCHAR2(32000) := 'train_item_list';
+   l_row_count                  NUMBER(10) := 0;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+<%
+   pageheader(p_dgrid=>'Y');
+%>
+<%
+   l_select := 'SELECT trn_item_code,trn_item_desc,remarks';
+   l_from   := '  FROM S004_T07001 ';
+   l_where  := ' WHERE 1=1';
+
+   IF p_trn_item_code IS NOT NULL THEN
+       l_where := l_where || ' AND trn_item_code= ' || p_trn_item_code;
+   END IF;
+      l_url := l_url ||'?p_trn_item_code=' || p_trn_item_code;
+
+   IF p_trn_item_desc IS NOT NULL THEN
+   l_where := l_where ||' AND UPPER(trn_item_desc) LIKE '|| '''' || '%' ||  UPPER(p_trn_item_desc) || '%' || '''' || ' ';
+   END IF;
+      l_url := l_url ||'&p_trn_item_desc=' || p_trn_item_desc;
+
+
+   IF p_page_no = 1 AND p_rows IS NULL THEN
+       l_sql := 'SELECT COUNT(*) ' || l_from || l_where;
+       OPEN tiref FOR l_sql;
+       LOOP
+           FETCH tiref INTO l_rows;
+           EXIT WHEN tiref%NOTFOUND;
+       END LOOP;
+       CLOSE tiref;
+   ELSE
+       l_rows := p_rows;
+   END IF;
+
+   l_url := l_url ||'&p_rows=' || l_rows;
+   l_sql := l_select ||', row_number() OVER (ORDER BY trn_item_code) rn ' || l_from || l_where;
+   l_sql := 'SELECT * FROM ( ' || l_sql || ') ' || zsi_lib.GeneratePagingWhere(p_page_no);
+
+%>
+<body>
+<%
+   zsi_bs_lib.openModalWindow('modalWindow','Training Item','ti_search_frm','train_item_list');
+zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.inputTextBox('Item Code','p_trn_item_code',p_inputSize =>2);
+zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.inputTextBox('Description','p_trn_item_desc',p_inputSize =>10);
+zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.closeModalWindow('submit','Search');
+%>
+
+   <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+      <tr valign="bottom">
+         <th nowrap align="center" width="100px">Item Code</th>
+         <th nowrap align="center" width="250px">Description</th>
+         <th nowrap align="center" width="350px">Remarks</th>
+         <th align="center" width="60px">Delete</th>
+      </tr>
+<%
+   l_dhtmlx_sort := 'int,str,str,na';
+   OPEN tiref FOR l_sql;
+   LOOP
+       FETCH tiref INTO l_trn_item_code,l_trn_item_desc,l_remarks,l_row_no;
+   EXIT WHEN tiref%NOTFOUND;
+   l_row_count := l_row_count + 1;
+%>
+   <tr valign="bottom">
+      <td nowrap align="center">
+      <a href="javascript:void(0)" TITLE="Click here to Edit Training Item" onClick="parent.attachURL('train_item_form?p_module_id=<%= l_module_id %>&p_trn_item_code=<%= l_trn_item_code %>','Edit Training Item  &raquo <%=l_trn_item_code %>', 650, 200)"><%=l_trn_item_code %></a>
+      </td>
+      <td nowrap align="left"><%=l_trn_item_desc %></td>
+      <td nowrap align="left"><%=l_remarks %></td>
+      <td><input type="checkbox" name="p_cb" onclick="zsi.table.setCheckBox(this,<%= l_trn_item_code %>);">
+      <input type="hidden" name="p_del_ti" value=""></td>
+   </tr>
+<%
+   END LOOP;
+%>
+   </table>
+
+   <div class="bottomNav">
+   <div class="buttonGroup">
+<%
+   zsi_bs_lib.Button('btnSearch','Search',p_data_toggle =>'modal',p_data_target =>'#modalWindow');
+   zsi_bs_lib.Button('btnAdd','Add',p_onclick =>'parent.attachURL(''train_item_form?p_module_id=' || l_module_id || '&p_trn_item_code='',''Add Training Item'', 900, 350)');
+   zsi_bs_lib.Button('btnDelete','Delete',p_onclick =>'return checkDelete(''train_item_delete?p_del_ti='');');
+%>
+   </div>
+<%
+   zsi_lib.ShowPaging(p_page_no,l_rows,l_row_count);
+%>
+   </div>
+
+<script type="text/javascript">
+   //on window resize
+   $(window).resize(function(){
+      zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+   function checkDelete(l_cmd) {
+      var l_stmt, l_count
+      l_stmt = zsi.table.getCheckBoxesValues("input[name=p_cb]:checked","p_del_ti=","&");
+
+      if (l_stmt!="") {
+         if(confirm("Are you sure you want to delete ALL SELECTED Training Item?")) {
+            $.post( l_cmd + "&" + l_stmt, function(d){
+               parent.ShowHideProgressWindow(false);
+               window.location.reload();
+            });
+         }
+      }
+   }
+
+   function gotoPage(p_this){
+   var url = "<%= l_url %>&p_page_no=" + p_this.value;
+   window.location.href = url;
+   };
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid);
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

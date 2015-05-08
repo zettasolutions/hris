@@ -1,0 +1,170 @@
+<%@ plsql procedure="train_cbs_nc_rpt" %>
+<%@ plsql parameter="p_module_id"                 type="NUMBER" %>
+<%@ plsql parameter="p_spsr_code"                 type="VARCHAR2" %>
+<%@ plsql parameter="p_start_date"                type="VARCHAR2" %>
+<%@ plsql parameter="p_end_date"                  type="VARCHAR2" %>
+<%@ plsql parameter="p_empl_id_no"                type="NUMBER" default="NULL" %>
+<%@ plsql parameter="p_empl_name"                 type="VARCHAR2" default="NULL" %>
+<%@ plsql parameter="p_dept"                      type="VARCHAR2" default="NULL" %>
+<%@ plsql parameter="p_list_by"                   type="NUMBER"   default="1" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   05-FEB-15  BD    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(3000);
+   l_from                       VARCHAR2(1000);
+   l_where0                     VARCHAR2(4000);
+   l_where                      VARCHAR2(4000);
+   l_order                      VARCHAR2(1000);
+   l_sql                        VARCHAR2(9000);
+
+   train_cur                    SYS_REFCURSOR;
+   l_empl_id_no                 s004_t07003_trainees.empl_id_no%TYPE;
+   l_empl_name                  employee_v.empl_name%TYPE;
+   l_dept_code                  employee_v.department%TYPE;
+   l_dept_desc                  employee_v.dept_desc%TYPE;
+   l_trn_code                   s004_t07003.trn_code%TYPE;
+   l_trn_desc                   s004_t07000.trn_desc%TYPE;
+   l_trn_type                   s004_t07003.trn_type%TYPE;
+   l_trn_type_name              s004_t07007.type_name%TYPE;
+   l_trn_hours                  s004_t07003.trn_hours%TYPE;
+   l_start_date                 s004_t07003.start_date%TYPE;
+   l_end_date                   s004_t07003.end_date%TYPE;
+
+   l_module_id                  s004_modules.module_id%TYPE := p_module_id;
+   l_row_count                  NUMBER(10) := 0;
+   l_rpt_title                  VARCHAR2(1024);
+%>
+<%
+   l_select := 'SELECT  tt.empl_id_no '
+            || ',zsi_lib.GetDescription(''employee_v'',''empl_name'',''empl_id_no'', tt.empl_id_no ) as empl_name  '
+            || ',zsi_lib.GetDescription(''employee_v'',''department'',''empl_id_no'',tt.empl_id_no) as dept_code  '
+            || ',zsi_lib.GetDescription(''employee_v'',''dept_desc'',''empl_id_no'', tt.empl_id_no ) as dept_desc '
+            || ',ts.trn_code '
+            || ',zsi_lib.GetDescription(''S004_T07000'',''trn_desc'',''trn_code'', ts.trn_code ) as trn_desc '
+            || ',ts.trn_type '
+            || ',zsi_lib.GetDescription(''S004_T07007'',''type_name'',''trn_type'', ts.trn_type ) as trn_type_name '
+            || ',ts.trn_hours '
+            || ',ts.start_date '
+            || ',ts.end_date ';
+
+   l_from   := '  FROM s004_t07003_trainees tt, s004_t07003 ts';
+   IF p_list_by = 1 THEN
+      l_order  := ' ORDER BY dept_code, empl_name, trn_desc ';
+   ELSE
+      l_order  := ' ORDER BY trn_desc, dept_code, empl_name ';
+   END IF;
+   l_where0 := ' WHERE tt.tran_no = ts.tran_no ';
+   l_where  := ' AND NVL(ts.trn_cost,0)=0  AND UPPER(ts.spsr_code) = ''' || UPPER(p_spsr_code) || ''''
+            || ' AND ((ts.start_date BETWEEN ''' || TO_DATE(p_start_date,'MM/DD/YYYY') || ''' AND ''' || TO_DATE(p_end_date,'MM/DD/YYYY') || ''') '
+            || ' OR (ts.end_date BETWEEN ''' || TO_DATE(p_start_date,'MM/DD/YYYY') || ''' AND ''' || TO_DATE(p_end_date,'MM/DD/YYYY') || ''')) ';
+
+   IF p_empl_id_no IS NOT NULL THEN
+      l_where := l_where || ' AND tt.empl_id_no = ' || p_empl_id_no;
+   END IF;
+
+   IF p_dept IS NOT NULL THEN
+      l_from := l_from || ', employee_v e ';
+      l_where0 := l_where0 || ' AND tt.empl_id_no = e.empl_id_no ';
+      l_where := l_where || ' AND e.dept_abbrv = ' || p_dept;
+   END IF;
+
+   l_sql    := l_select || l_from || l_where0 || l_where || l_order;
+
+   l_rpt_title := 'List of Employees Who Have Attended Trainings <br>Conducted by ' || (zsi_lib.GetDescription('S004_T07008','spsr_name','spsr_code', p_spsr_code ));
+   l_rpt_title := l_rpt_title || '<br>For the Period of '|| p_start_date || ' - ' || p_end_date;
+   l_rpt_title := UPPER(l_rpt_title);
+
+   reportheader(p_output=>'H');
+%>
+<body>
+
+<table>
+   <tr valign="top">
+      <td align="left"  class="head5"><%= l_rpt_title %></td>
+      <td align="right" class="head6">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss AM')) %></td>
+   </tr>
+</table>
+<table>
+   <tr valign="bottom">
+<thead>
+<%
+   IF p_list_by = 1 THEN
+%>
+      <th nowrap align="left">Name of Employee</th>
+      <th nowrap align="left">Dept</th>
+      <th nowrap align="left">Title of Training</th>
+<%
+   ELSE
+%>
+      <th nowrap align="left">Title of Training</th>
+      <th nowrap align="left">Name of Employee</th>
+      <th nowrap align="left">Dept</th>
+<%
+   END IF;
+%>
+      <th nowrap align="left">Type</th>
+      <th nowrap align="left">Date of Training</th>
+      <th nowrap align="left">Training Hours</th>
+</thead>
+   </tr>
+<%
+OPEN train_cur FOR l_sql;
+LOOP
+   FETCH train_cur INTO l_empl_id_no
+                        ,l_empl_name
+                        ,l_dept_code
+                        ,l_dept_desc
+                        ,l_trn_code
+                        ,l_trn_desc
+                        ,l_trn_type
+                        ,l_trn_type_name
+                        ,l_trn_hours
+                        ,l_start_date
+                        ,l_end_date;
+   EXIT WHEN train_cur%NOTFOUND;
+   l_row_count := l_row_count + 1;
+%>
+<tr valign="top">
+<%
+   IF p_list_by = 1 THEN
+%>
+   <td align="left"><%= l_empl_name %></td>
+   <td align="left"><%= l_dept_code %></td>
+   <td align="left"><%= l_trn_desc %></td>
+<%
+   ELSE
+%>
+   <td align="left"><%= l_trn_desc %></td>
+   <td align="left"><%= l_empl_name %></td>
+   <td align="left"><%= l_dept_code %></td>
+<%
+   END IF;
+%>
+   <td align="left"><%= l_trn_type_name %></td>
+   <td align="left" nowrap><%= TO_CHAR(l_start_date,'MM/DD/YYYY') %> - <%= TO_CHAR(l_end_date,'MM/DD/YYYY') %></td>
+   <td align="left"><%= l_trn_hours %></td>
+</tr>
+<%
+END LOOP;
+CLOSE train_cur;
+%>
+</table>
+</body>
+</html>

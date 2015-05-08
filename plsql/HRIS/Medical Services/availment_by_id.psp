@@ -1,0 +1,227 @@
+<%@ plsql procedure="availment_by_id" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-AUG-14  GF    New
+*/
+--DECLARATION SECTION
+l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+l_dhtmlx_sort                VARCHAR2(1024);
+%>
+<%
+   pageheader(p_dWin=>'Y',p_dgrid=>'Y');
+%>
+<body>
+<form name="frmList">
+<%
+zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputIdName(p_labelSize=>2);
+      zsi_bs_lib.SelectBox(p_labelName=>'By Month', p_Name=>'p_tran_month', p_labelSize=>2, p_selectSize=>1);
+      zsi_bs_lib.InputTextBox(p_labelName =>'By Year',p_inputName=>'p_tran_year',p_labelSize =>2, p_inputSize =>1,p_InputValue=>EXTRACT(YEAR FROM SYSDATE));
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Medical Plan', p_Name=>'p_medplan_code', p_labelSize=>2, p_selectSize=>4);
+      zsi_bs_lib.InputTextBox(p_labelName =>'Cost Center',p_inputName=>'p_empl_cc_desc',p_labelSize =>2, p_inputSize =>4,p_attributes=>'disabled');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Department',p_inputName=>'p_empl_dept_desc',p_labelSize =>2, p_inputSize =>4,p_attributes=>'disabled');
+      zsi_bs_lib.InputTextBox(p_labelName =>'Group',p_inputName=>'p_empl_group_desc',p_labelSize =>2, p_inputSize =>4,p_attributes=>'disabled');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Job Position',p_inputName=>'p_empl_job_desc',p_labelSize =>2, p_inputSize =>4,p_attributes=>'disabled');
+   zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.CloseEntryForm;
+
+%>
+</form>
+<div class="buttonGroup col-xs-offset-2">
+<%
+      zsi_bs_lib.Button('btnSubmit','Search');
+%>
+</div>
+
+ <br />
+
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+<tr valign="bottom">
+   <th  width="300px">Medical Plan</th>
+   <th align="center" width="120px">Availed In-House </th>
+   <th align="center" width="120px">Availed Outside</th>
+   <th align="right" width="100px">Amount</th>
+
+</tr>
+<%
+l_dhtmlx_sort := ',na';
+%>
+<tr valign="bottom">
+   <td></td>
+</tr>
+</table>
+
+<div class="bottomNav">
+<div class="buttonGroup">
+<%
+zsi_bs_lib.Button('btnPrint','Print');
+%>
+</div>
+</div>
+
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript">
+
+var l_page_rows=0;
+
+function displayInfo(data){
+   $("#p_empl_job_desc").val(data[50]);
+   $("#p_empl_cc_desc").val(data[47]);
+   $("#p_empl_dept_desc").val(data[48]);
+   $("#p_empl_group_desc").val(data[49]);
+}
+
+//on page loaded
+$(document).ready(function(){
+      new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_id_no]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_id_no"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[0];
+            var td = currentObject.parentNode;
+            $("#p_empl_name").val(unescape(data[43])); 
+            displayInfo(data);
+         }
+      });    
+      
+     new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_name]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_name"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[43];
+             var td = currentObject.parentNode;
+             $("#p_empl_id_no").val(data[0]);
+             displayInfo(data);
+         }
+      });
+
+   ctrlSel("#p_medplan_code","","N","medplan_code_v","sele_value","displayed_text","");
+
+   zsi.calendar.LoadMonths(document.getElementById("p_tran_month"));
+
+   mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid);
+   mygrid.clearAll();
+
+});
+
+
+$("#p_empl_id_no").blur(function(){
+   if(this.value) ctrlSel("#p_dep_id","","N","S004_T01029","emde_dependent_id","emde_dependent_name","Where emde_id_no=" + this.value );
+});
+
+function gotoPage(p_this){
+   var l_params = GetParams() + "&p_rows="+ l_page_rows + "&p_page_no=" + p_this.value;
+   LoadData(l_params );
+};
+
+function LoadData(p_params){
+   $.getJSON("availment_by_id_json?" + p_params,onLoadComplete);
+}
+
+function onLoadComplete(data){
+   mygrid.parse(data, "json");
+   l_page_rows=data.page_rows;
+   zsi.page.DisplayRecordPage(data.page_no,data.page_rows,data.row_count);
+}
+
+$("#btnSubmit").click(function(){
+    if($("#p_empl_id_no").val()=="") {
+      alert("Please select Employee");
+      return;
+    }
+    mygrid.clearAll();
+    LoadData(GetParams());
+});
+
+function GetParams(){
+   var l_params="";
+   l_params += "p_id_no=" + $("#p_empl_id_no").val();
+   l_params += "&p_medplan_code=" + $("#p_medplan_code").val();
+   l_params += "&p_tran_month=" + $("#p_tran_month").val();
+   l_params += "&p_tran_year=" + $("#p_tran_year").val();
+   return l_params;
+   }
+   
+
+$("#btnPrint").click(function(){
+   window.open("availment_by_id_rpt?" + GetParams() + "&p_criteria=" + GetCriterias() );
+});
+
+
+
+function GetCriterias(){
+   var l_criterias="";
+
+      l_criterias=setCriteria("#p_id_no","ID",l_criterias);
+      l_criterias=setCriteria("#p_medplan_code","Med. Plan. Code",l_criterias);
+      l_criterias=setCriteria("#p_tran_month","Month",l_criterias);
+      l_criterias=setCriteria("#p_tran_year","Year",l_criterias);
+
+
+   return l_criterias;
+}
+
+function setCriteria(p_inputName,p_desc, p_result){
+
+
+   var input = $(p_inputName);
+   if (input.prop("tagName")=="SELECT"){
+      if(input.find(":selected").text()){
+         if (p_result!="") p_result += ", ";
+         p_result += p_desc + "=" +  input.find(":selected").text();
+      }
+   }
+   else{
+      if(input.val()){
+         if (p_result!="") p_result += ", ";
+         p_result += p_desc + "=" + input.val();
+      }
+   }
+   return p_result;
+}
+
+   
+
+</script>
+<script type="text/javascript" src="zsi_employee_js"></script>
+</body>
+</html>

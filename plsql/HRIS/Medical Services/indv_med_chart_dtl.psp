@@ -1,0 +1,56 @@
+<%@ plsql procedure="indv_med_chart_dtl" %>
+<%@ plsql parameter="p_ldgr_no" type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_tab"     type="NUMBER" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   25-JAN-15  GT    Modified.
+   17-AUG-14  GF    New
+*/
+--DECLARATION SECTION
+l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+l_dhtmlx_sort                VARCHAR2(1024);
+l_rec                        S004_T08010_v%ROWTYPE;
+
+
+
+%>
+<%
+    pageheader(p_dgrid=>'Y');
+    SELECT * INTO l_rec FROM S004_T08010_v 
+    WHERE ldgr_no = p_ldgr_no;
+%>
+<script type="text/javascript" src="<%= l_dhtmlx_path %>dhtmlxWindows/codebase/dhtmlxwindows.js"></script>
+<script type="text/javascript" src="<%= l_dhtmlx_path %>dhtmlxWindows/codebase/dhtmlxcontainer.js"></script>
+<body>
+<div style="height:580px; overflow-y:auto;">
+<% 
+ CASE 
+    WHEN p_tab = 1 THEN indv_med_chart_bill_dtl(p_ldgr_no=>p_ldgr_no);
+    WHEN p_tab = 2 THEN indv_med_chart_ill_dtl(p_ldgr_no=>p_ldgr_no);
+    WHEN p_tab = 3 THEN indv_med_chart_lab_dtl(p_ldgr_no=>p_ldgr_no);
+    WHEN p_tab = 4 THEN indv_med_chart_dental_dtl(p_ldgr_no=>p_ldgr_no);
+    WHEN p_tab = 5 THEN indv_med_chart_doctor_dtl(p_ldgr_no=>p_ldgr_no);
+    WHEN p_tab = 6 THEN indv_med_chart_ih_dtl(p_ldgr_no=>p_ldgr_no);
+    WHEN p_tab = 9 THEN indv_med_chart_ape_dtl(p_ldgr_no=>p_ldgr_no);
+END CASE;    
+%>
+</div>
+
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

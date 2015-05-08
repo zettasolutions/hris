@@ -1,0 +1,134 @@
+<%@ plsql procedure="train_profile" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   17-AUG-14  GF    New
+*/
+--DECLARATION SECTION
+l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+l_dhtmlx_sort                VARCHAR2(1024);
+l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+<%
+   pageheader(p_dgrid=>'Y');
+%>
+<body>
+<%
+zsi_bs_lib.OpenEntryForm; 
+   
+   zsi_bs_lib.OpenFormGroup();
+             zsi_bs_lib.InputTextBox(p_labelName =>'Training', p_inputName=>'p_trn_desc', p_labelSize=>1, p_inputSize=>4);                    
+             zsi_bs_lib.InputTextBox(p_labelName =>'Speaker', p_inputName=>'p_spk_name', p_labelSize=>1, p_inputSize=>4);                    
+   zsi_bs_lib.CloseFormGroup();
+   
+   zsi_bs_lib.OpenFormGroup();
+             zsi_bs_lib.InputTextBox(p_labelName =>'Sponsor', p_inputName=>'p_spsr_name', p_labelSize=>1, p_inputSize=>4);                    
+             zsi_bs_lib.InputTextBox(p_labelName =>'Venue', p_inputName=>'p_venu_name', p_labelSize=>1, p_inputSize=>4); 
+             zsi_bs_lib.Button('btnSubmit','Search');
+   zsi_bs_lib.CloseFormGroup();
+
+zsi_bs_lib.CloseEntryForm; 
+
+l_dhtmlx_sort := 'int,str,int,str,str,str,str,na';
+%>
+
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+<tr valign="bottom">
+   <th align="center" width="80px">Tran No</th>
+   <th align="center" width="100px">Code</th>
+   <th align="left" width="300px">Training</th>
+   <th align="left" width="100px">Venue</th>   
+   <th align="center" width="100px">Start Date</th>   
+   <th align="center" width="100px">End Date</th>   
+   <th align="right" width="100px">Training Cost</th>   
+   <th align="right" width="100px">Training Hours</th>   
+   <th align="left" width="130px">Conducted By</th>   
+   <th align="left" width="130px">Sponsor</th>   
+</tr>
+<% l_dhtmlx_sort := 'str,str,str,str,str,na,na,str'; %>
+</table>
+
+<div class="bottomNav">
+<div class="buttonGroup">
+<%
+zsi_bs_lib.Button('btnPrint','Print');
+%>
+</div>
+<% zsi_bs_lib.ShowPagingCtrl; %>
+</div>
+
+<script type="text/javascript">
+   var l_page_rows=0;
+
+//on page loaded
+$(document).ready(function(){   
+       parent.HomeWindow=window;
+   });
+
+   //on window resize
+   $(window).resize(function(){
+      zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+   
+   function GetParams(){
+      var l_params="";
+      l_params += "p_trn_desc=" + $("#p_trn_desc").val();        
+      l_params += "&p_spk_name=" + $("#p_spk_name").val();          
+      l_params += "&p_spsr_name=" +  $("#p_spsr_name").val();
+      l_params += "&p_venu_name=" +  $("#p_venu_name").val();
+   return l_params;
+}
+
+   function gotoPage(p_this){
+      var l_params = GetParams() + "&p_rows="+ l_page_rows + "&p_page_no=" + p_this.value;
+      LoadData(l_params );
+   };
+
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid);
+
+/*Load and Reload*/
+   function LoadData(p_params){
+      $.getJSON("train_profile_json" + p_params,onLoadComplete);
+   }
+
+   function onLoadComplete(data){
+      mygrid.clearAll();
+      zsi.table.dhtmlx.Unescape(data,8);
+      zsi.table.dhtmlx.Unescape(data,9);
+      mygrid.parse(data, "json");
+      l_page_rows=data.page_rows;
+      zsi.page.DisplayRecordPage(data.page_no,data.page_rows,data.row_count);
+      $("#modalWindow").modal('hide');
+   }
+
+
+$("#btnSubmit").click(function(){
+    $.getJSON("train_profile_json?" + GetParams(),onLoadComplete);   
+});
+
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

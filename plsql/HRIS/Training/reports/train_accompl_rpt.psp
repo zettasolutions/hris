@@ -1,0 +1,141 @@
+<%@ plsql procedure="train_accompl_rpt" %>
+<%@ plsql parameter="p_module_id"                 type="NUMBER" %>
+<%@ plsql parameter="p_trn_type"                  type="VARCHAR2" default="NULL" %>
+<%@ plsql parameter="p_start_date"                type="VARCHAR2" %>
+<%@ plsql parameter="p_end_date"                  type="VARCHAR2" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   05-FEB-15  BD    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(3000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_order                      VARCHAR2(1000);
+   l_sql                        VARCHAR2(9000);
+
+   train_cur                    SYS_REFCURSOR;
+   l_tran_no                    trainingschedattend_v.tran_no%TYPE;
+   l_trn_desc                   trainingschedattend_v.trn_desc%TYPE;
+   l_trn_hours                  trainingschedattend_v.trn_hours%TYPE;
+   l_start_date                 trainingschedattend_v.start_date%TYPE;
+   l_end_date                   trainingschedattend_v.end_date%TYPE;
+   l_trn_type                   trainingschedattend_v.trn_type%TYPE;
+   l_trn_type_name              trainingschedattend_v.trn_type_name%TYPE;
+   l_act_trn_cost               NUMBER;
+   l_attendees_count            NUMBER;
+   l_old_trn_type               trainingschedattend_v.trn_type%TYPE;
+
+   l_module_id                  s004_modules.module_id%TYPE := p_module_id;
+   l_row_count                  NUMBER(10) := 0;
+   l_rpt_title                  VARCHAR2(1024);
+%>
+<%
+   l_select := 'SELECT  ts.tran_no '
+            || ',ts.trn_desc  '
+            || ',ts.trn_hours '
+            || ',ts.start_date '
+            || ',ts.end_date '
+            || ',trn_type '
+            || ',trn_type_name ';
+
+   l_from   := '  FROM trainingschedattend_v ts';
+   l_order  := ' ORDER BY ts.trn_type_name, ts.tran_no ';
+   l_where  := ' WHERE ((ts.start_date BETWEEN ''' || TO_DATE(p_start_date,'MM/DD/YYYY') || ''' AND ''' || TO_DATE(p_end_date,'MM/DD/YYYY') || ''') '
+            || ' OR (ts.end_date BETWEEN ''' || TO_DATE(p_start_date,'MM/DD/YYYY') || ''' AND ''' || TO_DATE(p_end_date,'MM/DD/YYYY') || ''')) ';
+
+   IF p_trn_type IS NOT NULL THEN
+      l_where := l_where || ' AND trn_type = ' || p_trn_type;
+   END IF;
+
+   l_sql    := l_select || l_from || l_where || l_order;
+
+   l_rpt_title := 'Training Accomplishment Report ';
+   l_rpt_title := l_rpt_title || '<br>For the Period of '|| p_start_date || ' - ' || p_end_date;
+   l_rpt_title := UPPER(l_rpt_title);
+
+   reportheader(p_output=>'H');
+%>
+<body>
+
+<table>
+   <tr valign="top">
+      <td align="left"  class="head5"><%= l_rpt_title %></td>
+      <td align="right" class="head6">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss AM')) %></td>
+   </tr>
+</table>
+<table>
+<%
+OPEN train_cur FOR l_sql;
+LOOP
+   FETCH train_cur INTO l_tran_no
+                        ,l_trn_desc
+                        ,l_trn_hours
+                        ,l_start_date
+                        ,l_end_date
+                        ,l_trn_type
+                        ,l_trn_type_name;
+   EXIT WHEN train_cur%NOTFOUND;
+   l_row_count := l_row_count + 1;
+
+   IF l_trn_type <> NVL(l_old_trn_type,0) THEN
+      l_old_trn_type := l_trn_type;
+%>
+   <thead>
+   <tr valign="top">
+      <td colspan="6" class="head5" align="left"><%= l_trn_type_name %></td>
+   </tr>
+   <tr valign="bottom">
+      <th nowrap align="left">Tran. No.</th>
+      <th nowrap align="left">Title of Training</th>
+      <th nowrap align="left">Date of Training</th>
+      <th nowrap align="center">No. of<br>Attendees</th>
+      <th nowrap align="center">Training<br>Manhours</th>
+      <th nowrap align="center">Actual<br>Training<br>Cost</th>
+   </tr>
+   </thead>
+<%
+   END IF;
+
+   -- Get the Total Actual Cost for the training
+   BEGIN
+      SELECT SUM(actual_cost), COUNT(*)
+        INTO l_act_trn_cost, l_attendees_count
+        FROM s004_t07003_trainees
+       WHERE tran_no = l_tran_no;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+         l_act_trn_cost := NULL;
+         l_attendees_count := NULL;
+   END;
+%>
+<tr valign="top">
+   <td align="left"><%= l_tran_no %></td>
+   <td align="left"><%= l_trn_desc %></td>
+   <td align="left" nowrap><%= TO_CHAR(l_start_date,'MM/DD/YYYY') %> - <%= TO_CHAR(l_end_date,'MM/DD/YYYY') %></td>
+   <td align="center"><%= l_attendees_count %></td>
+   <td align="center"><%= l_trn_hours %></td>
+   <td align="right"><%= zsi_lib.FormatAmount(l_act_trn_cost,2) %></td>
+</tr>
+<%
+END LOOP;
+CLOSE train_cur;
+%>
+</table>
+</body>
+</html>

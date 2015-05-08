@@ -1,0 +1,126 @@
+<%@ plsql procedure="train_emp_wtrain_rpt" %>
+<%@ plsql parameter="p_from_date"                type="VARCHAR2" %>
+<%@ plsql parameter="p_to_date"                  type="VARCHAR2" %>
+<%@ plsql parameter="p_list_by"                  type="VARCHAR2" %>
+<%@ plsql parameter="p_cc"                       type="NUMBER" default="NULL"%>
+
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   05-FEB-15  GF    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_rpt_title                  VARCHAR2(1024);   
+%>
+<%  
+   
+   reportheader(p_output=>'H');
+%>
+<body>
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+
+<table>
+   <tr valign="top">
+      <td align="left"  class="head5">List of Employees with Training Report</td>
+      <td align="right" class="head6">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss AM')) %></td>
+   </tr>
+   <tr valign="top">
+      <td align="left"  class="head6">For the Period of <%=p_from_date%> -  <%=p_to_date%></td>
+   </tr>   
+</table>
+
+<table class="gridReport">
+   <thead>
+   <tr valign="bottom">
+      <th nowrap align="left">Employe Name</th>
+      <th nowrap align="left">Trans No.</th>
+      <th nowrap align="left">Training Title</th>
+      <th nowrap align="left">From - To</th>
+      <th nowrap align="left">Hours</th>
+      <th nowrap align="left">Cost</th>
+      <th nowrap align="left">Type</th>
+      <th nowrap align="left">Certificate</th>
+   </tr>
+   </thead> 
+</table>
+
+<script type="text/javascript">
+
+function LoadData(){
+   var l_url = window.location.href;
+   var l_index = l_url.indexOf("?");   
+   var l_params= l_url.substr(l_index + 1);
+   
+   $.getJSON("train_emp_wtrain_rpt_json?" + l_params
+      ,onLoadComplete
+   ).fail(function() {
+       $(".loadingStatus").css("display","none");
+       alert("Sorry, the current report cannot display at this moment.");
+   });
+
+}
+
+function onLoadComplete(data){
+   var jsonGrid = $(".gridReport");
+   jsonGrid.clearGrid();
+   var l_dept_code="";
+   $.each(data.rows, function () {
+      var r = ""
+
+      /*
+      this code is ready for more data.
+      if(l_dept_code != this.data[0]){
+         var trD=""
+         trD += "<tr valign='top'>";
+            trD += "<td class='dept_code' colspan='8'>" + this.data[1]   + "</td>";
+         trD += "</tr>";   
+         jsonGrid.append(trD);
+         l_dept_code=this.data[0];
+      }
+      */
+
+      r += "<tr valign='top'>";
+      r += "<td nowrap>" + this.data[1]   + "</td>";
+      r += "<td>" + this.data[2]   + "</td>";
+      r += "<td>" + this.data[3]   + "</td>";
+      r += "<td>" + this.data[4]  + " - " + this.data[5]  + "</td>";
+      r += "<td align='center'>" + this.data[6]   + "</td>";
+      r += "<td>" + this.data[7]   + "</td>";
+      r += "<td>" + this.data[8]   + "</td>";
+      r += "<td align='center'>" + this.data[9]   + "</td>";
+      r += "</tr>";   
+      
+      
+      jsonGrid.append(r);
+   });    
+   $(".loadingStatus").css("display","none");   
+   //window.print();
+}
+
+ 
+//on page loaded
+$(document).ready(function(){    
+   LoadData();
+}); 
+   
+ 
+</script>
+</body>
+</html>

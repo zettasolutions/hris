@@ -1,0 +1,105 @@
+<%@ plsql procedure="manual_section_form" %>
+<%@ plsql parameter="p_module_id"     type="NUMBER"%>
+<%@ plsql parameter="p_manual_code"   type="NUMBER"%>
+<%@ plsql parameter="p_chapter_code"  type="NUMBER"%>
+<%@ plsql parameter="p_seq_no"        type="NUMBER"   default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   14-JAN-15  BD    Added module_id parameter.
+   26-OCT-14  BD    New
+*/
+--DECLARATION SECTION
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_rec                   S004_T08402%ROWTYPE;
+   l_file_label            VARCHAR2(50) := 'Page Content';
+%>
+<%
+   IF p_seq_no IS NOT NULL THEN
+      SELECT *
+        INTO l_rec
+        FROM S004_T08402
+       WHERE seq_no = p_seq_no;
+   END IF;
+   pageheader;
+%>
+<body>
+<form name="frmSection" action="manual_section_update" method="POST"  enctype="multipart/form-data">
+<%
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_module_id', p_inputValue=>p_module_id);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_manual_code', p_inputValue=>p_manual_code);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_chapter_code', p_inputValue=>p_chapter_code);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no', p_inputValue=>p_seq_no);
+
+   zsi_bs_lib.OpenEntryForm;
+
+   zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBox(p_labelName =>'Title',p_inputName=>'p_section_title',p_inputValue=>l_rec.section_title, p_labelSize =>4, p_inputSize =>6, p_attributes=>'');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBoxArea(p_labelName =>'Summary',p_inputName=>'p_section_summary',p_labelSize =>4, p_inputValue=>l_rec.section_summary, p_inputSize =>6, p_attributes=>'rows="2"');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBox(p_labelName =>'Effectivity Date',p_inputName=>'p_effectivity_date',p_inputValue=>l_rec.effectivity_date,p_labelSize =>4, p_inputSize =>4);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBox(p_labelName =>'Page No.',p_inputName=>'p_pages',p_inputValue=>l_rec.page_no, p_labelSize =>4, p_inputSize =>5, p_attributes=>'');
+   zsi_bs_lib.CloseFormGroup();
+
+
+   IF l_rec.seq_no IS NOT NULL THEN
+      zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Existing Page Content',p_inputName=>'p_old_file',p_inputValue=>zsi_lib.GetBaseName(l_rec.file_name), p_labelSize =>4, p_inputSize =>6, p_attributes=>'readonly');
+      zsi_bs_lib.CloseFormGroup();
+      l_file_label := 'New Page Content';
+   END IF;
+   zsi_bs_lib.OpenFormGroup();
+%>
+      <label class="col-xs-4 control-label" for="p_file_id"><%= l_file_label %></label>
+      <div class="col-xs-6">
+         <div class="input-group col-xs-9">
+            <input type="file" name="p_file" size="80">
+         </div>
+      </div>
+<%
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.YesNo(p_label_name=>'Ammended?',p_field=>'ammendment',p_value=>l_rec.ammendment,p_label_size =>4,p_select_size =>2);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBoxArea(p_labelName =>'Remarks',p_inputName=>'p_remarks',p_labelSize =>4, p_inputValue=>l_rec.remarks, p_inputSize =>6, p_attributes=>'rows="3"');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.CloseEntryForm;
+
+%>
+
+<div class="col-xs-12 buttonGroup">
+<%
+      zsi_bs_lib.Offset(2);
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+%>
+</div>
+</form>
+
+</body>
+</html>
+

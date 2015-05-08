@@ -1,0 +1,236 @@
+<%@ plsql procedure="standard_value_list" %>
+<%@ plsql parameter="p_sv_code"         type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_sv_value"        type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_sv_desc"         type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_displayed_text"  type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_can_be_modified" type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_rows"            type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_page_no"         type="NUMBER"   default="1"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   08-SEP-14  BD    Passed p_module_id to form url.
+   01-JUL-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(4000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_sql                        VARCHAR2(8000);
+
+   TYPE sv_cur IS REF CURSOR;
+   svref          sv_cur;
+   l_seq_no                     S004_T08000.seq_no%TYPE;
+   l_sele_code                  S004_T08000.sele_code%TYPE;
+   l_sele_value                 S004_T08000.sele_value%TYPE;
+   l_description                S004_T08000.description%TYPE;
+   l_displayed_text             S004_T08000.displayed_text%TYPE;
+   l_display_seq                S004_T08000.display_seq%TYPE;
+   l_can_be_modified            S004_T08000.can_be_modified%TYPE;
+   l_row_no                     NUMBER(10);
+   l_rows                       NUMBER(10);
+   l_max_rows                   NUMBER(10) := zsi_lib.MaxRowsInList;
+   l_url                        VARCHAR2(32000) := 'standard_value_list';
+   l_row_count                  NUMBER(10) := 0;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+
+%>
+<%
+  pageheader(p_dgrid=>'Y');
+%>
+<%
+
+  l_select := 'SELECT seq_no,
+                      sele_code,
+                      sele_value,
+                      description,
+                      displayed_text,
+                      display_seq,
+                      can_be_modified ';
+  l_from   := ' FROM S004_T08000' ;
+  l_where  := ' WHERE 1=1';
+
+  IF p_sv_code IS NOT NULL THEN
+     l_where := l_where || ' AND sele_code LIKE '|| '''' || '%' ||  upper(p_sv_code) || '%' || '''' || ' ';
+  END IF;
+   l_url := l_url ||'?p_sv_code=' || p_sv_code;
+
+  IF p_sv_value IS NOT NULL THEN
+       l_where := l_where ||' AND upper(sele_value) LIKE '|| '''' || '%' ||  upper(p_sv_value) || '%' || '''' || ' ';
+  END IF;
+   l_url := l_url ||'&p_sv_value=' || p_sv_value;
+
+  IF p_sv_desc IS NOT NULL THEN
+       l_where := l_where ||' AND upper(descripton) LIKE '|| '''' || '%' ||  upper(p_sv_desc) || '%' || '''' || ' ';
+  END IF;
+   l_url := l_url ||'&p_sv_desc=' || p_sv_desc;
+
+  IF p_displayed_text IS NOT NULL THEN
+       l_where := l_where ||' AND upper(displayed_text) LIKE '|| '''' || '%' ||  upper(p_displayed_text) || '%' || '''' || ' ';
+  END IF;
+   l_url := l_url ||'&p_displayed_text=' || p_displayed_text;
+
+  IF p_can_be_modified IS NOT NULL THEN
+     l_where := l_where || ' AND can_be_modified= ' || p_can_be_modified;
+  END IF;
+   l_url := l_url ||'&p_can_be_modified=' || p_can_be_modified;
+
+   IF p_page_no = 1 AND p_rows IS NULL THEN
+      l_sql := 'SELECT COUNT(*) ' || l_from || l_where;
+      OPEN svref FOR l_sql;
+      LOOP
+         FETCH svref INTO l_rows;
+         EXIT WHEN svref%NOTFOUND;
+      END LOOP;
+      CLOSE svref;
+   ELSE
+      l_rows := p_rows;
+   END IF;
+   l_url := l_url ||'&p_rows=' || l_rows;
+
+   l_sql := l_select ||', row_number() OVER (ORDER BY sele_code) rn ' || l_from || l_where;
+
+   l_sql := 'SELECT * FROM ( ' || l_sql || ') ' || zsi_lib.GeneratePagingWhere(p_page_no);
+
+%>
+<body>
+
+<%
+   zsi_bs_lib.openModalWindow('modalWindow','Search Standard Value','sv_search_frm','standard_value_list');
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Code',p_inputName=>'p_sv_code',p_labelSize =>3, p_inputSize =>8);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Value',p_inputName=>'p_sv_value',p_labelSize =>3, p_inputSize =>8);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Description',p_inputName=>'p_sv_desc',p_labelSize =>3, p_inputSize =>8);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Displayed Text',p_inputName=>'p_displayed_text',p_labelSize =>3, p_inputSize =>8);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+       zsi_bs_lib.YesNo(p_label_name=>'Can be Modified?',p_field=>'can_be_modified',p_label_size =>3,p_select_size =>2);
+      zsi_bs_lib.CloseFormGroup();
+
+zsi_bs_lib.closeModalWindow('submit','Search'); %>
+
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+   <tr valign="bottom">
+      <th nowrap align="left" width="150px">Code</th>
+      <th nowrap align="left" width="50px">Value</th>
+      <th nowrap align="left" width="200px">Description</th>
+      <th nowrap align="left" width="200px">Displayed Text</th>
+      <th nowrap align="center" width="70px">Display Seq.</th>
+      <th nowrap align="center" width="70px">Can be Modified</th>
+      <th align="center" width="60px">Delete</th>
+   </tr>
+<%
+   l_dhtmlx_sort := 'str,str,str,int,str,na';
+
+   OPEN svref FOR l_sql;
+   LOOP
+      FETCH svref INTO l_seq_no,
+                       l_sele_code,
+                       l_sele_value,
+                       l_description,
+                       l_displayed_text,
+                       l_display_seq,
+                       l_can_be_modified,
+                       l_row_no;
+      EXIT WHEN svref%NOTFOUND;
+      l_row_count := l_row_count + 1;
+%>
+   <tr valign="bottom">
+      <td nowrap align="center"><%=l_sele_code %></td>
+      <td nowrap align="left"><%=l_sele_value %></td>
+      <td nowrap align="left"><%=l_description %></td>
+      <td nowrap align="left"><a href="javascript:void(0)" TITLE="Click here to Edit Standard Value" onClick="parent.attachURL('standard_value_form?p_module_id=<%= l_module_id %>&p_seq_no=<%= l_seq_no %>','Edit Standard Value &raquo; <%=l_sele_code %>', 600, 300)"><%=l_displayed_text %></a></td>
+      <td nowrap align="center"><%=l_display_seq %></td>
+      <td nowrap align="center"><%=l_can_be_modified %></td>
+      <td><input type="checkbox" name="p_cb" onclick="zsi.table.setCheckBox(this,<%= l_seq_no %>);">
+                         <input type="hidden" name="p_del_sv" value=""></td>
+   </tr>
+<%
+   END LOOP;
+%>
+</table>
+<div class="bottomNav">
+   <div class="buttonGroup">
+   <%
+      zsi_bs_lib.Button('btnSearch','Search',p_data_toggle =>'modal',p_data_target =>'#modalWindow');
+      zsi_bs_lib.Button('btnAdd','Add',p_onclick =>'parent.attachURL(''standard_value_form?p_module_id=' || l_module_id || '&p_seq_no='',''Add Standard Values'', 900, 350)');
+      zsi_bs_lib.Button('btnDelete','Delete',p_onclick =>'return checkDelete(''S004_DELETE?p_value=0'');');
+   %>
+   </div>
+<% zsi_lib.ShowPaging(p_page_no,l_rows,l_row_count); %>
+</div>
+
+<script type="text/javascript">
+
+   $(document).ready(function(){
+      $('.modal-dialog').css('width', '600px');
+   });
+
+
+   //on window resize
+   $(window).resize(function(){
+       zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+
+  function checkDelete(l_cmd) {
+    var l_stmt, l_count
+      l_stmt = zsi.table.getCheckBoxesValues("input[name=p_cb]:checked","p_value=","&");
+
+    if (l_stmt!="") {
+        if(confirm("Are you sure you want to delete ALL SELECTED Standard Values?")) {
+          $.post( l_cmd + "&" + l_stmt + "&p_table=S004_T08000&p_field=seq_no", function(d){
+               parent.ShowHideProgressWindow(false);
+               window.location.reload();
+          });
+        }
+     }
+  }
+
+   function gotoPage(p_this){
+       var url = "<%= l_url %>&p_page_no=" + p_this.value;
+       window.location.href = url;
+    };
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+
+</script>
+
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<%@ plsql procedure="train_emp_inq" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-FEB-15  GT    New
+*/
+--DECLARATION SECTION
+l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+l_dhtmlx_sort                VARCHAR2(1024);
+%>
+<%
+   pageheader(p_dWin=>'Y',p_dgrid=>'Y');
+%>
+<body>
+<form name="frmList">
+<%
+zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputIdName(p_labelSize=>2);    
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Cost Center',p_inputName=>'p_empl_cc_desc',p_labelSize =>2, p_inputSize =>4,p_attributes=>'disabled');
+      zsi_bs_lib.InputTextBox(p_labelName =>'Department',p_inputName=>'p_empl_dept_desc',p_labelSize =>2, p_inputSize =>4,p_attributes=>'disabled');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Group',p_inputName=>'p_empl_group_desc',p_labelSize =>2, p_inputSize =>4,p_attributes=>'disabled');
+      zsi_bs_lib.InputTextBox(p_labelName =>'Job Position',p_inputName=>'p_empl_job_desc',p_labelSize =>2, p_inputSize =>4,p_attributes=>'disabled');
+   zsi_bs_lib.CloseFormGroup();
+
+zsi_bs_lib.CloseEntryForm;
+
+%>
+</form>
+<div class="buttonGroup col-xs-offset-2">
+<%
+      zsi_bs_lib.Button('btnSubmit','Search');
+%>
+</div>
+
+ <br />
+
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+   <tr valign="bottom">
+      <th align="center" width="100px">Tran No.</th>
+      <th align="center" width="100px">Code</th>
+      <th align="left" width="350px">Training Attended</th>
+      <th align="left" width="200px">Venue</th>
+      <th align="center" width="70px">Start Date</th>
+      <th align="center" width="70px">End Date</th>  
+      <th align="right" width="100px">Cost</th>
+      <th align="center" width="100px">Training Hours </th>
+      <th align="left" width="200px">Conducted By </th>
+      <th align="left" width="200px">Speaker(s)</th>
+   </tr>
+<%
+l_dhtmlx_sort := ',na';
+%>
+<tr valign="bottom">
+   <td></td>
+</tr>
+</table>
+
+<div class="bottomNav">
+<div class="buttonGroup">
+<%
+zsi_bs_lib.Button('btnPrint','Print');
+%>
+</div>
+</div>
+
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript">
+
+var l_page_rows=0;
+
+function displayInfo(data){
+   $("#p_empl_job_desc").val(data[50]);
+   $("#p_empl_cc_desc").val(data[47]);
+   $("#p_empl_dept_desc").val(data[48]);
+   $("#p_empl_group_desc").val(data[49]);
+}
+
+//on page loaded
+$(document).ready(function(){
+      new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_id_no]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_id_no"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[0];
+            var td = currentObject.parentNode;
+            $("#p_empl_name").val(unescape(data[43])); 
+            displayInfo(data);
+         }
+      });    
+      
+     new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_name]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_name"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[43];
+             var td = currentObject.parentNode;
+             $("#p_empl_id_no").val(data[0]);
+             displayInfo(data);
+         }
+      });
+   mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid);
+   mygrid.clearAll();
+
+});
+
+
+function gotoPage(p_this){
+   var l_params = GetParams() + "&p_rows="+ l_page_rows + "&p_page_no=" + p_this.value;
+   LoadData(l_params );
+};
+
+function LoadData(p_params){
+   $.getJSON("train_emp_inq_json?" + p_params,onLoadComplete);
+}
+
+function onLoadComplete(data){
+   mygrid.parse(data, "json");
+   l_page_rows=data.page_rows;
+   zsi.page.DisplayRecordPage(data.page_no,data.page_rows,data.row_count);
+}
+
+$("#btnSubmit").click(function(){
+    if($("#p_empl_id_no").val()=="") {
+      alert("Please select Employee");
+      return;
+    }
+    mygrid.clearAll();
+    LoadData(GetParams());
+});
+
+function GetParams(){
+   var l_params="";
+   l_params += "p_empl_id_no=" + $("#p_empl_id_no").val();
+   return l_params;
+   }
+   
+
+$("#btnPrint").click(function(){
+   window.open("train_emp_inq_rpt?" + GetParams() + "&p_criteria=" + GetCriterias() );
+});
+
+
+
+function GetCriterias(){
+   var l_criterias="";
+
+      l_criterias=setCriteria("#p_empl_id_no","ID",l_criterias);
+   return l_criterias;
+}
+
+function setCriteria(p_inputName,p_desc, p_result){
+
+
+   var input = $(p_inputName);
+   if (input.prop("tagName")=="SELECT"){
+      if(input.find(":selected").text()){
+         if (p_result!="") p_result += ", ";
+         p_result += p_desc + "=" +  input.find(":selected").text();
+      }
+   }
+   else{
+      if(input.val()){
+         if (p_result!="") p_result += ", ";
+         p_result += p_desc + "=" + input.val();
+      }
+   }
+   return p_result;
+}
+
+   
+
+</script>
+<script type="text/javascript" src="zsi_employee_js"></script>
+</body>
+</html>

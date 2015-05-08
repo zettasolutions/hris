@@ -1,0 +1,168 @@
+<%@ plsql procedure="train_budsumm_grp_rpt" %>
+<%@ plsql parameter="p_year"    type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_cc"      type="NUMBER" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   02-FEB-15  GF    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(3000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_order                      VARCHAR2(4000);
+   l_sql                        VARCHAR2(8000);
+   l_prev                       NUMBER:=0;
+   l_total_cost                 NUMBER:=0;
+   l_total_hrs                  NUMBER:=0;   
+   l_gtotal_cost                NUMBER:=0;
+   l_gtotal_hrs                 NUMBER:=0;
+   
+   l_ctr                        NUMBER:=0;
+   TYPE ts_cur IS REF CURSOR;
+   tsref              ts_cur;
+      
+   l_empl_id_no                  train_budsumm_grp_v.empl_id_no%TYPE;
+   l_empl_name                   train_budsumm_grp_v.empl_name%TYPE;
+   l_conv_desc                   train_budsumm_grp_v.conv_desc%TYPE;
+   l_ttl_actual_cost             train_budsumm_grp_v.ttl_actual_cost%TYPE;
+   l_ttl_trn_hours               train_budsumm_grp_v.ttl_trn_hours%TYPE;
+   l_dept_code                   train_budsumm_grp_v.dept_code%TYPE;
+   l_dept_desc                   train_budsumm_grp_v.dept_desc%TYPE;
+   l_trn_year                    train_budsumm_grp_v.trn_year%TYPE;
+     
+   l_module_id                   s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+<%
+   l_select := 'SELECT empl_id_no,empl_name,conv_desc,ttl_actual_cost,ttl_trn_hours,dept_code,dept_desc, trn_year ';
+   l_from   := '  FROM s004.train_budsumm_grp_v';
+   l_where  := ' WHERE 1=1';
+   l_order  := ' ORDER BY dept_desc ';
+   
+   
+   IF p_year IS NOT NULL THEN
+      l_where := l_where || ' AND trn_year= ' || p_year;
+   END IF;   
+
+
+   IF p_cc IS NOT NULL THEN
+      l_where := l_where || ' AND dept_code= ' || p_cc;
+   END IF;
+   
+   
+   l_sql := l_select || l_from || l_where || l_order;
+
+   reportheader(p_output=>'H');   
+%>
+<body >
+ 
+   <table>
+      <tr valign="top">
+         <td width="400px" align="left" class="head1 reportTitle">Training Budget Summary by Group</td>
+         <td width="200px" align="right" class="reportcriteria">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss')) %></td>
+      </tr>
+   </table>
+   
+
+   <table >
+      <thead>
+         <tr>
+            <th align="left">ID No</th>
+            <th align="left">Name</th>
+            <th align="left">Type</th>
+            <th align="left">Actual Cost</th>
+            <th align="left">Training Hours</th>
+         </tr>
+      </thead> 
+      <tbody>   
+<%
+      OPEN tsref FOR l_sql;
+      LOOP
+          FETCH tsref INTO l_empl_id_no,l_empl_name,l_conv_desc,l_ttl_actual_cost,l_ttl_trn_hours,l_dept_code,l_dept_desc, l_trn_year;
+      EXIT WHEN tsref%NOTFOUND;
+  
+         IF l_prev <> l_dept_code THEN
+            l_prev := l_dept_code;
+
+
+            IF l_ctr > 0 THEN
+%>
+               <tr style="border-top:1pt solid" >
+                  <td  colspan="3" align="right">Sub Total</td>
+                  <td  ><%= zsi_lib.FormatAmount(l_total_cost,2) %></td>
+                  <td  ><%= l_total_hrs %></td>
+               </tr>
+<%
+               l_total_cost:=0;
+               l_total_hrs:=0;                
+
+            END IF;
+%>            
+            
+
+            <tr >
+               <td colspan="5" class="head4" style="padding-top: 7px;"><%= l_dept_desc %></td>
+            </tr>
+
+<%   
+         END IF;
+%>
+            <tr valign="bottom">
+               <td align="left"><%=l_empl_id_no %></td>
+               <td ><%=l_empl_name %></td>
+               <td ><%=l_conv_desc %></td>
+               <td ><%=zsi_lib.FormatAmount(l_ttl_actual_cost,2) %></td>
+               <td ><%=l_ttl_trn_hours %></td>
+            </tr>
+<% 
+               l_total_cost   :=l_total_cost    + l_ttl_actual_cost;
+               l_total_hrs    :=l_total_hrs     + l_ttl_trn_hours;   
+               
+               l_gtotal_cost  :=l_gtotal_cost   + l_ttl_actual_cost;
+               l_gtotal_hrs   :=l_gtotal_hrs    + l_ttl_trn_hours;   
+         l_ctr:=l_ctr + 1;
+       END LOOP;
+%>
+
+
+ 
+      <!-- Print Last Sub Total-->
+      <tr style="border-top:1pt solid" >
+         <td  colspan="3" align="right">Sub Total&nbsp;&raquo</td>
+         <td  ><%= zsi_lib.FormatAmount(l_total_cost,2) %></td>
+         <td  ><%= l_total_hrs %></td>
+      </tr>
+            
+      <tr > 
+        <td colspan="5">&nbsp;</td>
+      </tr>
+
+      <tr >
+         <td  colspan="2" ></td>
+         <td  align="right"  class="head4" >Grand Total&nbsp;&raquo</td>
+         <td  style="border-left:1pt solid; border-top:1pt solid;border-bottom:1pt solid"><%= zsi_lib.FormatAmount(l_gtotal_cost,2) %></td>
+         <td  style="border-right:1pt solid; border-top:1pt solid;border-bottom:1pt solid"><%= l_gtotal_hrs %></td>
+      </tr>
+            
+
+      </tbody>
+      </table>
+
+ 
+ 
+</body>
+</html>

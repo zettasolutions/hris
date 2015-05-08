@@ -1,0 +1,31 @@
+<%@ plsql procedure="meds_inactive_update" %>
+<%@ plsql parameter="p_inactive" type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   08-AUG-14  GT    New
+*/
+%>
+<%
+BEGIN
+    
+      FOR i IN 1..p_inactive.COUNT LOOP
+        IF p_inactive(i) IS NOT NULL THEN
+        UPDATE S004_T08010_MEDS 
+           SET is_maintenance=0 
+          WHERE seq_no = p_inactive(i);        
+        END IF;
+      END LOOP;
+END;
+%>

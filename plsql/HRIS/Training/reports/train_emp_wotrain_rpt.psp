@@ -1,0 +1,133 @@
+<%@ plsql procedure="train_emp_wotrain_rpt" %>
+<%@ plsql parameter="p_year"                type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_year2"               type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_cc"                  type="NUMBER" default="NULL"%>
+
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   10-FEB-15  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_rpt_title                  VARCHAR2(1024);   
+%>
+<%  
+   
+   reportheader(p_output=>'H');
+%>
+<body>
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+
+<table>
+   <tr valign="top">
+      <td align="left"  class="head5">List of Employees without Training Report</td>
+      <td align="right" class="head6">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss AM')) %></td>
+   </tr>
+   <tr valign="top">
+      <td align="left"  class="head6">
+<% IF ((p_year IS NOT NULL AND p_year2 IS NULL) OR (p_year = p_year2)) THEN %>      
+      For the Year <%=p_year%>
+<% ELSE %>      
+      From Year: <%=p_year%> To Year: <%=p_year2%>
+<% END IF; %>            
+      </td>
+   </tr>   
+</table>
+
+<table class="gridReport">
+
+</table>
+
+<script type="text/javascript">
+
+function LoadData(){
+   var l_url = window.location.href;
+   var l_index = l_url.indexOf("?");   
+   var l_params= l_url.substr(l_index + 1);
+   
+   $.getJSON("train_emp_wotrain_rpt_json?" + l_params
+      ,onLoadComplete
+   ).fail(function() {
+       $(".loadingStatus").css("display","none");
+       alert("Sorry, the current report cannot display at this moment.");
+   });
+
+}
+
+
+
+function onLoadComplete(data){
+   var newdata = zsi.json.groupByColumnIndex(data,0);
+   var jsonGrid = $(".gridReport");
+   jsonGrid.clearGrid();
+   var l_dept_code="";
+   for(var _group in newdata) {
+      var r = ""
+      r +="<tr>";
+        r +="<th colspan='5' align='left'>Cost Center:"   + _group  + " </th>";
+
+   
+      r +="</tr>";  
+               r +="<tr >";
+         
+              r +="<th nowrap align='left'>Employe Name</th>";
+              r +="<th nowrap align='left'>SG</th>";
+              r +="<th nowrap align='left'>Employee Type</th>";
+              r +="<th nowrap align='left'>Date Hired</th>";
+            r +="</tr>"; 
+      
+ 
+       var rowItem= newdata[_group]
+       var ctr=0;
+         $.each(rowItem,function(){  
+            r +="<tr>";
+                 
+                 r +="<td> "   +  unescape(this[1])  + " </td>";  
+                 r +="<td> "   +  this[2]  + " </td>"; 
+                 r +="<td> "   +  this[3]  + " </td>";
+                 r +="<td> "   +  this[4]  + " </td>"; 
+            r +="</tr>";
+            ctr++;
+         });
+ 
+ 
+       r +="<tr>";
+         r +="<td style='border-bottom:1pt solid #000;font-weight:bold' colspan='5' align='center' >Count per Cost Center:"   + ctr  + " </td>";
+       r +="</tr>";  
+
+      jsonGrid.append(r);
+   } 
+   
+   
+   $(".loadingStatus").css("display","none");   
+   window.print();
+   
+}
+
+ 
+//on page loaded
+$(document).ready(function(){    
+   LoadData();
+}); 
+   
+ 
+</script>
+</body>
+</html>

@@ -1,0 +1,435 @@
+<%@ plsql procedure="train_sched_attend_update" %>
+<%@ plsql parameter="p_tran_no"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_trf_tranno"              type="VARCHAR2" default="NULL"%> 
+<%@ plsql parameter="p_trn_code"                type="VARCHAR2" default="NULL"%>   
+<%@ plsql parameter="p_trn_type"                type="VARCHAR2" default="NULL"%>   
+<%@ plsql parameter="p_venu_code"               type="VARCHAR2" default="NULL"%>  
+<%@ plsql parameter="p_spsr_code"               type="VARCHAR2" default="NULL"%>  
+<%@ plsql parameter="p_trn_days"                type="VARCHAR2" default="NULL"%>   
+<%@ plsql parameter="p_trn_hours"               type="VARCHAR2" default="NULL"%>  
+<%@ plsql parameter="p_trn_status"              type="VARCHAR2" default="NULL"%> 
+<%@ plsql parameter="p_conv_code"               type="VARCHAR2" default="NULL"%>  
+<%@ plsql parameter="p_reg_fee"                 type="VARCHAR2" default="NULL"%>    
+<%@ plsql parameter="p_travel_type"             type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_start_date"              type="VARCHAR2" default="NULL"%> 
+<%@ plsql parameter="p_end_date"                type="VARCHAR2" default="NULL"%>   
+<%@ plsql parameter="p_remarks"                 type="VARCHAR2" default="NULL"%>    
+<%@ plsql parameter="p_module_id"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tab"                     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_spk_seq_no"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_spk_code"                type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_cost_seq_no"             type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_item_code"               type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_item_amount"             type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_tt_seq_no"               type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_empl_id_no"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_empl_name"               type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_tt_reg_fee"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_reg_fee_charge_to"       type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_travel_cost"             type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_travel_cost_charge_to"   type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_with_certificate"        type="zsi_lib.VC2_255_ARR"%>
+
+<%@ plsql parameter="p_seq_no"                  type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_trainee_assess_seq_no"   type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_assessment_code"         type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_rating"                  type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_id_no"                   type="zsi_lib.VC2_255_ARR"%>
+
+
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   24-OCT-14  GT    New
+*/
+--DECLARATION SECTION
+   l_js_path         VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed         VARCHAR2(1) := 'N';
+   l_rec             S004_T07003%ROWTYPE;
+   l_recSpk          S004_T07003_SPEAKER%ROWTYPE;
+   l_recCost         S004_T07003_COSTING%ROWTYPE;
+   l_recTT           S004_T07003_TRAINEES%ROWTYPE;
+   l_recTA           S004_T07003_ASSESSMENT%ROWTYPE;
+   l_date_format     VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+   l_start_date      DATE;
+   l_end_date        DATE;
+   l_tran_no         S004_T07003.TRAN_NO%TYPE;
+   l_item_amount     S004_T07003_COSTING.item_amount%TYPE;
+   l_reg_fee         S004_T07003.reg_fee%TYPE;
+   l_tt_reg_fee      S004_T07003_TRAINEES.reg_fee%TYPE;
+   l_travel_cost     S004_T07003_TRAINEES.travel_cost%TYPE;
+   l_seq_no          NUMBER:=0;
+   l_start           NUMBER:=0;
+   l_end             NUMBER:=0;
+   l_loopctr         NUMBER:=1;
+   l_divparts        NUMBER:=0;
+   
+   CURSOR spk_cur IS
+      SELECT seq_no, spk_code
+        FROM s004_T07003_SPEAKER
+       WHERE tran_no = p_tran_no;
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Training Schedule and Attendees </title>
+</head>
+<body>
+<%  
+   l_tran_no := p_tran_no;  
+   l_start_date  := TO_DATE(p_start_date,l_date_format);
+   l_end_date  := TO_DATE(p_end_date,l_date_format);
+
+   IF p_tran_no IS NULL  AND p_trn_code IS NOT NULL THEN
+      SELECT S004_T07003_SQ001.NEXTVAL INTO l_tran_no FROM DUAL;      
+
+      INSERT INTO S004_T07003 (
+          tran_no    
+         ,trf_tranno 
+         ,trn_code   
+         ,trn_type   
+         ,venu_code  
+         ,spsr_code  
+         ,trn_days   
+         ,trn_hours  
+         ,trn_status 
+         ,conv_code  
+         ,travel_type
+         ,start_date 
+         ,end_date   
+         ,remarks    
+         ,created_by
+         ,date_created)
+      VALUES (
+          l_tran_no  
+         ,p_trf_tranno 
+         ,p_trn_code   
+         ,p_trn_type   
+         ,p_venu_code  
+         ,p_spsr_code  
+         ,p_trn_days   
+         ,p_trn_hours  
+         ,p_trn_status 
+         ,p_conv_code  
+         ,p_travel_type
+         ,l_start_date 
+         ,l_end_date   
+         ,p_remarks    
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE);
+         
+   ELSIF p_tran_no IS NOT NULL AND p_trn_code IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T07003 WHERE tran_no=p_tran_no;
+
+      IF zsi_lib.IsChanged(l_rec.trf_tranno, TO_NUMBER(p_trf_tranno)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.trf_tranno := p_trf_tranno;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.trn_code, TO_NUMBER(p_trn_code)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.trn_code := p_trn_code;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.trn_type, TO_NUMBER(p_trn_type)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.trn_type := p_trn_type;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.venu_code, p_venu_code) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.venu_code := p_venu_code;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.spsr_code, p_spsr_code) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.spsr_code := p_spsr_code;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.trn_days, TO_NUMBER(p_trn_days)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.trn_days := p_trn_days;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.trn_hours, TO_NUMBER(p_trn_hours)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.trn_hours := p_trn_hours;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.trn_status, TO_NUMBER(p_trn_status)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.trn_status := p_trn_status;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.trn_type, TO_NUMBER(p_trn_type)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.trn_type := p_trn_type;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.conv_code, TO_NUMBER(p_conv_code)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.conv_code := p_conv_code;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.travel_type, TO_NUMBER(p_travel_type)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.travel_type := p_travel_type;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.start_date, l_start_date) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.start_date := l_start_date;
+      END IF;
+ 
+      IF zsi_lib.IsChanged(l_rec.end_date, l_end_date) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.end_date := l_end_date;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.remarks, p_remarks) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.remarks := p_remarks;
+      END IF;
+
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modified := SYSDATE;
+         UPDATE S004_T07003 SET row = l_rec WHERE tran_no=p_tran_no;
+      END IF;
+   END IF;
+   
+   
+ /* Tab Details */   
+   FOR i IN 2..p_spk_code.COUNT LOOP
+      l_seq_no := p_spk_seq_no(i);  
+      IF p_spk_code(i) IS NOT NULL  AND l_seq_no IS NULL THEN
+         SELECT S004_T07003_SQ001.NEXTVAL INTO l_seq_no FROM DUAL;
+         INSERT INTO S004_T07003_SPEAKER (
+            tran_no
+           ,seq_no                  
+           ,spk_code
+           ,created_by
+           ,date_created
+            )
+         VALUES
+         (  l_tran_no
+           ,l_seq_no
+           ,p_spk_code(i)  
+           ,zsi_sessions_lib.GetCookieUser
+           ,SYSDATE
+         );             
+      ELSIF p_spk_code(i) IS NOT NULL  AND p_spk_seq_no(i) IS NOT NULL THEN
+         SELECT * INTO l_recSpk FROM S004_T07003_SPEAKER WHERE seq_no=p_spk_seq_no(i);
+         IF zsi_lib.IsChanged(l_recSpk.spk_code, p_spk_code(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_recSpk.spk_code := p_spk_code(i);
+         END IF;
+
+         IF l_changed = 'Y' THEN
+            l_recSpk.modified_by := zsi_sessions_lib.GetCookieUser;
+            l_recSpk.date_modified := SYSDATE;
+            UPDATE S004_T07003_SPEAKER SET row = l_recSpk WHERE seq_no=p_spk_seq_no(i);
+         END IF;            
+      END IF;   
+   END LOOP;  
+      
+   l_changed := 'N';
+   
+   FOR i IN 2..p_item_code.COUNT LOOP
+      l_seq_no := p_cost_seq_no(i); 
+      l_item_amount :=  REPLACE(p_item_amount(i),',','');   
+      IF p_item_code(i) IS NOT NULL  AND p_cost_seq_no(i) IS NULL THEN
+         SELECT S004_T07003_SQ001.NEXTVAL INTO l_seq_no FROM DUAL;
+         INSERT INTO S004_T07003_COSTING (
+             tran_no
+            ,seq_no                  
+            ,item_code
+            ,item_amount
+       ,created_by
+       ,date_created
+            )
+         VALUES
+         (   l_tran_no
+            ,l_seq_no
+            ,p_item_code(i)
+            ,l_item_amount
+       ,zsi_sessions_lib.GetCookieUser
+       ,SYSDATE
+            );  
+      ELSIF p_item_code(i) IS NOT NULL  AND p_cost_seq_no(i) IS NOT NULL THEN
+
+         SELECT * INTO l_recCost FROM S004_T07003_COSTING WHERE seq_no=p_cost_seq_no(i);
+
+         IF zsi_lib.IsChanged(l_recCost.item_code, TO_NUMBER(p_item_code(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_recCost.item_code := p_item_code(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recCost.item_amount, l_item_amount) = 'Y' THEN
+            l_changed :='Y';
+            l_recCost.item_amount := l_item_amount;
+         END IF;
+         
+         IF l_changed = 'Y' THEN
+            l_recCost.modified_by := zsi_sessions_lib.GetCookieUser;
+            l_recCost.date_modified := SYSDATE;
+            UPDATE S004_T07003_COSTING SET row = l_recCost WHERE seq_no=p_cost_seq_no(i);
+         END IF;            
+      END IF;   
+   END LOOP;  
+      
+   l_changed := 'N';
+
+   FOR i IN 2..p_empl_id_no.COUNT LOOP
+      l_seq_no := p_tt_seq_no(i); 
+      l_tt_reg_fee :=  REPLACE(p_tt_reg_fee(i),',','');   
+      l_travel_cost :=  REPLACE(p_travel_cost(i),',','');   
+      IF p_empl_id_no(i) IS NOT NULL  AND l_seq_no IS NULL THEN
+         SELECT S004_T07003_SQ001.NEXTVAL INTO l_seq_no FROM DUAL;
+         INSERT INTO S004_T07003_TRAINEES (
+             tran_no
+            ,seq_no  
+            ,empl_id_no
+            ,reg_fee
+            ,reg_fee_charge_to
+            ,travel_cost
+            ,travel_cost_charge_to
+            ,actual_cost
+            ,with_certificate
+       ,created_by
+       ,date_created
+            )
+         VALUES
+         (   l_tran_no
+            ,l_seq_no
+            ,p_empl_id_no(i)
+            ,l_tt_reg_fee
+            ,p_reg_fee_charge_to(i)
+            ,l_travel_cost
+            ,p_travel_cost_charge_to(i)
+            ,NVL(l_tt_reg_fee,0) + NVL(l_travel_cost,0)
+            ,p_with_certificate(i)
+            ,zsi_sessions_lib.GetCookieUser
+            ,SYSDATE
+            );
+            
+ 
+         IF zsi_lib.IsChanged(l_recTT.empl_id_no, TO_NUMBER(p_empl_id_no(i))) = 'Y' THEN
+            l_changed :='Y';
+         l_recTT.empl_id_no := p_empl_id_no(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recTT.reg_fee, l_tt_reg_fee) = 'Y' THEN
+            l_changed :='Y';
+         l_recTT.reg_fee := l_tt_reg_fee;
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recTT.reg_fee_charge_to, TO_NUMBER(p_reg_fee_charge_to(i))) = 'Y' THEN
+            l_changed :='Y';
+         l_recTT.reg_fee_charge_to := p_reg_fee_charge_to(i);
+         END IF;
+         
+         IF zsi_lib.IsChanged(l_recTT.travel_cost, l_travel_cost) = 'Y' THEN
+            l_changed :='Y';
+         l_recTT.travel_cost := l_travel_cost;
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recTT.travel_cost_charge_to, TO_NUMBER(p_travel_cost_charge_to(i))) = 'Y' THEN
+            l_changed :='Y';
+         l_recTT.travel_cost_charge_to := p_travel_cost_charge_to(i);
+         END IF;
+         
+         IF zsi_lib.IsChanged(l_recTT.with_certificate, TO_NUMBER(p_with_certificate(i))) = 'Y' THEN
+            l_changed :='Y';
+         l_recTT.with_certificate := p_with_certificate(i);
+         END IF;
+         
+         IF l_changed = 'Y' THEN
+            l_recTT.actual_cost := NVL(l_tt_reg_fee,0) + NVL(l_travel_cost,0);
+            l_recTT.modified_by := zsi_sessions_lib.GetCookieUser;
+            l_recTT.date_modified := SYSDATE;
+            UPDATE S004_T07003_TRAINEES SET row = l_recTT WHERE seq_no=p_tt_seq_no(i);
+         END IF;            
+      END IF;        
+   END LOOP; 
+--   l_reg_fee := zsi_lib.GetSum('actual_cost','S004_T07003_TRAINEES',' tran_no = ' || l_tran_no);
+--   UPDATE S004_T07003 SET reg_fee = l_reg_fee WHERE tran_no = l_tran_no; 
+      l_divparts := (p_trainee_assess_seq_no.COUNT - 1) / (p_seq_no.COUNT-1);
+      FOR i IN 2..p_seq_no.COUNT LOOP  
+         IF l_loopctr = 1 then        
+             l_start := 2;
+             l_end := (l_start + l_divparts) -1;
+         ELSE
+             l_start := l_end + 1;
+             l_end := (l_start + l_divparts)-1;
+         END IF;
+         l_loopctr := l_loopctr + 1;
+      IF p_seq_no(i) IS NULL THEN
+         SELECT S004_T07003_SQ001.NEXTVAL INTO l_seq_no FROM DUAL; 
+         FOR j IN l_start..l_end LOOP        
+              INSERT INTO S004_T07003_ASSESSMENT (
+                tran_no
+               ,id_no
+               ,seq_no
+               ,assessment_type
+               ,assessment_code
+               ,rating
+               ,trainee_assess_seq_no
+               ,created_by
+               ,date_created
+              )
+               VALUES (
+                 l_tran_no
+                ,p_id_no(i)
+                ,l_seq_no
+                ,200
+                ,p_assessment_code(j)
+                ,p_rating(j)
+                ,S004_T07003_SQ001.NEXTVAL
+                ,zsi_sessions_lib.GetCookieUser
+                ,SYSDATE
+                );           
+         END LOOP;
+      ELSE
+         FOR j IN l_start..l_end LOOP 
+               SELECT * INTO l_recTA FROM S004_T07003_ASSESSMENT WHERE trainee_assess_seq_no = p_trainee_assess_seq_no(j);
+
+               IF zsi_lib.IsChanged(l_recTA.id_no, TO_NUMBER(p_id_no(i))) = 'Y' THEN
+                  l_changed :='Y';
+                  l_recTA.id_no := p_id_no(i);
+               END IF;
+
+               IF zsi_lib.IsChanged(l_recTA.rating, TO_NUMBER(p_rating(j))) = 'Y' THEN
+                  l_changed :='Y';
+                  l_recTA.rating := p_rating(j);
+               END IF;
+
+            IF l_changed = 'Y' THEN
+               l_recTA.modified_by := zsi_sessions_lib.GetCookieUser;
+               l_recTA.date_modifIed := SYSDATE;
+               UPDATE S004_T07003_ASSESSMENT SET row = l_recTA WHERE trainee_assess_seq_no = p_trainee_assess_seq_no(j);
+            END IF;         
+         END LOOP;
+      END IF;
+   END LOOP;
+END;
+%>
+<script type="text/javascript">
+   var ifr = parent.dhxLayout.cells("b").getFrame();
+   location.href="train_sched_attend_form?p_module_id=<%=p_module_id%>&p_tran_no=<%=p_tran_no%>&p_tab=<%=p_tab%>";
+</script>

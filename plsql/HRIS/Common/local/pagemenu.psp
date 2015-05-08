@@ -1,0 +1,229 @@
+<%@ plsql procedure="pagemenu" %>
+<%@ plsql parameter="p_sys_id"   type="VARCHAR2"   default="NULL"%>
+<%!
+   /*
+   =======================================================================
+   *
+   * Copyright (c) 2014 ZettaSolutions,Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+   */
+
+   /* Modification History
+   Date       By    History
+   ---------  ----  ------------------------------------------------------------------------
+   09-JAN-15  GT    Added ismenu=1.
+   27-AUG-14  GT    Changed to dynamic menu.
+   27-JUL-14  GT    Modified Medical_plan to Medplan, Medical_acquired to Medacquired
+   Jun-29-14  GF    Change MyWorklist menu to admin menu, and removed other remaining item menus under admin menu.
+   Jun-25-14  GF    Added collapse and expand function for Sub-Menu.
+   Jun-25-14  BD    Used s004_lib for the paths.
+   Jun-21-14  GF    New
+   */
+
+   l_style_path     VARCHAR2(128) := zsi_lib.StylePath;
+   l_dhtmlx_path    VARCHAR2(128) := zsi_lib.DHTMLXPath;
+   l_js_path        VARCHAR2(128) := zsi_lib.JSPath;
+   l_user           VARCHAR2(100) := zsi_sessions_lib.GetCookieUser;
+
+    
+%>
+<html>
+<head>
+   <META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+   <META HTTP-EQUIV="EXPIRES" CONTENT="<%= TO_CHAR(SYSDATE,'Dy, DD Mon YYYY HH:MI:SS') %>">
+   <title>HRIS</title>
+   <link rel="stylesheet" type="text/css"  href="<%= l_dhtmlx_path %>dhtmlxAccordion/codebase/skins/dhtmlxaccordion_dhx_skyblue.css">
+   <script type="text/javascript" src="<%= l_dhtmlx_path %>dhtmlxAccordion/codebase/dhtmlxcommon.js"></script>
+   <script type="text/javascript" src="<%= l_dhtmlx_path %>dhtmlxAccordion/codebase/dhtmlxaccordion.js"></script>
+   <script type="text/javascript" src="<%= l_dhtmlx_path %>dhtmlxAccordion/codebase/dhtmlxcontainer.js"></script>
+   <script type="text/javascript" src="<%= l_js_path %>jquery-1.11.1.min.js"></script>
+   <link rel="stylesheet" type="text/css" href="<%= l_style_path %>bootstrap.min.css">
+   <link rel="stylesheet" type="text/css" href="zsi_style_css">
+
+
+<script type="text/javascript">
+
+ var dhxAccord;
+
+/*----[ jquery codes ]---------------*/
+$(document).ready(function(){
+   //calling a function when page is ready.
+   doOnLoad();
+
+  //JQuery function -  for collapse and expand Sub-Menu
+   $(".leftnavpanel ul").closest("li").each(function(){
+      $(this).children("a").click(function(e){
+         $(this.parentNode).children("ul").toggle("slow");
+      });
+   });
+
+});
+
+/*----[ end of jquery codes ]--------*/
+
+
+ function openLink (pLink, pText) {
+      parent.dhxLayout.cells('b').attachURL(pLink);
+      parent.dhxLayout.cells('b').setText(pText);
+ }
+
+function doOnLoad() {
+   dhxAccord=new dhtmlXAccordion(document.body);
+   dhxAccord.addItem("iAdmin", "Admin");
+   dhxAccord.cells("iAdmin").attachObject("Admin");
+
+   dhxAccord.addItem("iTransactions", "Transactions");
+   dhxAccord.cells("iTransactions").attachObject("Transactions");
+
+   dhxAccord.addItem("iInquiry", "Inquiry");
+   dhxAccord.cells("iInquiry").attachObject("Inquiry");
+
+   dhxAccord.addItem("iReports", "Reports");
+   dhxAccord.cells("iReports").attachObject("Reports");
+
+   dhxAccord.addItem("iSystem", "System");
+   dhxAccord.cells("iSystem").attachObject("System");
+
+   dhxAccord.openItem("iAdmin");
+   dhxAccord.setEffect(true);
+
+ }
+
+
+</script>
+</head>
+
+<body>
+ 
+ 
+ <div id="Admin" style="display:none"  class="leftnavpanel">
+    <ul>
+ 
+    <li>&raquo; <a href="javascript: openLink('dental_services_list','Dental Services');">Dental Services</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('doctors_directory_list','Doctors Directory');">Doctors Directory</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('exam_rtype_list','Examination Result Type');">Examination Result Type</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('exam_rtype_exm_list','Examination Result Type-Exam');">Examination Result Type-Exam</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('exam_rtype_grp_list','Examination Result-Group');">Examination Result-Group</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('hcp_list','Hospital, Clinic, Pharmacy');">Hospital, Clinic, Pharmacy</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('illnesses_list','Illnesses');">Illnesses</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('lab_staff_list','Laboratory Staffs');">Laboratory Staffs</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('medicine_reference_list','Medicine Reference');">Medicine Reference</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('standard_value_list','Standard Value');">Standard Value</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('treatment_for_list','Treatment For');">Treatment For</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('vaccines_list','Vaccine');">Vaccine</a></li>
+    
+    
+ 
+    </ul>
+ </div>
+ 
+ <div id="Transactions" style="display:none"  class="leftnavpanel">
+    <ul>
+ 
+    <li>&raquo; <a href="javascript: openLink('medplan_coverage_reset_form','Med. Plan Coverage Reset');">Med. Plan Coverage Reset</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('medplan_coverage_list','Medical Plan Data Entry');">Medical Plan Data Entry</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('med_inv_list','Medicine Inventory Data Entry');">Medicine Inventory Data Entry</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('oncredit_form','On-Credit Transactions');">On-Credit Transactions</a></li>
+ 
+    </ul>
+ </div>
+ 
+ <div id="Inquiry" style="display:none"  class="leftnavpanel">
+    <ul>
+ 
+    <li>&raquo; <a href="javascript: openLink('availment_by_ab','Availment By Age Bracket');">Availment By Age Bracket</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('availment_by_id','Availment By Id');">Availment By Id</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('emp_info','Employee Information');">Employee Information</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('indv_med_chart','Individual Med. Chart');">Individual Med. Chart</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('med_inventory','Inventory of Medicines');">Inventory of Medicines</a></li>
+ 
+    </ul>
+ </div>
+ <%%>
+ <div id="Reports" style="display:none"  class="leftnavpanel">
+    <ul>
+ 
+    <li>&raquo; <a href="javascript: openLink('ape_results_byID_rpt_filter','APE Results by Id');">APE Results by Id</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('curr_medplan_exp_graph_filter','Current Med Plan Exp.- Graph');">Current Med Plan Exp.- Graph</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('CURR_MEDPLAN_EXP_RPT_FILTER','Current Med. Plan Exp. - List');">Current Med. Plan Exp. - List</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('dental_exam_byID_rpt_filter','Dental Exam Results by Id');">Dental Exam Results by Id</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('','Dependents who availed the PhilHealth Counterpart');">Dependents who availed the PhilHealth Counterpart</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('empl_hosp_rpt_filter','Employees Hospitalization');">Employees Hospitalization</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('empl_no_ape_ade_rpt_filter','Employees With No APE/ADE');">Employees With No APE/ADE</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('empl_for_ape_ade_rpt_filter','Employees for APE/ADE');">Employees for APE/ADE</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('empl_clearance_rpt_filter','Employees with Clearance');">Employees with Clearance</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('EMPL_DENTAL_RPT_FILTER','Employees with Dental Exam');">Employees with Dental Exam</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('eye_exam_rpt_filter','Employees with Eye Exam');">Employees with Eye Exam</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('health_monitoring_rpt_filter','Health Monitoring');">Health Monitoring</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('hospitalization_exp_rpt_filter','Hospitalization Expenses');">Hospitalization Expenses</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('house_cons_byID_rpt_filter','House Consultation by Id');">House Consultation by Id</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('loa_rpt_filter','LOA Printing');">LOA Printing</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('MEDPLAN_SUMM_RPT_FILTER','Medical Plan Summary');">Medical Plan Summary</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('med_disp_rpt_filter','Medicine Dispensed from Clinic');">Medicine Dispensed from Clinic</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('med_exp_rpt_filter','Monthly Medicine Expenses');">Monthly Medicine Expenses</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('philhealth_avail_rpt_filter','Philhealth Availment');">Philhealth Availment</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('top10_health_reltd_rpt_filter','Top 10 Health Related Complaints');">Top 10 Health Related Complaints</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('illness_topN_graph_filter','Top Illnesses - Graph');">Top Illnesses - Graph</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('ILLNESS_TOPN_RPT_FILTER','Top Illnesses - List');">Top Illnesses - List</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('vaccination_rpt_filter','Vaccination by Vaccine');">Vaccination by Vaccine</a></li>
+ 
+    </ul>
+ </div>
+ 
+ <div id="System" style="display:none"  class="leftnavpanel">
+    <ul>
+ 
+    <li>&raquo; <a href="javascript: openLink('hris_modules_list','HRIS Modules');">HRIS Modules</a></li>
+ 
+    <li>&raquo; <a href="javascript: openLink('hris_users_list','Users');">Users</a></li>
+ 
+    </ul>
+ </div>
+ 
+  
+</body>
+</html>

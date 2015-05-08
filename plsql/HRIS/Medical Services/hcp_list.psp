@@ -1,0 +1,232 @@
+<%@ plsql procedure="hcp_list" %>
+<%@ plsql parameter="p_ref_code" type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_ref_desc" type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_ref_type" type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_rows"     type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_page_no"  type="NUMBER"   default="1"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   08-SEP-14  BD    Passed p_module_id to form url.
+   05-JUL-14  GT    Added Pagination.
+   02-JUL-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(4000);
+   l_where                      VARCHAR2(4000);
+   l_sql                        VARCHAR2(8000);
+   l_from                       VARCHAR2(1000);
+
+
+   TYPE hcp_cur IS REF CURSOR;
+   hcpref          hcp_cur;
+   l_ref_code                   S004_T08004.reference_code%TYPE;
+   l_ref_desc                   S004_T08004.reference_desc%TYPE;
+   l_ref_type                   S004_T08004.referral_type%TYPE;
+   l_acct_no                    S004_T08004.account_no%TYPE;
+   l_address                    S004_T08004.address%TYPE;
+   l_remarks                    S004_T08004.remarks%TYPE;
+   l_row_no                     NUMBER(10);
+   l_rows                       NUMBER(10);
+   l_max_rows                   NUMBER(10) := zsi_lib.MaxRowsInList;
+   l_url                        VARCHAR2(32000) := 'hcp_list';
+   l_row_count                  NUMBER(10) := 0;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+
+
+%>
+<%
+  pageheader(p_dgrid=>'Y');
+%>
+<%
+
+  l_select := 'SELECT reference_code,
+                      reference_desc,
+                      referral_type,
+                      account_no,
+                      address,
+                      remarks ';
+  l_from   := ' FROM S004_T08004 ' ;
+  l_where  := ' WHERE 1=1';
+
+  IF p_ref_code IS NOT NULL THEN
+     l_where := l_where || ' AND reference_code= ' || p_ref_code;
+  END IF;
+   l_url := l_url ||'?p_ref_code=' || p_ref_code;
+
+  IF p_ref_desc IS NOT NULL THEN
+       l_where := l_where ||' AND upper(reference_desc) LIKE '|| '''' || '%' ||  upper(p_ref_desc) || '%' || '''' || ' ';
+  END IF;
+   l_url := l_url ||'&p_ref_desc=' || p_ref_desc;
+
+  IF p_ref_type IS NOT NULL THEN
+     l_where := l_where || ' AND referral_type= ' || p_ref_type;
+  END IF;
+   l_url := l_url ||'&p_ref_type=' || p_ref_type;
+
+   IF p_page_no = 1 AND p_rows IS NULL THEN
+      l_sql := 'SELECT COUNT(*) ' || l_from || l_where;
+      OPEN hcpref FOR l_sql;
+      LOOP
+         FETCH hcpref INTO l_rows;
+         EXIT WHEN hcpref%NOTFOUND;
+      END LOOP;
+      CLOSE hcpref;
+   ELSE
+      l_rows := p_rows;
+   END IF;
+   l_url := l_url ||'&p_rows=' || l_rows;
+
+   l_sql := l_select ||', row_number() OVER (ORDER BY reference_code) rn ' || l_from || l_where;
+
+   l_sql := 'SELECT * FROM ( ' || l_sql || ') ' || zsi_lib.GeneratePagingWhere(p_page_no);
+
+
+%>
+<body>
+<%
+   zsi_bs_lib.openModalWindow('modalWindow','Search Hospital, Clinic, Pharmacy','hcp_search_frm','hcp_list');
+
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Code',p_inputName=>'p_ref_code', p_labelSize =>3, p_inputSize =>8, p_inputclass=>'numeric');
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Description',p_inputName=>'p_ref_desc', p_labelSize =>3, p_inputSize =>8);
+      zsi_bs_lib.CloseFormGroup();
+
+
+      zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.SelectBox(p_labelName=>'Establishment', p_Name=>'p_ref_type', p_labelSize=>3, p_selectSize=>8);
+      zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.closeModalWindow('submit','Search');
+
+%>
+
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+   <tr valign="bottom">
+      <th nowrap align="center" width="50px">Code</th>
+      <th nowrap align="left" width="200px">Name</th>
+      <th nowrap align="left" width="200px">Establishment</th>
+      <th nowrap align="left" width="100px">Account No.</th>
+      <th nowrap align="left" width="200px">Address</th>
+      <th width="250px">Remarks</th>
+      <th align="center" width="60px">Delete</th>
+   </tr>
+<%
+
+   l_dhtmlx_sort := 'str,str,str,str,str,na';
+
+   OPEN hcpref FOR l_sql;
+   LOOP
+      FETCH hcpref INTO l_ref_code,
+                        l_ref_desc,
+                        l_ref_type,
+                        l_acct_no,
+                        l_address,
+                        l_remarks,
+                        l_row_no;
+
+      EXIT WHEN hcpref%NOTFOUND;
+      l_row_count := l_row_count + 1;
+%>
+   <tr valign="bottom">
+      <td nowrap align="center">
+         <a href="javascript:void(0)" TITLE="Click here to Edit Establishment" onClick="parent.attachURL('hcp_form?p_module_id=<%= l_module_id %>&p_ref_code=<%= l_ref_code %>','Edit Establishment', 550, 265)"><%=l_ref_code %></a>
+      </td>
+      <td nowrap align="left"><%=l_ref_desc %></td>
+      <td><%= zsi_lib.GetDescription('referral_type_v','displayed_text','sele_value', l_ref_type )%></td>
+      <td><%=l_acct_no %></td>
+      <td><%=l_address %></td>
+      <td><%=l_remarks %></td>
+      <td><input type="checkbox" name="p_cb" onclick="zsi.table.setCheckBox(this,<%= l_ref_code %>);">
+                         <input type="hidden" name="p_del_hcp" value=""></td>
+   </tr>
+<%
+   END LOOP;
+%>
+</table>
+
+<div class="bottomNav">
+   <div class="buttonGroup">
+   <%
+            zsi_bs_lib.Button('btnSearch','Search',p_data_toggle =>'modal',p_data_target =>'#modalWindow');
+            zsi_bs_lib.Button('btnAdd','Add',p_onclick =>'parent.attachURL(''hcp_form?p_module_id=' || l_module_id || '&p_ref_code='',''Add Hotel, Clinic, Pharmacy'', 900, 350)');
+            zsi_bs_lib.Button('btnDelete','Delete',p_onclick =>'return checkDelete(''S004_DELETE?p_value=0'');');
+   %>
+   </div>
+<% zsi_lib.ShowPaging(p_page_no,l_rows,l_row_count); %>
+</div>
+
+<script type="text/javascript">
+/*variable declaration*/
+   var ctrlSel = zsi.control.SelectList;
+
+
+/*end of declaration*/
+
+   $(document).ready(function(){
+      $('.modal-dialog').css('width', '450px');
+
+      ctrlSel("#p_ref_type","","N","referral_type_v","seq_no","description","");
+
+   });
+
+   //on window resize
+   $(window).resize(function(){
+       zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+
+    function checkDelete(l_cmd) {
+       var l_stmt, l_count
+         l_stmt = zsi.table.getCheckBoxesValues("input[name=p_cb]:checked","p_value=","&");
+
+       if (l_stmt!="") {
+           if(confirm("Are you sure you want to delete ALL SELECTED Establishment?")) {
+             $.post( l_cmd + "&" + l_stmt + "&p_table=S004_T08004&p_field=reference_code", function(d){
+                  parent.ShowHideProgressWindow(false);
+                  window.location.reload();
+             });
+           }
+        }
+     }
+
+   function gotoPage(p_this){
+       var url = "<%= l_url %>&p_page_no=" + p_this.value;
+       window.location.href = url;
+    };
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+
+</script>
+
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

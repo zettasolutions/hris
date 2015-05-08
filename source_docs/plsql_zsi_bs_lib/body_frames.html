@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/javascript">
+
+			window.urlTargetPage = null;
+			window.isFromTree = false;
+			window.isDocLoaded = false;
+			window.onDocLoaded = undefined;
+
+			window.frameContentLoad = function(url) {
+				if (window.urlTargetPage != null && window.urlTargetPage.length > 0) return;
+				if (window.isFromTree) {
+					window.isFromTree = false;
+					return;
+				}
+
+				var path = url.href.split(url.search).join("");
+
+				path = path.substr(path.lastIndexOf("/")+1);
+
+				if (url.hash) path += url.hash;
+
+				if (treeframe && treeframe.MenuBuilder)
+					treeframe.MenuBuilder.targetContentChanged(path);
+			}
+
+			window.onload=function(){
+				if (parent != null) {
+					var link = parent.location.search;
+					if (link != null && link.length > 0) link = link.substr(1);
+
+					if (parent.location.hash) link += parent.location.hash;
+				}
+				window.urlTargetPage = link;
+				window.isDocLoaded = true;
+				if (window.onDocLoaded != undefined) window.onDocLoaded();
+			};
+		</script>
+
+	<frameset cols="300,*" bordercolor="#a0a0a0" border="3" framespacing="1">
+		<frame src="tree_menu.html" name="treeframe"></frame>
+		<frame src="startup.html" name="basefrm"></frame>
+	</frameset><noframes></noframes>
+
+</html>

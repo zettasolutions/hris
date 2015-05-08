@@ -1,0 +1,232 @@
+<%@ plsql procedure="doctors_directory_list" %>
+<%@ plsql parameter="p_dd_code"      type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_dd_name"      type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_dd_specialty" type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_rows"         type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_page_no"      type="NUMBER"   default="1"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   08-SEP-14  BD    Passed p_module_id to form url.
+   05-AUG-14  GT    Fixed specialty select.
+   05-JUL-14  GT    Fix Pagination and Search.
+   04-JUL-14  BD    Added Pagination.
+   02-JUL-14  GT    Fix specialty dropdown list.
+   02-JUL-14  GF    Applied bs.inputTextBox function and bs.selectList function, applied new function ResizeGrid from s004lib.js.
+   30-JUN-14  GT    Modified.
+   29-JUN-14  RN    New
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(3000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_sql                        VARCHAR2(8000);
+
+
+    TYPE dd_cur IS REF CURSOR;
+    ddref          dd_cur;
+   l_doctor_code                S004_T08006.doctor_code%TYPE;
+   l_doctor_name                S004_T08006.doctor_name%TYPE;
+   l_specialty                  S004_T08006.specialty%TYPE;
+   l_contact_no                 S004_T08006.contact_no%TYPE;
+   l_remarks                    S004_T08006.remarks%TYPE;
+   l_row_no                     NUMBER(10);
+   l_rows                       NUMBER(10);
+   l_max_rows                   NUMBER(10) := zsi_lib.MaxRowsInList;
+   l_url                        VARCHAR2(32000) := 'doctors_directory_list';
+   l_row_count                  NUMBER(10) := 0;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+<%
+  pageheader(p_dgrid=>'Y');
+%>
+<%
+
+   l_select := 'SELECT doctor_code,
+                       UPPER(doctor_name),
+                       UPPER(specialty),
+                       contact_no,
+                       remarks ';
+   l_from   := '  FROM S004_T08006 ';
+   l_where  := ' WHERE 1=1';
+
+   IF p_dd_code IS NOT NULL THEN
+      l_where := l_where || ' AND doctor_code= ' || p_dd_code;
+   END IF;
+   l_url := l_url ||'?p_dd_code=' || p_dd_code;
+
+   IF p_dd_name IS NOT NULL THEN
+       l_where := l_where ||' AND upper(doctor_name) LIKE ''' ||  upper(p_dd_name) || '%''';
+       l_url := l_url ||'&p_dd_name=' || p_dd_name;
+   END IF;
+
+   IF p_dd_specialty IS NOT NULL THEN
+       l_where := l_where || ' AND specialty= ' || p_dd_specialty;
+       l_url := l_url ||'&p_dd_specialty=' || p_dd_specialty;
+   END IF;
+
+   IF p_page_no = 1 AND p_rows IS NULL THEN
+      l_sql := 'SELECT COUNT(*) ' || l_from || l_where;
+      OPEN ddref FOR l_sql;
+      LOOP
+         FETCH ddref INTO l_rows;
+         EXIT WHEN ddref%NOTFOUND;
+      END LOOP;
+      CLOSE ddref;
+   ELSE
+      l_rows := p_rows;
+   END IF;
+   l_url := l_url ||'&p_rows=' || l_rows;
+
+   l_sql := l_select ||', row_number() OVER (ORDER BY doctor_code) rn ' || l_from || l_where;
+
+   l_sql := 'SELECT * FROM ( ' || l_sql || ') ' || zsi_lib.GeneratePagingWhere(p_page_no);
+%>
+<body>
+<%
+
+   zsi_bs_lib.openModalWindow('modalWindow','Search Doctor','dd_search_frm','doctors_directory_list');
+
+
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Code',p_inputName=>'p_dd_code', p_labelSize =>3, p_inputSize =>3, p_inputclass=>'numeric');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Name',p_inputName=>'p_dd_name',p_labelSize =>3, p_inputSize =>9);
+   zsi_bs_lib.CloseFormGroup();
+
+
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Specialty', p_Name=>'p_dd_specialty', p_labelSize=>3, p_selectSize=>9);
+   zsi_bs_lib.CloseFormGroup();
+
+
+   zsi_bs_lib.closeModalWindow('submit','Search');
+%>
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+   <tr valign="bottom">
+      <th nowrap align="center" width="50px">Code</th>
+      <th nowrap align="left" width="200px">Name</th>
+      <th nowrap align="left" width="200px">Specialty</th>
+      <th nowrap align="center" width="100px">Contact No.</th>
+      <th width="250px">Remarks</th>
+      <th align="center" width="60px">Delete</th>
+   </tr>
+<%
+   l_dhtmlx_sort := 'str,str,str,str,str,na';
+
+   OPEN ddref FOR l_sql;
+   LOOP
+      FETCH ddref INTO l_doctor_code,
+                       l_doctor_name,
+                       l_specialty,
+                       l_contact_no,
+                       l_remarks,
+                       l_row_no;
+
+
+      EXIT WHEN ddref%NOTFOUND;
+      l_row_count := l_row_count + 1;
+%>
+   <tr valign="bottom">
+      <td nowrap align="center">
+         <a href="javascript:void(0)" TITLE="Click here to Edit Doctor Directory" onClick="parent.attachURL('doctors_directory_form?p_module_id=<%= l_module_id %>&p_dd_code=<%= l_doctor_code %>','Edit Doctor Directory Code &raquo <%=l_doctor_code %>', 475, 230)"><%=l_doctor_code %></a>
+      </td>
+      <td nowrap align="left"><%=l_doctor_name %></td>
+      <td nowrap align="left"><%= zsi_lib.GetDescription('doctor_specialty_v','displayed_text','seq_no', l_specialty )%></td>
+      <td><%=l_contact_no %></td>
+      <td><%=l_remarks %></td>
+      <td><input type="checkbox" name="p_cb" onclick="zsi.table.setCheckBox(this,<%= l_doctor_code %>);">
+                         <input type="hidden" name="p_value" value=""></td>
+   </tr>
+<%
+   END LOOP;
+%>
+</table>
+
+<div class="bottomNav">
+   <div class="buttonGroup">
+<%
+      zsi_bs_lib.Button('btnSearch','Search',p_data_toggle =>'modal',p_data_target =>'#modalWindow');
+      zsi_bs_lib.Button('btnAdd','Add',p_onclick =>'parent.attachURL(''doctors_directory_form?p_module_id=' || l_module_id || '&p_dd_code='',''Add Doctors Directory'', 900, 315)');
+      zsi_bs_lib.Button('btnDelete','Delete',p_onclick =>'return checkDelete(''S004_DELETE?p_value=0'');');
+%>
+   </div>
+   <% zsi_lib.ShowPaging(p_page_no,l_rows,l_row_count); %>
+</div>
+
+<script type="text/javascript">
+
+/*variable declaration*/
+var ctrlSel = zsi.control.SelectList;
+
+
+/*end of declaration*/
+
+$(document).ready(function(){
+   $('.modal-dialog').css('width', '450px');
+
+   ctrlSel("#p_dd_specialty","","N","doctor_specialty_v","sele_value","displayed_text","");
+});
+
+
+   //on window resize
+   $(window).resize(function(){
+      zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+
+  function checkDelete(l_cmd) {
+    var l_stmt, l_count
+      l_stmt = zsi.table.getCheckBoxesValues("input[name=p_cb]:checked","p_value=","&");
+
+    if (l_stmt!="") {
+        if(confirm("Are you sure you want to delete ALL SELECTED Doctor?")) {
+          $.post( l_cmd + "&" + l_stmt + "&p_table=S004_T08006&p_field=doctor_code", function(d){
+             parent.ShowHideProgressWindow(false);
+             window.location.href = window.location.href;
+          });
+        }
+     }
+  }
+
+   function gotoPage(p_this){
+       var url = "<%= l_url %>&p_page_no=" + p_this.value;
+       window.location.href = url;
+    };
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("str,str,str,date,date");
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+
+</script>
+
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

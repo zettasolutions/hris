@@ -1,0 +1,315 @@
+<%@ plsql procedure="ape_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tab"         type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_id_no"       type="NUMBER" default="NULL"   %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   06-JAN-15  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_dhtmlx_sort           VARCHAR2(1024);
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_ctr                   NUMBER := 1;
+   l_where                 VARCHAR2(4000);
+   l_meds_count            NUMBER:=0;
+   l_emp_rec               employee_v%ROWTYPE;
+   l_rec                   consultation_v%ROWTYPE;
+   l_empl_id_no            consultation_v.id_no%TYPE := '';
+   l_tran_date             VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_dep_id                consultation_v.dep_id%TYPE := '';
+   l_empl_type             consultation_v.empl_type%TYPE := '';
+   l_cost_center           consultation_v.cost_center%TYPE := '';
+   l_department            consultation_v.department%TYPE := '';
+   l_group_code            consultation_v.group_code%TYPE := '';
+   l_medplan_type          consultation_v.medplan_type%TYPE := '';
+   l_medplan_code          consultation_v.medplan_code%TYPE := '';
+   l_emp_name              consultation_v.emp_name%TYPE := '';
+   l_emp_type              consultation_v.emp_type%TYPE := '';
+   l_dep_name              consultation_v.dep_name%TYPE := '';
+   l_dept_desc             consultation_v.dept_desc%TYPE := '';
+   l_group_desc            consultation_v.group_desc%TYPE := '';
+   l_cc_desc               consultation_v.cc_desc%TYPE := '';
+   l_job_desc              consultation_v.job_desc%TYPE := '';
+   l_post_status           consultation_v.post_status%TYPE := 0;
+   l_complaint             consultation_v.complaint%TYPE := '';
+   l_diagnosis             consultation_v.diagnosis%TYPE := '';
+   l_treatment             consultation_v.treatment%TYPE := '';
+   l_recom_test             consultation_v.recom_test%TYPE := '';
+   l_post_date             VARCHAR(20) := '';
+   l_remarks               consultation_v.remarks%TYPE := '';
+   l_age_brak_code         consultation_v.age_brak_code%TYPE := '';
+   l_user_iswrite          NUMBER(1):=0;
+   l_tab                   VARCHAR2(4000):=p_tab;
+      
+   CURSOR ape_cur IS
+      SELECT * 
+        FROM S004_T08019
+       WHERE ape_priority IS NOT NULL
+      ORDER BY ape_priority;
+    
+   CURSOR l_rge_cur(lp_result_type IN NUMBER) IS
+   SELECT * 
+     FROM RESULT_GROUP_EXAM_V 
+    WHERE ape_priority IS NOT NULL
+      AND result_type = lp_result_type
+    ORDER BY ape_priority;
+    
+
+   CURSOR l_results_cur(lp_result_type IN NUMBER) IS
+   SELECT * 
+     FROM APE_RESULTS_V 
+    WHERE tran_no = p_tran_no
+      AND result_type = lp_result_type
+    ORDER BY ape_priority;
+
+   Function GetActiveTab (p_Tab IN VARCHAR2, p_StateTab IN VARCHAR2) RETURN VARCHAR2
+      IS
+         l_tab VARCHAR2(100) := '';
+      BEGIN
+         IF p_Tab = p_StateTab THEN
+            l_tab := 'active';
+         END IF;
+         RETURN l_tab;
+   END GetActiveTab;
+%>
+<%
+   if(l_tab is null) THEN
+      l_tab:='tab6';
+   END IF;   
+   
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   IF p_tran_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM consultation_v WHERE tran_no = p_tran_no;
+      l_empl_id_no      :=l_rec.id_no;
+      l_tran_date       :=to_char(l_rec.tran_date, l_date_format);
+      l_dep_id          :=l_rec.dep_id;
+      l_empl_type       :=l_rec.empl_type;
+      l_cost_center     :=l_rec.cost_center;
+      l_department      :=l_rec.department;
+      l_group_code      :=l_rec.group_code;
+      l_medplan_type    :=l_rec.medplan_type;
+      l_medplan_code    :=l_rec.medplan_code;
+      l_post_status     :=l_rec.post_status;
+      l_post_date       :=to_char(l_rec.post_date, l_date_format);
+      l_emp_name        :=l_rec.emp_name;
+      l_emp_type        :=l_rec.emp_type;
+      l_dep_name        :=l_rec.dep_name;
+      l_dept_desc       :=l_rec.dept_desc;
+      l_group_desc      :=l_rec.group_desc;
+      l_cc_desc         :=l_rec.cc_desc;
+      l_job_desc        :=l_rec.job_desc;
+      l_age_brak_code   :=l_rec.age_brak_code;
+      l_complaint       :=l_rec.complaint; 
+      l_diagnosis       :=l_rec.diagnosis; 
+      l_treatment       :=l_rec.treatment; 
+      l_recom_test      :=l_rec.recom_test;
+   ELSE
+      SELECT * INTO l_emp_rec FROM employee_v WHERE empl_id_no = p_id_no;
+      l_empl_type             :=l_emp_rec.empl_type;
+      l_cost_center           :=l_emp_rec.empl_group_code;
+      l_department            :=l_emp_rec.department;
+      l_group_code            :=l_emp_rec.group_code;
+      l_age_brak_code         :=l_emp_rec.age_brak_code;
+   END IF;
+   pageheader(p_dwin=>'Y', p_dgrid=>'Y');
+
+%>
+<body>
+<form name="frmList" action="ape_update" method="POST" >
+<%
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no',p_inputValue=>p_tran_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_id_no',p_inputValue=>p_id_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_type',p_inputValue=>l_empl_type);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_cost_center',p_inputValue=>l_cost_center);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_department',p_inputValue=>l_department);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_group_code',p_inputValue=>l_group_code);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_age_brak_code',p_inputValue=>l_age_brak_code);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_module_id',p_inputValue=>p_module_id);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tab');
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_dtl_seq_no'); 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_result_type');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_exam_group');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_exam_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_result');
+
+   
+zsi_bs_lib.OpenEntryForm;
+%>
+<div class="row col-xs-12">&nbsp;</div>
+<%
+zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBox(p_labelName =>'Date',p_inputName=>'p_tran_date',p_inputValue=>l_tran_date,p_labelSize =>1, p_inputSize =>2, p_attributes=>'style="width: 110px;"');
+       zsi_bs_lib.SelectBox(p_labelName=>'Dependent', p_Name=>'p_dep_id', p_labelSize=>2, p_selectSize=>3);
+   zsi_bs_lib.YesNo(p_label_name=>'Is Posted?',p_field=>'post_status',p_value=>l_post_status,p_label_size =>1,p_select_size =>1);
+zsi_bs_lib.CloseFormGroup();
+
+
+zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBox(p_labelName =>'Complaint',p_inputName=>'p_complaint',p_inputValue=>l_complaint, p_labelSize =>1, p_inputSize =>3);
+   zsi_bs_lib.InputTextBox(p_labelName =>'Treatment',p_inputName=>'p_treatment',p_inputValue=>l_treatment, p_labelSize =>1, p_inputSize =>3);
+   zsi_bs_lib.InputTextBox(p_labelName =>'Diagnosis',p_inputName=>'p_diagnosis',p_inputValue=>l_diagnosis, p_labelSize =>1, p_inputSize =>3);
+zsi_bs_lib.CloseFormGroup();
+
+zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBox(p_labelName =>'Remarks',p_inputName=>'p_remarks',p_inputValue=>l_remarks, p_labelSize =>1, p_inputSize =>11);
+zsi_bs_lib.CloseFormGroup();
+
+zsi_bs_lib.CloseEntryForm; 
+%>
+
+<ul class="nav nav-tabs" role="tablist">
+<%
+   FOR i in ape_cur LOOP
+%>
+  <li class="<%=GetActiveTab('tab'||i.result_type,l_tab)%>"><a href="#" id="tab<%=i.result_type%>"><%=i.result_desc%></a></li>
+<%
+   END LOOP;
+%>
+</ul>
+<div class="tab-pages">
+<%
+      FOR i in ape_cur LOOP
+%>
+   <div id="tab<%=i.result_type%>" class="tab <%=GetActiveTab('tab'||i.result_type,l_tab)%>">
+   <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="400px" id="gridbox<%=i.result_type%>">
+         <tr>
+            <th width="200px" nowrap align="left">Exam Group</th>
+            <th width="200px" nowrap align="left">Exam Type</th>
+            <th width="350px" nowrap align="left">Normal Range</th>
+            <th width="700px" nowrap align="left">Result</th>
+         </tr>
+<%
+      IF p_tran_no IS NULL THEN
+         FOR j in l_rge_cur(i.result_type) LOOP
+%>
+         <tr>
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_result_type', p_inputValue=>i.result_type);
+                   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_exam_group', p_inputValue=>j.exam_group);
+                   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_exam_code', p_inputValue=>j.seq_no);
+                   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_dtl_seq_no',p_inputValue=>''); %>
+                   <%= j.group_desc %>
+            </td>
+            <td><%= j.exam_desc %></td>
+            <td><%= j.normal_range %></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_result',p_inputValue=>'', p_wrapper=>'N', p_inputSize =>4);%></td>
+         </tr>
+<%
+        END LOOP;
+%>
+      </table>
+<%
+      ELSE
+         FOR j in l_results_cur(i.result_type) LOOP
+%>
+         <tr>
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_dtl_seq_no',p_inputValue=>j.dtl_seq_no); %><%= j.group_desc %></td>
+            <td><%= j.exam_desc %></td>
+            <td><%= j.normal_range %></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_result',p_inputValue=>j.result, p_wrapper=>'N', p_inputSize =>4);%></td>
+         </tr>
+<%
+        END LOOP;
+     END IF;
+%>
+      </table>
+   </div>  
+<%
+   END LOOP;
+%>
+</div>
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_post_status = 0 AND l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+</form>
+
+<script type="text/javascript" src="zsi_employee_js"></script>
+<script type="text/javascript">
+
+<% FOR i IN ape_cur LOOP %>
+
+   var mygrid<%=i.result_type%> = dhtmlXGridFromTable("gridbox<%=i.result_type%>");
+   mygrid<%=i.result_type%>.setSkin("light");
+   mygrid<%=i.result_type%>.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid<%=i.result_type%>.setEditable(false);
+   mygrid<%=i.result_type%>.lockRow(0, true);
+   mygrid<%=i.result_type%>.enableLightMouseNavigation(true);
+   mygrid<%=i.result_type%>.setColSorting("<%= l_dhtmlx_sort %>"); 
+   mygrid<%=i.result_type%>.sortImg.src=mygrid<%=i.result_type%>.imgURL+"sort_desc.gif";
+   //zsi.table.dhtmlx.ResizeGrid(window, mygrid<%=i.result_type%>);  
+
+<% END LOOP; %>
+
+$("form[name=frmList]").submit(function(){
+   if( zsi.form.checkMandatory()!=true) return false;
+   return true;
+});
+
+
+//on page loaded
+$(document).ready(function(){
+      
+      zsi.form.markMandatory({                  
+         "groupNames":[ 
+            {"names" :
+               [    
+                   "p_tran_date"
+                  ,"p_empl_id_no"
+               ]
+            ,  "required_one":"N"
+            ,  "type":"S"
+            }
+         ]                     
+         ,"groupTitles":[ 
+         
+            {"titles" : 
+               [         
+                   "Tran Date"
+                  ,"Employee Id or Name"
+               ]
+            }
+         ]
+         ,"required_one_indexes":[1,2,3,4,5,6,7]
+      });
+ 
+ 
+
+   //populate list
+   ctrlSel("#p_dep_id","<%=l_dep_id%>","N","S004_T01029","emde_dependent_id","emde_dependent_name","Where emde_id_no=<%=NVL(l_empl_id_no,0)%>" );
+//   ctrlSel("select[id=p_lr_medservice_code]","","N","medservice_code_v","sele_value","displayed_text","ORDER BY description");
+   ctrlSel("select[id=p_result_type]","","N","S004_T08019","result_type","result_desc","ORDER BY result_Type");
+
+   $("#p_empl_id_no").blur(function(){
+      if(this.value) ctrlSel("#p_dep_id","<%=l_dep_id%>","N","S004_T01029","emde_dependent_id","emde_dependent_name","Where emde_id_no=" + this.value );
+   });
+
+});
+</script>
+
+</body>
+</html>
+

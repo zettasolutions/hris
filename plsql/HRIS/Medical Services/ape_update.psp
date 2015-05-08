@@ -1,0 +1,300 @@
+<%@ plsql procedure="ape_update" %>
+<%@ plsql parameter="p_tran_no"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tran_date"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_empl_id_no"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_age_brak_code"           type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_empl_type"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_cost_center"             type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_department"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_group_code"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_dep_id"                  type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_complaint"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_diagnosis"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_treatment"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_remarks"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_post_status"             type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_module_id"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tab"                     type="VARCHAR2" default="NULL"%>
+
+<%@ plsql parameter="p_dtl_seq_no"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_exam_group"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_result_type"             type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_exam_code"               type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_result"                  type="zsi_lib.VC2_4K_ARR"%>
+
+<%!
+/*
+
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   16-JAN-15  GT    Modified added new params.
+   07-AUG-14  GT    New
+*/
+--DECLARATION SECTION
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed               VARCHAR2(1) := 'N';
+   l_rec                   S004_T08020%ROWTYPE;
+   l_date_format           VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+
+   l_tran_date             DATE;
+   l_tran_year             NUMBER;
+   l_post_date             DATE;
+   l_age_brak              NUMBER:=p_age_brak_code;
+   l_seq_no                NUMBER:=0;
+
+   l_tran_no               S004_T08020.TRAN_NO%TYPE;
+   l_ledger_no             NUMBER:=0;
+   
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update APE </title>
+</head>
+<body>
+<%
+   l_tran_no := p_tran_no;  
+   l_tran_date  := TO_DATE(p_tran_date,l_date_format);
+   l_tran_year := EXTRACT(YEAR FROM TO_DATE(p_tran_date,l_date_format));
+   
+   IF p_dep_id IS NOT NULL THEN
+      l_age_brak := zsi_lib.GetDescription('dependents_v', 'age_brak_code', 'emde_dependent_id', p_dep_id);
+   END IF;
+   
+   IF p_post_status = 1 then
+      l_post_date := SYSDATE;
+   ELSE 
+      l_post_date := NULL;
+   END IF;
+
+
+   IF p_tran_no IS NULL  AND p_empl_id_no IS NOT NULL THEN
+     SELECT S004_T08020_SQ001.NEXTVAL INTO l_tran_no FROM DUAL;      
+      INSERT INTO S004_T08020 (
+          tran_no
+         ,tran_date
+         ,id_no
+         ,age_brak_code
+         ,empl_type
+         ,cost_center
+         ,department
+         ,group_code
+         ,medplan_type
+         ,medplan_code
+         ,complaint
+         ,diagnosis
+         ,treatment
+         ,remarks
+         ,post_status
+         ,post_date
+         ,created_by
+         ,date_created
+      )
+      VALUES
+      (   l_tran_no 
+         ,l_tran_date
+         ,p_empl_id_no
+         ,l_age_brak
+         ,p_empl_type
+         ,p_cost_center
+         ,p_department
+         ,p_group_code
+         ,1
+         ,4
+         ,p_complaint
+         ,p_diagnosis
+         ,p_treatment
+         ,p_remarks
+         ,p_post_status
+         ,l_post_date
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+);
+   
+   ELSIF p_tran_no IS NOT NULL AND p_empl_id_no IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T08020 WHERE tran_no=p_tran_no;
+
+      IF zsi_lib.IsChanged(l_rec.tran_date, l_tran_date) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.tran_date := l_tran_date;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.id_no, TO_NUMBER(p_empl_id_no)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.id_no := p_empl_id_no;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.age_brak_code, TO_NUMBER(l_age_brak)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.age_brak_code := l_age_brak;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.empl_type, p_empl_type) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.empl_type := p_empl_type;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.cost_center, p_cost_center) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.cost_center := p_cost_center;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.department, p_department) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.department := p_department;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.group_code, p_group_code) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.group_code := p_group_code;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.complaint, p_complaint) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.complaint := p_complaint;
+      END IF;      
+      
+      IF zsi_lib.IsChanged(l_rec.diagnosis, p_diagnosis) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.diagnosis := p_diagnosis;
+      END IF;      
+
+      IF zsi_lib.IsChanged(l_rec.treatment, p_treatment) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.treatment := p_treatment;
+      END IF;      
+
+      IF zsi_lib.IsChanged(l_rec.post_status, TO_NUMBER(p_post_status)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.post_status := p_post_status;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.post_date, l_post_date) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.post_date := l_post_date;
+      END IF;
+
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08020 SET row = l_rec WHERE tran_no=p_tran_no;
+      END IF;
+   END IF;
+   
+   FOR i IN 2..p_dtl_seq_no.COUNT LOOP
+      IF p_dtl_seq_no(i) IS NULL THEN
+         INSERT INTO S004_T08020_RESULT (
+                                          tran_no
+                                          ,dtl_seq_no
+                                          ,result_type
+                                          ,exam_group
+                                          ,exam_code
+                                          ,result
+                                          ,created_by
+                                          ,date_created)   
+                                  VALUES (
+                                          l_tran_no
+                                         ,S004_T08020_RESULT_SQ001.NEXTVAL
+                                         ,p_result_type(i)
+                                         ,p_exam_group(i)
+                                         ,p_exam_code(i)
+                                         ,p_result(i)
+                                         ,zsi_sessions_lib.GetCookieUser
+                                         ,SYSDATE                                         
+                                         );
+      ELSE 
+         UPDATE  S004_T08020_RESULT SET result = p_result(i) WHERE dtl_seq_no=p_dtl_seq_no(i);
+      END IF;
+   END LOOP;   
+
+   IF p_post_status = 1 THEN
+    
+      SELECT S004_T08010_SQ001.NEXTVAL INTO l_ledger_no FROM DUAL; 
+      
+      INSERT INTO S004_T08010
+         (ldgr_no
+         ,tran_no                
+         ,tran_year                  
+         ,tran_date                  
+         ,id_no                      
+         ,age_brak_code
+         ,dep_id                     
+         ,empl_type                  
+         ,cost_center                
+         ,department                 
+         ,group_code                 
+         ,medplan_type               
+         ,medplan_code
+         ,remarks
+         ,created_by
+         ,date_created)   
+   SELECT l_ledger_no
+         ,tran_no
+         ,l_tran_year
+         ,tran_date
+         ,id_no
+         ,age_brak_code
+         ,dep_id
+         ,empl_type
+         ,cost_center
+         ,department
+         ,group_code
+         ,medplan_type
+         ,medplan_code
+         ,remarks
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+    FROM S004_T08020
+   WHERE tran_no = p_tran_no;
+        
+      INSERT INTO S004_T08010_RESULT
+            (ldgr_no    
+            ,seq_no     
+            ,tran_year  
+            ,tran_date  
+            ,id_no                  
+            ,result_type
+            ,exam_group
+            ,exam_code
+            ,result
+            ,created_by
+            ,date_created)
+      SELECT l_ledger_no
+            ,dtl_seq_no
+            ,EXTRACT(YEAR FROM TO_DATE(p_tran_date, l_date_format))
+            ,TO_DATE(p_tran_date, l_date_format)
+            ,p_empl_id_no
+            ,result_type
+            ,exam_group
+            ,exam_code
+            ,result
+            ,zsi_sessions_lib.GetCookieUser
+            ,SYSDATE
+      FROM S004_T08020_RESULT
+      WHERE tran_no = p_tran_no;
+      END IF; 
+
+END;
+%>
+<script type="text/javascript">
+   parent.parent.parent.HomeWindow.LoadData("?p_id_no=<%=p_empl_id_no %>");
+   parent.LoadData("?p_id_no=<%=p_empl_id_no %>");
+   location.href="ape_form?p_tran_no=<%=l_tran_no%>&p_id_no=<%=p_empl_id_no %>&p_module_id=<%=p_module_id %>&p_tab=<%=p_tab %>";
+
+</script>
+</body>
+</html>

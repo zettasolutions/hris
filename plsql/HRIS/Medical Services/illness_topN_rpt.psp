@@ -1,0 +1,239 @@
+<%@ plsql procedure="illness_topN_rpt" %>
+<%@ plsql parameter="p_topN"        type="NUMBER"     default="3" %>
+<%@ plsql parameter="p_et"          type="VARCHAR2"   default="NULL"%>
+<%@ plsql parameter="p_cmonth"      type="NUMBER" %>
+<%@ plsql parameter="p_cyear"       type="NUMBER" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   16-MAR-15  BD    Fixed bug.
+   17-NOV-14  BD    New
+*/
+--DECLARATION SECTION
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+
+   CURSOR age_bracket_cur IS
+      SELECT sele_value as age_bracket, description as  age_bracket_desc
+        FROM age_bracket_v
+       ORDER BY description;
+
+   CURSOR dept_cur (p_ccnt_grp_cd IN NUMBER) IS
+      SELECT ccnt_cd, ccnt_abbrv
+        FROM ccnt_dept_v
+       WHERE ccnt_grp_cd = p_ccnt_grp_cd
+       ORDER BY ccnt_abbrv;
+
+   CURSOR ccnt_grp_cur IS
+      SELECT ccnt_grp_cd, COUNT(*) as ccnt_grp_count
+        FROM ccnt_dept_v
+       GROUP BY ccnt_grp_cd
+       HAVING COUNT(*) > 1
+       ORDER BY ccnt_grp_cd;
+
+
+   l_select                     VARCHAR2(1000);
+   l_from                       VARCHAR2(500);
+   l_where                      VARCHAR2(1000);
+   l_group                      VARCHAR2(1000);
+   l_sql                        VARCHAR2(5000);
+   illness_cur                  SYS_REFCURSOR;
+
+   l_illness_name_arr           zsi_lib.VC2_255_ARR;
+   l_illness_code_arr           zsi_lib.NUM_ARR;
+   l_count_arr                  zsi_lib.NUM_ARR;
+   l_rank_arr                   zsi_lib.NUM_ARR;
+   l_age_bracket_code_arr       zsi_lib.NUM_ARR;
+   l_age_bracket_desc_arr       zsi_lib.VC2_255_ARR;
+   --l_count                      NUMBER(10) := 0;
+   --l_rank                       NUMBER(10);
+
+   l_illnesses_count            NUMBER(10) := 0;
+   l_age_bracket_count          NUMBER(10) := 0;
+   l_dept_ill_age_count         NUMBER(10);
+   l_ill_count                  NUMBER(10);
+   l_group_total_arr            zsi_lib.NUM_ARR;
+   l_grand_total_arr            zsi_lib.NUM_ARR;
+   l_ctr                        NUMBER(10) := 0;
+   l_first                      BOOLEAN := TRUE;
+   l_period                     DATE;
+
+   FUNCTION FormatNum (p_num IN NUMBER) RETURN VARCHAR2 IS
+   BEGIN
+      IF p_num = 0 THEN
+         RETURN NULL;
+      END IF;
+      RETURN p_num;
+   END;
+
+%>
+<%
+   reportheader(p_output=>'H');
+   l_period := TO_DATE(p_cmonth || '/01/' || p_cyear,'MM/DD/YYYY');
+
+   l_select := 'SELECT t.illness_code, t.illness_name, COUNT(*) as count_emp ';
+   l_from   := ' FROM s004_t08010_illness_v t, employee_v e ';
+   l_where  := ' WHERE t.id_no = e.empl_id_no '
+            || ' AND TO_CHAR(t.tran_date,''mm'') = ' || p_cmonth
+            || ' AND t.tran_year = ' || p_cyear;
+   l_group  := ' GROUP BY t.illness_code, t.illness_name ORDER BY 2 DESC ';
+
+   IF p_et IS NOT NULL THEN
+      l_where := l_where || ' AND UPPER(e.emp_grouping) = ''' || UPPER(p_et) || '''';
+   END IF;
+
+   l_sql := l_select || l_from || l_where || l_group;
+   l_sql := 'SELECT illness_code, illness_name, count_emp, topN FROM (SELECT illness_code, illness_name, count_emp, DENSE_RANK() OVER(ORDER BY count_emp DESC) as topN FROM (' || l_sql || ')) WHERE topN <= ' || p_topN || ' ORDER BY topN DESC ';
+
+--htp.p(l_sql);
+--return;
+
+   OPEN illness_cur FOR l_sql;
+   FETCH illness_cur BULK COLLECT INTO l_illness_code_arr, l_illness_name_arr, l_count_arr, l_rank_arr;
+   CLOSE illness_cur;
+
+   OPEN  age_bracket_cur;
+   FETCH age_bracket_cur BULK COLLECT INTO l_age_bracket_code_arr, l_age_bracket_desc_arr;
+   CLOSE age_bracket_cur;
+
+   l_illnesses_count := l_illness_code_arr.COUNT;
+   l_age_bracket_count := l_age_bracket_code_arr.COUNT;
+
+%>
+<body onload="window.print();">
+
+<table width="100%">
+   <tr valign="top">
+      <td align="left" class="head1 reportTitle">Top <%= p_topn %> Illnesses List for <%= TO_CHAR(l_period,'Month YYYY') %></td>
+      <td align="right" class="reportcriteria">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss')) %></td>
+   </tr>
+</table>
+<br />
+
+<table border="1">
+   <tr>
+      <th align="left" rowspan="2">Dept</th>
+<%
+      FOR i IN 1..l_illnesses_count LOOP
+%>
+      <th class="alignCenter" colspan="<%= l_age_bracket_count %>" nowrap><%= NVL(l_illness_name_arr(i),'Undefined') %></th>
+      <th rowspan="2" nowrap>Total</th>
+<%
+      END LOOP;
+%>
+   </tr>
+   <tr>
+<%
+      FOR i IN 1..l_illnesses_count LOOP
+         FOR j IN 1..l_age_bracket_count LOOP
+         l_ctr := l_ctr + 1;
+         l_group_total_arr(l_ctr) := 0;
+         l_grand_total_arr(l_ctr) := 0;
+%>
+      <th class="alignCenter" nowrap><%= l_age_bracket_desc_arr(j) %></th>
+<%
+         END LOOP;
+         l_ctr := l_ctr + 1;
+         l_group_total_arr(l_ctr) := 0;
+         l_grand_total_arr(l_ctr) := 0;
+      END LOOP;
+%>
+   </tr>
+<%
+      <<CCNT_GRP>>
+      FOR g IN ccnt_grp_cur LOOP
+
+         l_first := TRUE;
+         <<DEPARTMENTS>>
+         FOR d IN dept_cur(g.ccnt_grp_cd) LOOP
+%>
+      <tr>
+         <td><%= d.ccnt_abbrv %></td>
+<%
+           l_ctr := 0;
+            <<ILLNESSES>>
+            FOR i IN 1..l_illnesses_count LOOP
+               l_ill_count := 0;
+               <<AGE_BRACKETS>>
+               FOR j IN 1..l_age_bracket_count LOOP
+                  l_dept_ill_age_count := 0;
+                  BEGIN
+                     SELECT COUNT(*) as dept_ill_age_count
+                       INTO l_dept_ill_age_count
+                       FROM s004_t08010_illness_v t, employee_v e
+                      WHERE t.id_no = e.empl_id_no
+                        AND TO_CHAR(t.tran_date,'mm') = p_cmonth
+                        AND t.tran_year = p_cyear
+                        AND t.illness_code = l_illness_code_arr(i)
+                        AND e.department = d.ccnt_cd
+                        AND e.age_brak_code = l_age_bracket_code_arr(j)
+                        AND e.emp_grouping = DECODE(p_et,NULL,e.emp_grouping,p_et);
+                  END;
+                  IF l_dept_ill_age_count = 0 THEN
+                     l_dept_ill_age_count := NULL;
+                  END IF;
+                  l_ill_count :=  l_ill_count + NVL(l_dept_ill_age_count,0);
+
+                  l_ctr := l_ctr + 1;
+                  IF l_first THEN
+                     l_group_total_arr(l_ctr) := 0;
+                  END IF;
+                  l_group_total_arr(l_ctr) := l_group_total_arr(l_ctr) + NVL(l_dept_ill_age_count,0);
+                  l_grand_total_arr(l_ctr) := l_grand_total_arr(l_ctr) + NVL(l_dept_ill_age_count,0);
+%>
+         <td align="center"><%= FormatNum(l_dept_ill_age_count) %></td>
+<%
+               END LOOP AGE_BRACKETS;
+               l_ctr := l_ctr + 1;
+               IF l_first THEN
+                  l_group_total_arr(l_ctr) := 0;
+               END IF;
+               l_group_total_arr(l_ctr) := l_group_total_arr(l_ctr) + NVL(l_ill_count,0);
+               l_grand_total_arr(l_ctr) := l_grand_total_arr(l_ctr) + NVL(l_ill_count,0);
+%>
+         <td align="center"><%= FormatNum(l_ill_count) %></td>
+<%
+            END LOOP ILLNESSES;
+            l_first := FALSE;
+         END LOOP DEPARTMENTS;
+%>
+   </tr>
+   <tr style="font-weight:bold;">
+      <td>Total</td>
+<%
+         FOR i IN 1..l_ctr LOOP
+%>
+         <td align="center" title="<%= i %>"><%= FormatNum(l_group_total_arr(i)) %></td>
+<%
+         END LOOP;
+%>
+   </tr>
+<%
+      END LOOP CCNT_GRP;
+%>
+   <tr style="font-weight:bold;">
+      <td>Grand Total</td>
+<%
+         FOR i IN 1..l_ctr LOOP
+%>
+         <td align="center"><%= FormatNum(l_grand_total_arr(i)) %></td>
+<%
+         END LOOP;
+%>
+   </tr>
+</table>
+
+</body>
+</html>
+

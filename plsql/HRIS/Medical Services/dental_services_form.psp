@@ -1,0 +1,156 @@
+<%@ plsql procedure="dental_services_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_ds_code"     type="VARCHAR2" DEFAULT='NULL'%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-SEP-14  BD    Added security logic.
+   05-AUG-14  BD    Fixed horizontal scrollbar issue.
+   04-JUL-14  GF    added class="form-control input-sm" to all input boxes, and select list in multiple entry form.
+   03-JUL-14  GT    implement class="table" for multi entry form.
+   26-JUN-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_style_path     VARCHAR2(128) := zsi_lib.StylePath;
+   l_js_path        VARCHAR2(128) := zsi_lib.JSPath;
+   l_title          VARCHAR2(50);
+   l_frmOffset      VARCHAR2(50):='';
+
+   l_rec  S004_T08009%ROWTYPE;
+   l_user_iswrite       NUMBER(1):=0;
+%>
+<%
+   pageheader();
+%>
+
+<body >
+<form name="frmDSList" action="dental_services_update" method="POST" >
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ds_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ds_desc');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ds_type');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ds_rate');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_remarks');
+
+   IF p_ds_code IS NOT NULL THEN
+      SELECT * INTO l_rec FROM S004_T08009 WHERE ds_code = p_ds_code;
+      zsi_bs_lib.OpenEntryForm;
+      zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ds_code',p_inputValue=>l_rec.ds_code);
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Description',p_inputName=>'p_ds_desc', p_labelSize =>3, p_inputSize =>9,p_inputValue=>upper(l_rec.ds_desc));
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.ChargeType(p_labelSize=>3, p_SelectSize=>3,p_value=>l_rec.ds_type);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Rate',p_inputName=>'p_ds_rate', p_labelSize =>3, p_inputSize =>9,p_inputValue=>zsi_lib.FormatAmount(l_rec.ds_rate));
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Opened Remarks',p_inputName=>'p_remarks', p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.remarks);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.CloseEntryForm;
+
+      l_frmOffset:='col-xs-offset-3';
+   ELSE
+%>
+<table class="table">
+   <tr>
+      <th nowrap align="left">Description</th>
+      <th nowrap align="left">Charge Type</th>
+      <th nowrap align="right">Rate</th>
+      <th>Opened Remarks</th>
+   </tr>
+<%
+      FOR i IN 1..5 LOOP
+%>
+   <tr>
+
+      <td><input type="hidden" name="p_ds_code" value="">
+         <input type="text" name="p_ds_desc" value="" class="form-control input-sm">
+      </td>
+      <td>
+          <SELECT name="p_ds_type" value="" class="form-control input-sm">
+            <OPTION></OPTION>
+            <OPTION value="0">FREE</OPTION>
+            <OPTION value="1">CHARGE</OPTION>
+          </SELECT>
+      </td>
+      <td><input type="text" name="p_ds_rate" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_remarks" value="" class="form-control input-sm"></td>
+   </tr>
+<%
+      END LOOP;
+%>
+</table>
+<%
+   END IF;
+%>
+
+<div class="buttonGroup <%=l_frmOffset%>">
+<%
+   IF  l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+
+<script type="text/javascript">
+
+$("form[name=frmDSList]").submit(function(){
+   if( zsi.form.checkMandatory()!=true) return false;
+   return true;
+});
+
+zsi.json.checkValueExist("input[name=p_ds_desc]","S004_T08009","ds_desc");   
+
+$(document).ready(function(){
+       zsi.form.markMandatory({       
+         "groupNames":[ 
+               {"names" : 
+                     [  
+                      "p_ds_desc"
+                     ,"p_ds_type"
+                     ,"p_ds_rate"
+                     ]
+               , "type":"M"
+               }             
+         ]      
+         ,"groupTitles":[ 
+               {"titles" :  
+                     [                       
+                      "Description"
+                     ,"Charge Type"
+                     ,"Rate"
+                     ]
+               }
+         ]
+   });
+ })
+
+
+</script>
+</form>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<%@ plsql procedure="train_sponsors_rpt_filter"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   01-JAN-15  GF    New
+*/
+   --DECLARATION SECTION
+   l_user                       VARCHAR2(30);
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_amchart_path               VARCHAR2(128);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+   l_user_iswrite               NUMBER(1):=0;
+%>
+<%
+   l_user       := zsi_sessions_lib.GetCookieUser;
+   l_module_id  := zsi_lib.GetModuleID(owa_util.get_procedure);
+   l_user_iswrite := 1;
+   pageheader;
+%>
+<body>
+<form name="frmList" action="train_sponsors_rpt" method="GET" target="_blank">
+<%
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+%>
+   <label class=" col-xs-1 control-label">Order By:</label>
+   <div class="col-xs-2">
+   <select class="form-control input-sm" id="p_order" name="p_order">
+         <option value="spsr_code" >Code</option>
+         <option value="spsr_name" selected="selected" >Sponsor Name  </option>
+         <option value="spsr_address">Address</option>
+         
+   </select>
+   </div>
+<%
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.CloseEntryForm;
+%>
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_user_iswrite = 1 then
+      zsi_bs_lib.Offset(1);
+      zsi_bs_lib.Button('btnSubmit','Run Report',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+</form>
+
+</body>
+</html>

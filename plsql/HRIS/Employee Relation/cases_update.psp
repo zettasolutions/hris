@@ -1,0 +1,215 @@
+<%@ plsql procedure="cases_update" %>
+<%@ plsql parameter="p_tran_no"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tran_year"               type="NUMBER"   default="EXTRACT(YEAR FROM SYSDATE)"%>
+<%@ plsql parameter="p_case_type"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_case_no"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_charges"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_respondents"             type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_pi_date"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_remarks"                 type="VARCHAR2" default="NULL"%>
+
+<% /* Respondents */ %>
+<%@ plsql parameter="p_r_seq_no"               type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_id_no"                  type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_resp_name"              type="zsi_lib.VC2_255_ARR"%>
+
+<% /* Status By */ %>
+<%@ plsql parameter="p_s_seq_no"               type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_date_endorsed"          type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_status"                 type="zsi_lib.VC2_255_ARR"%>
+
+
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-FEB-15  GT    Removed Handled By.
+   14-NOV-14  GT    New
+*/
+--DECLARATION SECTION
+   l_js_path         VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed         VARCHAR2(1) := 'N';
+   l_rec             S004_T08800%ROWTYPE;
+   l_recResp         S004_T08800_RESPONDENTS%ROWTYPE;
+   l_recHand         S004_T08800_HANDLEDBY%ROWTYPE;
+   l_recStat         S004_T08800_STATUS%ROWTYPE;
+   l_date_format     VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+   l_pi_date         DATE;
+   val_error         BOOLEAN := FALSE;
+   l_err_msg         VARCHAR2(255);
+   l_seq_no          NUMBER :=0;
+   l_tran_no         S004_T08800.tran_no%TYPE;
+   l_date_endorsed   DATE;
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Medicine Acquired From Clinic </title>
+</head>
+<body>
+<%
+   l_tran_no := p_tran_no;
+   l_pi_date := TO_DATE(p_pi_date,l_date_format);
+   IF p_tran_no IS NULL  AND p_case_type IS NOT NULL THEN
+      SELECT S004_T08800_SQ001.NEXTVAL INTO l_tran_no FROM DUAL;
+      SELECT COUNT(*) INTO l_seq_no FROM S004_T08800 WHERE tran_year = p_tran_year;
+      INSERT INTO S004_T08800 (
+          tran_no
+         ,tran_year
+         ,seq_no
+         ,pi_date
+         ,case_type
+         ,case_no
+         ,charges
+         ,respondents
+         ,remarks
+         ,created_by
+         ,date_created
+
+      )
+      VALUES
+      (  l_tran_no 
+         ,p_tran_year
+         ,NVL(l_seq_no,0) + 1
+         ,l_pi_date
+         ,p_case_type
+         ,p_case_no
+         ,p_charges
+         ,p_respondents
+         ,p_remarks
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+   );
+   ELSIF p_tran_no IS NOT NULL AND p_case_type IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T08800 WHERE tran_no=p_tran_no;
+
+      IF zsi_lib.IsChanged(l_rec.tran_year, p_tran_year) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.tran_year := p_tran_year;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.case_type, TO_NUMBER(p_case_type)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.case_type := p_case_type;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.pi_date, l_pi_date) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.pi_date := l_pi_date;
+      END IF;
+      
+      IF zsi_lib.IsChanged(l_rec.case_no, p_case_no) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.case_no := p_case_no;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.charges, p_charges) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.charges := p_charges;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.respondents, p_respondents) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.respondents := p_respondents;
+      END IF;
+     
+
+      IF zsi_lib.IsChanged(l_rec.remarks, p_remarks) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.remarks := p_remarks;
+      END IF;      
+
+      IF zsi_lib.IsChanged(l_rec.pi_date, l_pi_date) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.pi_date := l_pi_date;
+      END IF;
+
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08800 SET row = l_rec WHERE tran_no=p_tran_no;
+      END IF;
+   END IF;
+
+  /* tab details */
+   
+   FOR i IN 2..p_r_seq_no.COUNT LOOP
+      IF p_r_seq_no(i) IS NULL  AND p_id_no(i) IS NOT NULL THEN
+         INSERT INTO S004_T08800_RESPONDENTS (
+             tran_no
+            ,seq_no                  
+            ,id_no)
+         VALUES
+         (   l_tran_no
+            ,S004_T08800_SQ001.NEXTVAL 
+            ,p_id_no(i));    
+      ELSIF p_r_seq_no(i) IS NOT NULL  AND p_id_no(i) IS NOT NULL THEN
+
+         SELECT * INTO l_recResp FROM S004_T08800_RESPONDENTS WHERE seq_no=p_r_seq_no(i);
+         IF zsi_lib.IsChanged(l_recResp.id_no, TO_NUMBER(p_id_no(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_recResp.id_no := p_id_no(i);
+         END IF;
+         IF l_changed = 'Y' THEN
+            l_recResp.modified_by := zsi_sessions_lib.GetCookieUser;
+            l_recResp.date_modifIed := SYSDATE;
+            UPDATE S004_T08800_RESPONDENTS SET row = l_recResp WHERE seq_no=p_r_seq_no(i);
+         END IF;            
+      END IF;            
+   END LOOP;   
+   
+   l_changed := 'N'; 
+   
+   FOR i IN 2..p_s_seq_no.COUNT LOOP
+       l_date_endorsed := TO_DATE(p_date_endorsed(i),l_date_format);
+      IF p_s_seq_no(i) IS NULL  AND p_date_endorsed(i) IS NOT NULL  THEN
+         INSERT INTO S004_T08800_STATUS (
+             tran_no
+            ,seq_no                  
+            ,date_endorsed
+            ,status)
+         VALUES
+         (   l_tran_no
+            ,S004_T08800_SQ001.NEXTVAL
+            ,l_date_endorsed
+            ,p_status(i));    
+      ELSIF p_s_seq_no(i) IS NOT NULL  AND p_date_endorsed(i) IS NOT NULL THEN
+
+         SELECT * INTO l_recStat FROM S004_T08800_STATUS WHERE seq_no=p_s_seq_no(i);
+         IF zsi_lib.IsChanged(l_recStat.date_endorsed, l_date_endorsed) = 'Y' THEN
+            l_changed :='Y';
+            l_recStat.date_endorsed := l_date_endorsed;
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recStat.status, p_status(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_recStat.status := p_status(i);
+         END IF;
+         
+         IF l_changed = 'Y' THEN
+            l_recStat.modified_by := zsi_sessions_lib.GetCookieUser;
+            l_recStat.date_modifIed := SYSDATE;
+            UPDATE S004_T08800_STATUS SET row = l_recStat WHERE seq_no=p_s_seq_no(i);
+         END IF;            
+      END IF;            
+   END LOOP;      
+END;
+%>
+<script type="text/javascript">
+   parent.LoadData("");
+   parent.w1.close();
+</script>

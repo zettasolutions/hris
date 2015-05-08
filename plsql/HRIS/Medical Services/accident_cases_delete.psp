@@ -1,0 +1,29 @@
+<%@ plsql procedure="accident_cases_delete" %>
+<%@ plsql parameter="p_del_ac" type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   23-JUL-14   GT    Replaced ac with av.
+   13-JUL-14   RN    New
+*/
+%>
+<%
+BEGIN
+   IF p_del_ac.COUNT > 0 THEN
+      FOR i IN 2..p_del_ac.COUNT LOOP
+         DELETE FROM S004_T08013 WHERE tran_no = p_del_ac(i);
+      END LOOP;
+   END IF;
+END;
+%>

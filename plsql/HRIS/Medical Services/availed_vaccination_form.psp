@@ -1,0 +1,270 @@
+<%@ plsql procedure="availed_vaccination_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_id_no"       type="NUMBER" default="NULL"   %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-SEP-14  BD    Added security logic.
+   23-JUL-14  GF    Implement OpenFormGroup, and CloseFormGroup
+                    Implement HTML5 input[type="date"] with Botstrap datepicker.
+   21-JUL-14  BD    Added employee lov
+   18-JUL-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path        VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path            VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path         VARCHAR2(128) := zsi_lib.StylePath;
+   l_title              VARCHAR2(50);
+   l_date_format        VARCHAR(20) := 'MM/DD/YYYY';
+   l_date               VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_emp_rec            employee_v%ROWTYPE;
+   l_rec                availed_vaccination_v%ROWTYPE;
+   l_empl_id_no         availed_vaccination_v.id_no%TYPE := '';
+   l_tran_date          VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_dep_id             availed_vaccination_v.dep_id%TYPE := '';
+   l_empl_type          availed_vaccination_v.empl_type%TYPE := '';
+   l_cost_center        availed_vaccination_v.cost_center%TYPE := '';
+   l_department         availed_vaccination_v.department%TYPE := '';
+   l_group_code         availed_vaccination_v.group_code%TYPE := '';
+   l_vaccine_code       availed_vaccination_v.vaccine_code%TYPE := '';
+   l_brand              availed_vaccination_v.brand%TYPE := '';
+   l_route              availed_vaccination_v.route%TYPE := '';
+   l_site_given         availed_vaccination_v.site_given%TYPE := '';
+   l_vaccine_lotno      availed_vaccination_v.vaccine_lotno%TYPE := '';
+   l_manufacturer       availed_vaccination_v.manufacturer%TYPE := '';
+   l_next_vaccine       VARCHAR(20) := '';
+   l_amnt_billed        availed_vaccination_v.amnt_billed%TYPE;
+   l_for_refund         availed_vaccination_v.for_refund%TYPE := 0;
+   l_doctor_code        availed_vaccination_v.doctor_code%TYPE := '';
+   l_reference_code     availed_vaccination_v.reference_code%TYPE := '';
+   l_remarks            availed_vaccination_v.remarks%TYPE := '';
+   l_in_house           availed_vaccination_v.in_house%TYPE := 0;
+   l_post_status        availed_vaccination_v.post_status%TYPE := 0;
+   l_post_date          VARCHAR(20) := '';
+   l_emp_name           availed_vaccination_v.emp_name%TYPE := '';
+   l_emp_type           availed_vaccination_v.emp_type%TYPE := '';
+   l_dep_name           availed_vaccination_v.dep_name%TYPE := '';
+   l_dept_desc          availed_vaccination_v.dept_desc%TYPE := '';
+   l_group_desc         availed_vaccination_v.group_desc%TYPE := '';
+   l_cc_desc            availed_vaccination_v.cc_desc%TYPE := '';
+   l_job_desc           availed_vaccination_v.job_desc%TYPE := '';
+   l_vacc_name          availed_vaccination_v.vacc_name%TYPE := '';
+   l_age_brak_code      availed_vaccination_v.age_brak_code%TYPE := '';
+   l_user_iswrite       NUMBER(1):=0;
+%>
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   IF p_tran_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM availed_vaccination_v WHERE tran_no = p_tran_no;
+      l_empl_id_no      :=l_rec.id_no;
+      l_tran_date       :=to_char(l_rec.tran_date, l_date_format);
+      l_dep_id          :=l_rec.dep_id;
+      l_empl_type       :=l_rec.empl_type;
+      l_cost_center     :=l_rec.cost_center;
+      l_department      :=l_rec.department;
+      l_group_code      :=l_rec.group_code;
+      l_vaccine_code    :=l_rec.vaccine_code;
+      l_brand           :=l_rec.brand;
+      l_route           :=l_rec.route;
+      l_site_given      :=l_rec.site_given;
+      l_vaccine_lotno   :=l_rec.vaccine_lotno;
+      l_manufacturer    :=l_rec.manufacturer;
+      l_next_vaccine    :=to_char(l_rec.next_vaccine, l_date_format);
+      l_amnt_billed     :=l_rec.amnt_billed;
+      l_for_refund      :=l_rec.for_refund;
+      l_doctor_code     :=l_rec.doctor_code;
+      l_reference_code  :=l_rec.reference_code;
+      l_remarks         :=l_rec.remarks;
+      l_in_house        :=l_rec.in_house;
+      l_post_status     :=l_rec.post_status;
+      l_post_date       :=to_char(l_rec.post_date, l_date_format);
+      l_emp_name        :=l_rec.emp_name;
+      l_emp_type        :=l_rec.emp_type;
+      l_dep_name        :=l_rec.dep_name;
+      l_dept_desc       :=l_rec.dept_desc;
+      l_group_desc      :=l_rec.group_desc;
+      l_cc_desc         :=l_rec.cc_desc;
+      l_job_desc        :=l_rec.job_desc;
+      l_vacc_name       :=l_rec.vacc_name;
+      l_age_brak_code   :=l_rec.age_brak_code;
+   ELSE
+      SELECT * INTO l_emp_rec FROM employee_v WHERE empl_id_no = p_id_no;
+      l_empl_type             :=l_emp_rec.empl_type;
+      l_cost_center           :=l_emp_rec.empl_group_code;
+      l_department            :=l_emp_rec.department;
+      l_group_code            :=l_emp_rec.group_code;
+      l_age_brak_code         :=l_emp_rec.age_brak_code;
+   END IF;
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<form name="frmList" action="availed_vaccination_update" method="POST" >
+<%
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no',p_inputValue=>p_tran_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_id_no',p_inputValue=>p_id_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_type',p_inputValue=>l_empl_type);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_cost_center',p_inputValue=>l_cost_center);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_department',p_inputValue=>l_department);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_group_code',p_inputValue=>l_group_code);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_age_brak_code',p_inputValue=>l_age_brak_code);
+
+   zsi_bs_lib.OpenEntryForm;
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Date',p_inputName=>'p_tran_date',p_inputValue=>l_tran_date,p_labelSize =>2, p_inputSize =>4, p_attributes=>'style="width: 110px;"');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+       zsi_bs_lib.SelectBox(p_labelName=>'Vaccine', p_Name=>'p_vaccine_code', p_labelSize=>2, p_selectSize=>4);
+       zsi_bs_lib.InputTextBox(p_labelName =>'Vaccine Lot No',p_inputName=>'p_vaccine_lotno',p_inputValue=>l_vaccine_lotno ,p_labelSize =>2, p_inputSize =>4);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Brand',p_inputName=>'p_brand',p_inputValue=>l_brand,p_labelSize =>2, p_inputSize =>4);
+      zsi_bs_lib.InputTextBox(p_labelName =>'Manufacturer',p_inputName=>'p_manufacturer',p_inputValue=>l_manufacturer,p_labelSize =>2, p_inputSize =>4);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Route',p_inputName=>'p_route',p_inputValue=>l_route ,p_labelSize =>2, p_inputSize =>4);
+      zsi_bs_lib.InputTextBox(p_labelName =>'Next Vaccine Date',p_inputName=>'p_next_vacc_date',p_inputValue=>l_next_vaccine, p_labelSize =>2, p_inputSize =>1);
+      zsi_bs_lib.YesNo(p_label_name=>'In-House?',p_field=>'in_house',p_value=>l_in_house,p_label_size =>2,p_select_size =>1);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Site Given',p_inputName=>'p_site_given',p_inputValue=>l_site_given,p_labelSize =>2, p_inputSize =>4);
+      zsi_bs_lib.SelectBox(p_labelName=>'Hospital/Clinic', p_Name=>'p_reference_code', p_labelSize=>2, p_selectSize=>4);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+       zsi_bs_lib.SelectBox(p_labelName=>'Doctor', p_Name=>'p_doctor_code', p_labelSize=>2, p_selectSize=>4);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.OpenDiv('col-xs-12 LeftAdjust-m3');
+         zsi_bs_lib.InputTextBox(p_labelName =>'Amount Billed',p_inputName=>'p_amnt_billed',p_inputValue=>zsi_lib.FormatAmount(l_amnt_billed), p_labelSize =>2, p_inputSize =>1);
+         zsi_bs_lib.YesNo(p_label_name=>'For Refund?',p_field=>'for_refund',p_value=>l_for_refund,p_label_size =>2,p_select_size =>1);
+      zsi_bs_lib.CloseDiv;
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+       zsi_bs_lib.InputTextBoxArea(p_labelName =>'Remarks',p_inputName=>'p_remarks',p_labelSize =>2, p_inputValue=>l_remarks, p_inputSize =>10, p_attributes=>'rows="2"');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.YesNo(p_label_name=>'Is Posted?',p_field=>'post_status',p_value=>l_post_status,p_label_size =>2,p_select_size =>1);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.CloseEntryForm;
+
+%>
+
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_post_status = 0  and l_user_iswrite = 1 then
+      zsi_bs_lib.Offset(2);
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+</form>
+
+<script type="text/javascript" src="zsi_employee_js"></script>
+<script type="text/javascript">
+
+   $("form[name=frmList]").submit(function(){
+      var ischeckDate = false;
+      if( zsi.form.checkMandatory()!=true) return false;
+
+      ischeckDate = zsi.form.checkDate(
+               [   "p_tran_date"
+                  ,"p_or_date"
+               ]
+               ,
+               [
+                   "Transaction Date"
+                  ,"O.R. Date"
+               ]
+      );
+
+      return ischeckDate;
+   }); 
+                        
+                     
+   //on page loaded  
+   $(document).ready(function(){
+
+       zsi.form.markMandatory({       
+         "groupNames":[ 
+               {"names" :  
+                     [  
+                      "p_tran_date" 
+                     ,"p_empl_id_no" 
+                     ,"p_vaccine_code" 
+                     ,"p_amnt_billed" 
+                     ,"p_or_date" 
+                     ,"p_or_number" 
+                     ]
+               ,  "type":"S"
+               }             
+         ]      
+         ,"groupTitles":[ 
+               {"titles" :  
+                     [                       
+                      "Transaction Date"
+                     ,"Employee ID#"
+                     ,"Vaccine"
+                     ,"Amount Billed"
+                     ,"O.R. Date"
+                     ,"O.R. Number"
+                     ]
+               }
+
+         ]
+      });
+              
+      //populate list
+      ctrlSel("#p_dep_id","<%=l_dep_id%>","N","S004_T01029","emde_dependent_id","emde_dependent_name","Where emde_id_no=<%=NVL(l_empl_id_no,0)%>" );
+      ctrlSel("#p_vaccine_code","<%=l_vaccine_code%>","N","S004_T08005","vaccine_code","vaccine_name","ORDER BY vaccine_name");
+      ctrlSel("#p_doctor_code","<%=l_doctor_code%>","N","S004_T08006","doctor_code","doctor_name","ORDER BY doctor_name");
+      ctrlSel("#p_reference_code","<%=l_reference_code%>","N","S004_T08004","reference_code","reference_desc","ORDER BY reference_desc");
+   });
+
+
+
+  $("#p_empl_id_no").blur(function(){
+
+      ctrlSel("#p_dep_id","<%=l_dep_id%>","N","S004_T01029","emde_dependent_id","emde_dependent_name","Where emde_id_no=" + this.value );
+  });
+
+   $("#p_amnt_billed,#p_amnt_covered,#p_amnt_not_covered").keypress(function(event){
+
+      return zsi.form.checkNumber(event,'.,');
+   });
+
+   $("#p_amnt_billed,#p_amnt_covered").blur(function(){
+       var obj= this;
+       zsi.form.checkNumberFormat(this);
+   });
+   
+
+
+</script>
+
+
+</body>
+</html>
+

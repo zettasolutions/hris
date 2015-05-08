@@ -1,0 +1,65 @@
+<%@ plsql procedure="empl_clearance_rpt_filter"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   22-MAR-15  GT    New
+*/
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_dhtmlx_sort                VARCHAR2(1024);
+%>
+<%
+   pageheader(p_dWin=>'Y');
+%>
+<body>
+<form name="frmList">
+<%
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Year',p_inputName=>'p_year',p_inputValue=>EXTRACT(YEAR FROM SYSDATE),p_labelSize =>1, p_inputSize =>1);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+       zsi_bs_lib.SelectBox(p_labelName=>'Clearance', p_Name=>'p_clearance_type', p_labelSize=>1, p_selectSize=>2);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+       zsi_bs_lib.SelectBox(p_labelName=>'Sport', p_Name=>'p_sport_type', p_labelSize=>1, p_selectSize=>2);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.CloseEntryForm;
+%>
+</form>
+<div class="col-xs-12 buttonGroup">
+<%
+      zsi_bs_lib.Offset(1);
+      zsi_bs_lib.Button('btnPrint','Print');
+%>
+</div>
+<script type="text/javascript">
+var ctrlSel = zsi.control.SelectList;
+$(document).ready(function(){
+   ctrlSel("#p_clearance_type","","N","clearance_types_v","sele_value","displayed_text","ORDER BY displayed_text");
+   ctrlSel("#p_sport_type","","N","sport_types_v","sele_value","displayed_text","ORDER BY displayed_text");
+})
+
+$("#btnPrint").click(function(){
+   var l_params="";
+   l_params += "p_year=" + $("#p_year").val();
+   l_params += "&p_clearance_type=" + $("#p_clearance_type").val();
+   l_params += "&p_sport_type=" + $("#p_sport_type").val();
+   window.open("empl_clearance_rpt?" + l_params);
+});
+</script>
+</body>
+</html>

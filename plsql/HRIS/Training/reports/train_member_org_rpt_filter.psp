@@ -1,0 +1,88 @@
+<%@ plsql procedure="train_member_org_rpt_filter"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   04-FEB-15  GT    New
+*/
+   --DECLARATION SECTION
+   l_user                       VARCHAR2(30);
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_amchart_path               VARCHAR2(128);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+   l_user_iswrite               NUMBER(1):=0;
+%>
+<%
+   l_user       := zsi_sessions_lib.GetCookieUser;
+   l_module_id  := zsi_lib.GetModuleID(owa_util.get_procedure);
+   l_user_iswrite := 1;
+   pageheader;
+%>
+<body><form name="frmList" action="train_member_org_rpt" method="GET" target="_blank">
+<%
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+%>
+   <label class=" col-xs-2 control-label">Order By#1:</label>
+   <div class="col-xs-2">
+   <select class="form-control input-sm" id="p_order1" name="p_order1">
+         <option value="empl_name" selected="selected">Empl. Last Name  </option>
+         <option value="dept_abbrv">Department</option>
+         <option value="conv_desc">Organization</option>
+         
+   </select>
+   </div>
+<%
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+%>
+   <label class=" col-xs-2 control-label">Order By#2:</label>
+   <div class="col-xs-2">
+   <select class="form-control input-sm" id="p_order2" name="p_order2">
+         <option value="empl_name" >Empl. Last Name  </option>
+         <option value="dept_abbrv" selected="selected">Department</option>
+         <option value="conv_desc">Organization</option>
+         
+   </select>
+   </div>  
+<%
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+%>  
+   <label class=" col-xs-2 control-label">Order By#3:</label>
+   <div class="col-xs-2">
+   <select class="form-control input-sm" id="p_order3" name="p_order3">
+         <option value="empl_name">Empl. Last Name  </option>
+         <option value="dept_abbrv">Department</option>
+         <option value="conv_desc"  selected="selected">Organization</option>
+         
+   </select>
+   </div>
+<%
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.CloseEntryForm;
+%>
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_user_iswrite = 1 then
+      zsi_bs_lib.Offset(2);
+      zsi_bs_lib.Button('btnSubmit','Run Report',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+</form>
+
+</body>
+</html>

@@ -1,0 +1,126 @@
+<%@ plsql procedure="errors_list" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   08-FEB-15  GF    New
+*/
+--DECLARATION SECTION
+l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+l_dhtmlx_sort                VARCHAR2(1024);
+%>
+<%
+   pageheader(p_dgrid=>'Y');
+%>
+<body>
+
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+<tr valign="bottom">
+<th nowrap align="center" width="60px">Error No</th>
+<th nowrap align="left" width="500px">Error Message</th>
+<th nowrap align="left" width="200px">Url</th>
+<th nowrap align="center" width="80px">Occurence</th>
+<th nowrap align="center" width="80px">Error Type</th>
+<th nowrap align="center" width="100px">Created Date</th>
+<th nowrap align="center" width="100px">Created by</th>
+<th nowrap align="center" width="100px">Modified Date</th>
+<th nowrap align="center" width="100px">Modified by</th>
+
+
+<th align="center" width="60px">Delete</th>
+   </tr>
+<%
+l_dhtmlx_sort := 'int,str,int,str,str,str,str,str,str,na';
+%>
+<tr valign="bottom">
+   <td nowrap align="center"></td>
+   <td nowrap align="left"></td>
+   <td nowrap align="left"></td>
+   <td nowrap align="left"></td>
+   <td nowrap align="left"></td>
+   <td nowrap align="left"></td>
+   <td nowrap align="left"></td>
+   <td nowrap align="left"></td>
+   <td nowrap align="left"></td>
+            
+   <td></td>
+</tr>
+</table>
+
+<div class="bottomNav">
+<div class="buttonGroup">
+<%
+zsi_bs_lib.Button('btnDelete','Delete',p_onclick =>'return checkDelete(''errors_delete?p_del_e='');');
+%>
+</div>
+<% zsi_bs_lib.ShowPagingCtrl; %>
+</div>
+<script type="text/javascript">
+//on window resize
+$(window).resize(function(){
+   zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+});
+function SearchData(){
+   var l_params="";
+   l_params += '?p_error_no=' + $("#p_error_no").val();
+   l_params += '&p_url=' + $("#p_url").val();
+   l_params += '&p_occurence=' + $("#p_occurence").val();
+   l_params += '&p_error_type=' + $("#p_error_type").val();
+   LoadData(l_params);
+}
+function checkDelete(l_cmd) {
+   var l_stmt, l_count
+   l_stmt = zsi.table.getCheckBoxesValues("input[name=p_cb]:checked","p_del_e=","&");
+   
+   if (l_stmt!="") {
+      if(confirm("Are you sure you want to delete ALL SELECTED errors?")) {
+         $.post( l_cmd + "&" + l_stmt, function(d){
+            window.location.reload();
+         });
+      }
+   }
+}
+
+function gotoPage(p_this){
+var l_params = "?p_page_no=" + p_this.value;
+LoadData(l_params);
+};
+var mygrid = dhtmlXGridFromTable("gridbox1");
+mygrid.setSkin("light");
+mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+mygrid.setEditable(false);
+mygrid.lockRow(0, true);
+mygrid.enableLightMouseNavigation(true);
+mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+LoadData('');
+zsi.table.dhtmlx.ResizeGrid(window, mygrid);
+
+/*Load and Reload*/
+function LoadData(p_params){
+   var l_params=p_params; 
+   $.getJSON("errors_json" + l_params,onLoadComplete);       
+}
+
+function onLoadComplete(data){
+   mygrid.clearAll();
+   zsi.table.dhtmlx.Unescape(data,1);
+   mygrid.parse(data, "json");        
+   zsi.page.DisplayRecordPage(data.page_no,data.page_rows,data.row_count);
+   $("#modalWindow").modal('hide');    
+}
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

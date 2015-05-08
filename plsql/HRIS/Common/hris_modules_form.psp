@@ -1,0 +1,203 @@
+<%@ plsql procedure="hris_modules_form" %>
+<%@ plsql parameter="p_module_id" type="VARCHAR2" DEFAULT='NULL'%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   27-FEB-15  GT    Added proc_type, module_desc for documentation
+   25-AUG-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_style_path     VARCHAR2(128) := zsi_lib.StylePath;
+   l_js_path        VARCHAR2(128) := zsi_lib.JSPath;
+   l_frmOffset      VARCHAR2(50):='';
+   
+   l_rec  S004_MODULES%ROWTYPE;
+%>
+ 
+<%
+  pageheader(p_dgrid=>'Y');
+%>
+<body> 
+<form name="frmDSList" action="hris_modules_update" method="POST" >
+<% 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_module_id'); 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_module_name'); 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_module_desc'); 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_module_group_id'); 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_sysgroup'); 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_module_url'); 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_proc_type'); 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_proc_desc'); 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no'); 
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ismenu'); 
+
+  
+   IF p_module_id IS NOT NULL THEN
+      SELECT * INTO l_rec FROM S004_MODULES WHERE module_id = p_module_id;
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_module_id',p_inputValue=>l_rec.module_id); 
+
+   zsi_bs_lib.OpenEntryForm;
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Name',p_inputName=>'p_module_name',p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.module_name);                    
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+        zsi_bs_lib.InputTextBoxArea(p_labelName =>'Description',p_inputName=>'p_module_desc',p_labelSize =>3, p_inputValue=>l_rec.module_desc, p_inputSize =>9, p_attributes=>'rows="2"');
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.SelectBox(p_labelName=>'Module Group', p_Name=>'p_module_group_id', p_labelSize=>3, p_selectSize=>6); 
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.SysGroup(p_labelSize=>3, p_SelectSize=>3,p_value=>l_rec.sys_group_id);
+      zsi_bs_lib.CloseFormGroup();
+      
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Procedure/URL ',p_inputName=>'p_module_url',p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.module_url);                    
+      zsi_bs_lib.CloseFormGroup();
+      
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.ProcType(p_labelSize=>3, p_SelectSize=>3,p_value=>l_rec.proc_type);
+      zsi_bs_lib.CloseFormGroup();
+      
+      zsi_bs_lib.OpenFormGroup();
+        zsi_bs_lib.InputTextBoxArea(p_labelName =>'Description',p_inputName=>'p_proc_desc',p_labelSize =>3, p_inputValue=>l_rec.proc_desc, p_inputSize =>9, p_attributes=>'rows="2"');
+      zsi_bs_lib.CloseFormGroup();
+    
+      
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Seq#. ',p_inputName=>'p_seq_no',p_labelSize =>3, p_inputSize =>1,p_inputValue=>l_rec.seq_no);                    
+      zsi_bs_lib.CloseFormGroup();
+      
+      zsi_bs_lib.OpenFormGroup();
+          zsi_bs_lib.YesNo(p_label_name=>'Menu?',p_field=>'ismenu',p_value=>l_rec.ismenu,p_label_size =>3,p_select_size =>2);
+      zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.CloseEntryForm;   
+   l_frmOffset:='col-xs-offset-3';
+   
+   ELSE
+%>
+   <table class="table">
+      <tr valign="bottom">
+         <th nowrap align="left">Name</th>
+         <th nowrap align="left">Module Desc</th>
+         <th nowrap align="right">Module Group</th>
+         <th nowrap align="right">System</th>
+         <th nowrap align="left">URL</th>
+         <th nowrap align="right">Proc Type</th>
+         <th nowrap align="left">Proc Desc</th>
+         <th nowrap align="right">Seq#</th>
+         <th nowrap align="right">Menu?</th>
+      </tr>
+<%
+      FOR i IN 1..5 LOOP
+%>
+         <tr valign="bottom">
+
+            <td><input type="hidden" name="p_module_id" value="">
+               <input type="text" name="p_module_name" value="" class="form-control input-sm">
+            </td>
+            <td>
+               <input type="text" name="p_module_desc" value="" class="form-control input-sm">
+            </td>
+            <td><select id="p_module_group_id" name="p_module_group_id" class="form-control"></select></td>
+            <td>
+                <SELECT name="p_sysgroup" value="" class="form-control input-sm">
+                  <OPTION></OPTION>
+                  <OPTION value="1">Medical Clinic</OPTION>
+                  <OPTION value="2">Training</OPTION>
+                  <OPTION value="3">HR Policy</OPTION>
+                  <OPTION value="4">Employee Relations</OPTION>
+                </SELECT>
+            </td>            
+            <td><input type="text" autocomplete="off" value="" name="p_module_url" id="p_url" class="form-control input-sm"> </td>
+            <td>
+                <SELECT name="p_proc_type" value="" class="form-control input-sm">
+                  <OPTION></OPTION>
+                  <OPTION value="L">List</OPTION>
+                  <OPTION value="F">Form</OPTION>
+                  <OPTION value="U">Update</OPTION>
+                  <OPTION value="D">Delete</OPTION>
+                  <OPTION value="J">JSON</OPTION>
+                  <OPTION value="T">Filter</OPTION>
+                  <OPTION value="R">Report</OPTION>
+                </SELECT>
+            </td>            
+            <td>
+               <input type="text" name="p_proc_desc" value="" class="form-control input-sm">
+            </td>
+            <td><input type="text" name="p_seq_no" value="" class="form-control input-sm"></td>
+            <td><%= zsi_lib.YesNo(p_field=>'ismenu')%></td>
+         </tr>
+<%
+      END LOOP;
+%>
+      </table>
+<%  
+   END IF;    
+%>
+<div class="buttonGroup <%=l_frmOffset%>">
+<% 
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');    
+%>    
+</div>
+
+</form>
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript">
+
+/*variable declaration*/
+var ctrlSel = zsi.control.SelectList;
+
+
+/*end of declaration*/
+
+$(document).ready(function(){
+   $("textarea[name=p_module_desc],textarea[name=p_proc_desc]").addClass("allowEnter");
+   
+   new zsi.search({
+    column_names : ["Procedure/URL"] 
+   ,column_indexes : [0] 
+   ,input:"input[name=p_module_url]"
+   ,url :"user_objects_search_json"
+   ,parameter: "p_object_name"
+   ,onSelectedItem: 
+      function(currentObject,data,i){            
+         currentObject.value=data[0];                      
+      }
+   });          
+
+   var selObj = $("select[id=p_module_group_id]");
+   if(selObj.length>1){
+      /*new entry*/
+      ctrlSel("select[id=p_module_group_id]","","N","hris_modules_v","module_id","module_name","");
+   }
+   else{     
+      /*edit entry*/
+      ctrlSel("select[id=p_module_group_id]","<%=l_rec.module_group_id%>","N","hris_modules_v","module_id","module_name","");   
+  }
+
+});
+
+</script>
+</body>
+</html>
+
+ 

@@ -1,0 +1,226 @@
+<%@ plsql procedure="dental_services_list" %>
+<%@ plsql parameter="p_ds_code"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_ds_desc"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_ds_type"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_rows"        type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_page_no"     type="NUMBER"   default="1"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   08-SEP-14  BD    Passed p_module_id to form url.
+   05-JUL-14  BD    Added filtering of the current results.
+   05-JUL-14  GF    Implement function Button.
+   04-JUL-14  BD    Added Pagination.
+   02-JUL-14  GF    Applied bs.inputTextBox function and bs.selectList function
+   30-JUN-14  GF    Applied small button style.
+   30-JUN-14  GF    Implement Modal Form.
+   29-JUN-14  GF    Implement JS function zsi.table.setCheckBox and zsi.table.getCheckBoxesValues.
+   29-JUN-14  BD    Cleanup, added autoresizing.
+   27-JUN-14  GF    Removed redundant css,js reference, fixed js bugs.
+   21-JUN-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(3000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_sql                        VARCHAR2(8000);
+   TYPE ds_cur IS REF CURSOR;
+   dsref          ds_cur;
+   l_ds_code                    S004_T08009.ds_code%TYPE;
+   l_ds_desc                    S004_T08009.ds_desc%TYPE;
+   l_ds_type                    S004_T08009.ds_type%TYPE;
+   l_ds_rate                    S004_T08009.ds_rate%TYPE;
+   l_remarks                    S004_T08009.remarks%TYPE;
+   l_row_no                     NUMBER(10);
+   l_rows                       NUMBER(10);
+   l_max_rows                   NUMBER(10) := zsi_lib.MaxRowsInList;
+   l_url                        VARCHAR2(32000) := 'dental_services_list';
+   l_row_count                  NUMBER(10) := 0;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+<%
+   pageheader(p_dgrid=>'Y');
+%>
+<%
+
+   l_select := 'SELECT ds_code,
+                       upper(ds_desc),
+                       ds_type,
+                       ds_rate,
+                       remarks ' ;
+   l_from   := '  FROM S004_T08009 ';
+   l_where  := ' WHERE 1=1';
+
+
+   IF p_ds_code IS NOT NULL THEN
+      l_where := l_where || ' AND ds_code= ' || p_ds_code;
+   END IF;
+   l_url := l_url ||'?p_ds_code=' || p_ds_code;
+
+   IF p_ds_desc IS NOT NULL THEN
+      l_where := l_where ||' AND UPPER(ds_desc) LIKE '|| '''' || '%' ||  UPPER(p_ds_desc) || '%' || '''' || ' ';
+   END IF;
+   l_url := l_url ||'&p_ds_desc=' || p_ds_desc;
+
+   IF p_ds_type IS NOT NULL THEN
+      l_where := l_where || ' AND ds_type= ' || p_ds_type;
+   END IF;
+   l_url := l_url ||'&p_ds_type=' || p_ds_type;
+
+   IF p_page_no = 1 AND p_rows IS NULL THEN
+      l_sql := 'SELECT COUNT(*) ' || l_from || l_where;
+      OPEN dsref FOR l_sql;
+      LOOP
+         FETCH dsref INTO l_rows;
+         EXIT WHEN dsref%NOTFOUND;
+      END LOOP;
+      CLOSE dsref;
+   ELSE
+      l_rows := p_rows;
+   END IF;
+   l_url := l_url ||'&p_rows=' || l_rows;
+
+   l_sql := l_select ||', row_number() OVER (ORDER BY ds_code) rn ' || l_from || l_where;
+
+   l_sql := 'SELECT * FROM ( ' || l_sql || ') ' || zsi_lib.GeneratePagingWhere(p_page_no);
+
+
+
+
+%>
+<body>
+ <%
+   zsi_bs_lib.openModalWindow('modalWindow','Search Dental Service','ds_search_frm','dental_services_list');
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Code',p_inputName=>'p_ds_code', p_labelSize =>3, p_inputSize =>3, p_inputclass=>'numeric');
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Description',p_inputName=>'p_ds_desc', p_labelSize =>3, p_inputSize =>9);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.ChargeType(p_labelSize=>3, p_SelectSize=>3);
+
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.closeModalWindow('submit','Search');
+%>
+
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+   <tr valign="bottom">
+      <th nowrap align="center" width="50px">Code</th>
+      <th nowrap align="left" width="250px">Description</th>
+      <th nowrap align="left" width="100px">Charge Type</th>
+      <th nowrap align="right" width="100px">Rate</th>
+      <th width="250px">Opened Remarks</th>
+      <th align="center" width="60px">Delete</th>
+   </tr>
+<%
+   l_dhtmlx_sort := 'str,str,str,int,str,na';
+
+   OPEN dsref FOR l_sql;
+   LOOP
+      FETCH dsref INTO l_ds_code,
+                       l_ds_desc,
+                       l_ds_type,
+                       l_ds_rate,
+                       l_remarks,
+                       l_row_no;
+      EXIT WHEN dsref%NOTFOUND;
+      l_row_count := l_row_count + 1;
+%>
+   <tr valign="bottom">
+      <td nowrap align="center">
+         <a href="javascript:void(0)" TITLE="Click here to Edit Dental Service" onClick="parent.attachURL('dental_services_form?p_module_id=<%=l_module_id %>&p_ds_code=<%= l_ds_code %>','Edit Dental Service Code &raquo <%=l_ds_code %>', 650, 230)"><%=l_ds_code %></a>
+      </td>
+      <td nowrap align="left"><%=l_ds_desc %></td>
+      <td>
+<% if l_ds_type=0 then %>
+      Free
+<% elsif l_ds_type=1 then%>
+      Charge
+<% end if; %>
+      </td>
+      <td><%= zsi_lib.FormatAmount(l_ds_rate) %></td>
+      <td><%=l_remarks %></td>
+      <td><input type="checkbox" name="p_cb" onclick="zsi.table.setCheckBox(this,<%= l_ds_code %>);">
+                         <input type="hidden" name="p_value" value=""></td>
+   </tr>
+<%
+   END LOOP;
+%>
+</table>
+
+<div class="bottomNav">
+   <div class="buttonGroup">
+   <%
+            zsi_bs_lib.Button('btnSearch','Search',p_data_toggle =>'modal',p_data_target =>'#modalWindow');
+            zsi_bs_lib.Button('btnAdd','Add',p_onclick =>'parent.attachURL(''dental_services_form?p_module_id=' || l_module_id || '&p_ds_code='',''Add Dental Services'', 900, 275)');
+            zsi_bs_lib.Button('btnDelete','Delete',p_onclick =>'return checkDelete(''S004_DELETE?p_value=0'');');
+   %>
+   </div>
+<% zsi_lib.ShowPaging(p_page_no,l_rows,l_row_count); %>
+</div>
+
+<script type="text/javascript">
+   $(document).ready(function(){
+      $('.modal-dialog').css('width', '450px');
+   });
+
+   //on window resize
+   $(window).resize(function(){
+       zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+
+  function checkDelete(l_cmd) {
+    var l_stmt, l_count
+      l_stmt = zsi.table.getCheckBoxesValues("input[name=p_cb]:checked","p_value=","&");
+
+    if (l_stmt!="") {
+        if(confirm("Are you sure you want to delete ALL SELECTED Dental Services?")) {
+          $.post( l_cmd + "&" + l_stmt + "&p_table=S004_T08009&p_field=ds_code", function(d){
+            parent.ShowHideProgressWindow(false);
+            window.location.href = window.location.href;
+          });
+        }
+     }
+   }
+
+   function gotoPage(p_this){
+       var url = "<%= l_url %>&p_page_no=" + p_this.value;
+       window.location.href = url;
+    };
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+
+   zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+
+</script>
+
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

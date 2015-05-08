@@ -1,0 +1,217 @@
+<%@ plsql procedure="emp_info" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   19-AUG-14  GT    Modified.
+   17-AUG-14  GF    New
+*/
+--DECLARATION SECTION
+l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+l_dhtmlx_sort                VARCHAR2(1024);
+%>
+<%
+   pageheader(p_dlayout=>'Y',p_dgrid=>'Y');
+%>
+<body>
+<%
+zsi_bs_lib.OpenEntryForm; 
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Age', p_inputName=>'p_by_age',p_labelSize =>1, p_inputSize =>1);   
+      zsi_bs_lib.SelectBox(p_labelName=>'Age Bracket',  p_Name=>'p_by_ab', p_labelSize=>2, p_selectSize=>2);                    
+      zsi_bs_lib.SelectBox(p_labelName=>'Workstation',  p_Name=>'p_by_ws', p_labelSize=>1, p_selectSize=>1);                    
+      zsi_bs_lib.SelectBox(p_labelName=>'Civil Status', p_Name=>'p_by_cs', p_labelSize=>2, p_selectSize=>2);                    
+   zsi_bs_lib.CloseFormGroup();
+
+ 
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Rank',       p_Name=>'p_by_rank', p_labelSize=>1, p_selectSize=>2);                    
+      zsi_bs_lib.SelectBox(p_labelName=>'Empl. Type', p_Name=>'p_by_et', p_labelSize=>1, p_selectSize=>2);                    
+      zsi_bs_lib.SelectBox(p_labelName=>'Blood Type', p_Name=>'p_by_bt', p_labelSize=>1, p_selectSize=>2);                    
+      zsi_bs_lib.SelectBox(p_labelName=>'Gender',     p_Name=>'p_by_gender', p_labelSize=>1, p_selectSize=>2);                    
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+             zsi_bs_lib.SelectBox(p_labelName=>'Cost Center', p_Name=>'p_by_cc', p_labelSize=>1, p_selectSize=>7);                    
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+             zsi_bs_lib.SelectBox(p_labelName=>'Department', p_Name=>'p_by_dept', p_labelSize=>1, p_selectSize=>7);                    
+   zsi_bs_lib.CloseFormGroup();
+   
+   zsi_bs_lib.OpenFormGroup();
+             zsi_bs_lib.SelectBox(p_labelName=>'Group', p_Name=>'p_by_group', p_labelSize=>1, p_selectSize=>7);                    
+   zsi_bs_lib.Button('btnSubmit','Search');
+   zsi_bs_lib.CloseFormGroup();
+ 
+zsi_bs_lib.CloseEntryForm; 
+%>
+
+ <br />
+
+<div style="height:450px; overflow-y:auto;" class="col-xs-12">
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="250px" id="gridbox1">
+<tr valign="bottom">
+   <th align="center" width="75px">Type Group</th>   
+   <th align="center" width="50px">Emp Type</th>   
+   <th  width="230px">Employee</th>
+   <th align="center" width="55px">Cost Center </th>
+   <th align="center" width="60px">Age Bracket</th>
+   <th align="center" width="50px">Age</th>   
+   <th align="center" width="100px">Blood Type</th>   
+   <th align="center" width="55px">Work Station</th>   
+   <th align="center" width="55px">Civil Status</th>   
+   <th align="center" width="55px">Gender</th>   
+   <th align="center" width="120px">Rank</th>   
+</tr>
+<%
+   l_dhtmlx_sort := 'str,str,str,str,str,str,str,str,str,na';
+%>
+</table>
+
+<div class="bottomNav">
+<div class="buttonGroup">
+<%
+zsi_bs_lib.Button('btnPrint','Print Result');
+zsi_bs_lib.Button('btnPrintAll','Print All');
+%>
+</div>
+<% zsi_bs_lib.ShowPagingCtrl; %>
+</div>
+</div>
+<script type="text/javascript">
+/*variable declaration*/
+var ctrlSel = zsi.control.SelectList;
+var l_page_rows=0;
+
+/*end of declaration*/
+
+
+//on page loaded
+$(document).ready(function(){     
+   mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   mygrid.clearAll();
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid);
+
+   ctrlSel("#p_by_ab","","N","age_bracket_v","sele_value","displayed_text"," ORDER BY TO_NUMBER(sele_value)");
+   ctrlSel("#p_by_et","","N","emp_grouping_v","sele_value","displayed_text","");
+   ctrlSel("#p_by_ws","","N","work_station_v","sele_value","displayed_text","");
+   ctrlSel("#p_by_gender","","N","gender_v","sele_value","displayed_text","");
+   ctrlSel("#p_by_cs","","N","employee_civil_status_v","sele_value","displayed_text","");
+   ctrlSel("#p_by_rank","","N","employee_rank_v","sele_value","displayed_text","");
+   ctrlSel("#p_by_bt","","N","blood_type_v","sele_value","displayed_text","");
+   ctrlSel("#p_by_cc","","N","cost_center_v","ccnt_cd","ccnt_desc"," ORDER BY ccnt_desc");
+   ctrlSel("#p_by_dept","","N","ccnt_dept_v","ccnt_cd","ccnt_desc"," ORDER BY ccnt_desc");
+   ctrlSel("#p_by_group","","N","ccnt_groups_v","ccnt_cd","ccnt_desc"," ORDER BY ccnt_desc");
+             
+   p_age_brak_code     = $("#p_age_brak_code");
+   p_medplan_code     = $("#p_medplan_code");
+   
+});
+
+function onLoadComplete(data){
+   mygrid.clearAll();
+   zsi.table.dhtmlx.Unescape(data,2);   
+   mygrid.parse(data, "json");
+   l_page_rows= data.page_rows;
+   zsi.page.DisplayRecordPage(data.page_no,data.page_rows,data.row_count);
+   $("#modalWindow").modal('hide');    
+} 
+
+
+
+$("#btnSubmit").click(function(){
+    LoadData(GetParams() ); 
+});
+
+$("#btnPrint").click(function(){
+   var l_criterias =GetCriterias();
+   l_criterias=zsi.form.setCriteria("#p_page_no","Page No",l_criterias);
+   
+   var l_params =GetParams();
+   if($("#p_page_no").val()) l_params += "&p_page_no=" + $("#p_page_no").val(); 
+      
+   
+   window.open("emp_info_rpt?" + l_params + "&p_criteria=" + escape(l_criterias) );
+});
+
+$("#btnPrintAll").click(function(){
+   window.open("emp_info_rpt?" + GetParams() + "&p_print=A" + "&p_criteria=" + escape(GetCriterias()) );
+});
+
+
+function gotoPage(p_this){
+   var l_params = GetParams() + "&p_rows="+ l_page_rows + "&p_page_no=" + p_this.value;
+   LoadData(l_params ); 
+};
+
+
+function LoadData(params){
+ $.getJSON("emp_info_json?" + params,onLoadComplete);   
+}
+
+
+ 
+function GetParams(){
+   var l_params="";
+   l_params += "p_by_age=" + $("#p_by_age").val();   
+   l_params += "&p_by_ab=" + $("#p_by_ab").val();    
+   l_params += "&p_by_ws=" + $("#p_by_ws").val();    
+   l_params += "&p_by_cs=" + $("#p_by_cs").val();    
+   l_params += "&p_by_rank=" + $("#p_by_rank").val();  
+   l_params += "&p_by_et=" + $("#p_by_et").val();    
+   l_params += "&p_by_bt=" + $("#p_by_bt").val();    
+   l_params += "&p_by_gender=" + $("#p_by_gender").val();
+   l_params += "&p_by_cc=" + $("#p_by_cc").val();    
+   l_params += "&p_by_dept=" + $("#p_by_dept").val();  
+   l_params += "&p_by_group=" + $("#p_by_group").val(); 
+
+   return l_params;
+}
+
+function GetCriterias(){
+   var l_criterias="";
+                    
+      l_criterias=zsi.form.setCriteria("#p_by_age","Age",l_criterias);
+      l_criterias=zsi.form.setCriteria("#p_by_ab","Age Bracket",l_criterias);
+      l_criterias=zsi.form.setCriteria("#p_by_ws","Work Station",l_criterias);
+      l_criterias=zsi.form.setCriteria("#p_by_cs","Civil Status",l_criterias);
+      l_criterias=zsi.form.setCriteria("#p_by_rank","Rank",l_criterias);
+      l_criterias=zsi.form.setCriteria("#p_by_et","Empl. Type",l_criterias);
+      l_criterias=zsi.form.setCriteria("#p_by_bt","Blood Type",l_criterias);
+      l_criterias=zsi.form.setCriteria("#p_by_gender","Gender",l_criterias);
+      l_criterias=zsi.form.setCriteria("#p_by_cc","Cost Center",l_criterias);
+      l_criterias=zsi.form.setCriteria("#p_by_dept","Department",l_criterias);
+      l_criterias=zsi.form.setCriteria("#p_by_group","Group",l_criterias);
+
+   return l_criterias;
+}
+
+
+
+
+
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,138 @@
+<%@ plsql procedure="hcp_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_ref_code"    type="VARCHAR2" DEFAULT='NULL'%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-SEP-14  BD    Added security logic.
+   03-JUL-14  GT    implement class="table" for multi entry form.
+   02-JUL-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_style_path     VARCHAR2(128) := zsi_lib.StylePath;
+   l_js_path        VARCHAR2(128) := zsi_lib.JSPath;
+   l_title          VARCHAR2(50);
+   l_frmOffset      VARCHAR2(50):='';
+
+   l_rec  S004_T08004%ROWTYPE;
+   l_user_iswrite       NUMBER(1):=0;
+%>
+<%
+  pageheader;
+%>
+<body >
+<form name="frmDSList" action="hcp_update" method="POST" >
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ref_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ref_desc');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ref_type');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ref_acct');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ref_address');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_remarks');
+
+   IF p_ref_code IS NOT NULL THEN
+      SELECT * INTO l_rec FROM S004_T08004 WHERE reference_code = p_ref_code;
+      zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ref_code',p_inputValue=>l_rec.reference_code);
+
+      zsi_bs_lib.OpenEntryForm;
+
+            zsi_bs_lib.OpenFormGroup();
+               zsi_bs_lib.InputTextBox(p_labelName =>'Description',p_inputName=>'p_ref_desc', p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.reference_desc);
+            zsi_bs_lib.CloseFormGroup();
+
+
+            zsi_bs_lib.OpenFormGroup();
+                  zsi_bs_lib.SelectBox(p_labelName=>'Establishment', p_Name=>'p_ref_type', p_labelSize=>3, p_selectSize=>9);
+            zsi_bs_lib.CloseFormGroup();
+
+            zsi_bs_lib.OpenFormGroup();
+               zsi_bs_lib.InputTextBox(p_labelName =>'Account No.',p_inputName=>'p_ref_acct', p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.account_no);
+            zsi_bs_lib.CloseFormGroup();
+
+            zsi_bs_lib.OpenFormGroup();
+               zsi_bs_lib.InputTextBox(p_labelName =>'Address',p_inputName=>'p_ref_address', p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.address);
+            zsi_bs_lib.CloseFormGroup();
+
+
+            zsi_bs_lib.OpenFormGroup();
+               zsi_bs_lib.InputTextBox(p_labelName =>'Remarks',p_inputName=>'p_remarks', p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.remarks);
+            zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.CloseEntryForm;
+      l_frmOffset:='col-xs-offset-3';
+
+   ELSE
+%>
+<table class="table">
+   <tr>
+      <th nowrap align="left">Description</th>
+      <th nowrap align="left">Establishment</th>
+      <th nowrap align="left">Account No.</th>
+      <th nowrap align="left">Address</th>
+      <th>Remarks</th>
+   </tr>
+<%
+   FOR i IN 1..5 LOOP
+%>
+   <tr valign="bottom">
+
+      <td><input type="hidden" name="p_ref_code" value="">
+         <input type="text" name="p_ref_desc" value=""  class="form-control input-sm">
+      </td>
+      <td><% zsi_bs_lib.SelectBox(p_Name=>'p_ref_type', p_selectSize=>2, p_wrapper=>'N');%></td>
+      <td><input type="text" name="p_ref_acct" value=""  class="form-control input-sm"></td>
+      <td><input type="text" name="p_ref_address" value=""   class="form-control input-sm"></td>
+      <td><input type="text" name="p_remarks" value=""  class="form-control input-sm"></td>
+   </tr>
+<%
+   END LOOP;
+   END IF;
+%>
+</table>
+<div class="buttonGroup <%=l_frmOffset%>">
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+</form>
+
+
+<script type="text/javascript">
+/*variable declaration*/
+   var ctrlSel = zsi.control.SelectList;
+
+
+/*end of declaration*/
+
+   $(document).ready(function(){
+      $('.modal-dialog').css('width', '450px');
+
+      ctrlSel("select[name=p_ref_type]","<%=l_rec.referral_type%>","N","referral_type_v","sele_value","displayed_text","");
+
+   });
+
+ zsi.json.checkValueExist("input[name=p_ref_desc]","S004_T08004","reference_desc");   
+
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

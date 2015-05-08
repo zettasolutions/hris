@@ -1,0 +1,40 @@
+<%@ plsql procedure="testform" %>
+<%!
+
+--DECLARATION SECTION
+ 
+   l_ctr        NUMBER(10) := 0;
+   l_str        VARCHAR2(1000);
+   
+   CURSOR Test_cur is
+select a.ogc_geometry.sdo_ordinates as ordinate from  S004.BDRY_BARANGAY a where a.brgy_code='KAM'; 
+
+%>
+<%
+
+For e IN test_cur() LOOP
+    For i IN e.ordinate.first .. e.ordinate.last LOOP
+ 
+        l_ctr := l_ctr + 1;
+        l_str := l_str || ', ' || e.ordinate(i);
+   
+        if mod(l_ctr,2) = 0 then
+           l_str := substr(l_str,3);
+           if i = e.ordinate.last then
+           l_str := 'new google.maps.LatLng(' || l_str || ')';
+           else
+           l_str := 'new google.maps.LatLng(' || l_str || '),';
+           end if;
+           htp.p(l_str);
+            htp.BR;
+           l_str := '';
+        end if;
+        
+ 
+    END LOOP;
+END LOOP ;
+  
+%>   
+   
+
+ 

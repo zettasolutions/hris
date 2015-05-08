@@ -1,0 +1,156 @@
+<%@ plsql procedure="hospitalization_exp_rpt" %>
+<%@ plsql parameter="p_cmonth"      type="NUMBER" %>
+<%@ plsql parameter="p_cyear"       type="NUMBER" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   16-MAR-15  BD    Created.
+*/
+--DECLARATION SECTION
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+
+   CURSOR age_bracket_cur IS
+      SELECT sele_value as age_bracket, description as  age_bracket_desc
+        FROM age_bracket_v
+       ORDER BY description;
+
+   CURSOR dept_cur (p_ccnt_grp_cd IN NUMBER) IS
+      SELECT ccnt_cd, ccnt_abbrv
+        FROM ccnt_dept_v
+       WHERE ccnt_grp_cd = p_ccnt_grp_cd
+       ORDER BY ccnt_abbrv;
+
+   CURSOR ccnt_grp_cur IS
+      SELECT ccnt_grp_cd, COUNT(*) as ccnt_grp_count
+        FROM ccnt_dept_v
+       GROUP BY ccnt_grp_cd
+       HAVING COUNT(*) > 1
+       ORDER BY ccnt_grp_cd;
+
+
+   l_count                      NUMBER;
+   l_dept_age_amt_billed        NUMBER;
+   l_total                      NUMBER;
+   l_grand_total                NUMBER := 0;
+   l_age_bracket_total_arr      zsi_lib.NUM_ARR;
+   l_age_bracket_count          NUMBER(2);
+   l_period                     DATE;
+   l_age_bracket_code_arr       zsi_lib.NUM_ARR;
+   l_age_bracket_desc_arr       zsi_lib.VC2_255_ARR;
+
+   FUNCTION FormatNum (p_num IN NUMBER) RETURN VARCHAR2 IS
+   BEGIN
+      IF p_num = 0 THEN
+         RETURN NULL;
+      END IF;
+      RETURN p_num;
+   END;
+
+%>
+<%
+   reportheader(p_output=>'H');
+   l_period := TO_DATE(p_cmonth || '/01/' || p_cyear,'MM/DD/YYYY');
+
+   OPEN  age_bracket_cur;
+   FETCH age_bracket_cur BULK COLLECT INTO l_age_bracket_code_arr, l_age_bracket_desc_arr;
+   CLOSE age_bracket_cur;
+
+   l_age_bracket_count := l_age_bracket_code_arr.COUNT;
+   FOR i IN 1..l_age_bracket_count LOOP
+      l_age_bracket_total_arr(i) := 0;
+   END LOOP;
+%>
+<body onload="window.print();">
+
+<table width="100%">
+   <tr valign="top">
+      <td align="left" class="head1 reportTitle">Hospitalization for <%= TO_CHAR(l_period,'Month YYYY') %></td>
+      <td align="right" class="reportcriteria">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss')) %></td>
+   </tr>
+</table>
+<br />
+
+<table border="1">
+   <tr>
+      <th class="alignLeft" rowspan="2">Dept</th>
+      <th class="alignCenter" colspan="<%= l_age_bracket_count %>">Age Bracket</th>
+      <th class="alignCenter" rowspan="2">Cost</th>
+   </tr>
+   <tr>
+<%
+      FOR j IN 1..l_age_bracket_count LOOP
+%>
+      <th class="alignCenter" nowrap><%= l_age_bracket_desc_arr(j) %></th>
+<%
+      END LOOP;
+%>
+   </tr>
+<%
+      <<CCNT_GRP>>
+      FOR g IN ccnt_grp_cur LOOP
+
+         <<DEPARTMENTS>>
+         FOR d IN dept_cur(g.ccnt_grp_cd) LOOP
+            l_total := 0;
+%>
+      <tr>
+         <td><%= d.ccnt_abbrv %></td>
+<%
+            <<AGE_BRACKETS>>
+            FOR j IN 1..l_age_bracket_count LOOP
+               l_dept_age_amt_billed := 0;
+               BEGIN
+                   SELECT SUM(NVL(amnt_billed,0)), COUNT(DISTINCT t.id_no)
+                    INTO l_dept_age_amt_billed, l_count
+                    FROM s004_t08010_billing_v t, employee_v e
+                   WHERE t.id_no = e.empl_id_no
+                     AND TO_CHAR(t.tran_date,'mm') = p_cmonth
+                     AND t.tran_year = p_cyear
+                     AND e.department = d.ccnt_cd
+                     AND e.age_brak_code = l_age_bracket_code_arr(j)
+                     AND t.medplan_code = 3;
+               END;
+               l_total := l_total + NVL(l_dept_age_amt_billed,0);
+               l_grand_total := l_grand_total + NVL(l_dept_age_amt_billed,0);
+               l_age_bracket_total_arr(j) := l_age_bracket_total_arr(j) + NVL(l_count,0);
+%>
+         <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_count),0) %></td>
+<%
+            END LOOP AGE_BRACKETS;
+%>
+         <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_total),2) %></td>
+<%
+         END LOOP DEPARTMENTS;
+%>
+   </tr>
+<%
+      END LOOP CCNT_GRP;
+%>
+   <tr style="font-weight:bold;">
+      <td>Grand Total</td>
+<%
+         FOR j IN 1..l_age_bracket_count LOOP
+%>
+         <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_age_bracket_total_arr(j)),0) %></td>
+<%
+         END LOOP;
+%>
+         <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_grand_total),2) %></td>
+   </tr>
+</table>
+
+</body>
+</html>
+

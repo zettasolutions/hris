@@ -1,0 +1,252 @@
+<%
+      --owa_util.mime_header('application/vnd.ms-word', false);
+      --htp.p('Content-Disposition: inline; filename="meds_maintenance.doc"');
+      --owa_util.mime_header('application/vnd.ms-excel', false);
+      --htp.p('Content-Disposition: inline; filename="meds_maintenance.xls"');
+      --owa_util.http_header_close;
+%>
+<%@ plsql procedure="meds_maint_rpt" %>
+<%@ plsql parameter="p_tran_no"              type="NUMBER" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   01-JAN-15  BD    Refinement
+   06-JAN-15  BD    New
+*/
+--DECLARATION SECTION
+   l_image_path                 VARCHAR2(128) := zsi_lib.ImagePath;
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+   l_user_iswrite               NUMBER(1):=0;
+   l_t08000_info                s004_t08000%ROWTYPE;
+   l_signatory_info             s004_t01000%ROWTYPE;
+   l_patient_info               s004_t01000%ROWTYPE;
+   l_t08015_info                s004_t08015%ROWTYPE;
+   l_t08006_info                s004_t08006%ROWTYPE;
+   l_spacer                     VARCHAR2(3);
+   l_sig_len1                   NUMBER(3);
+   l_sig_len2                   NUMBER(3);
+
+   CURSOR accredited_drug_stores_cur IS
+      SELECT *
+        FROM s004_t08004
+       WHERE referral_type = 3
+         AND accredited = 1;
+
+   CURSOR med_maint_cur IS
+      SELECT *
+        FROM med_maintenance_dtl_v
+       WHERE tran_no = p_tran_no;
+%>
+<%
+   reportheader(p_output=>'H');
+   BEGIN
+
+      SELECT *
+        INTO l_t08006_info
+        FROM s004_t08006
+       WHERE is_med_signatory = 1;
+
+      SELECT *
+        INTO l_t08015_info
+        FROM s004_t08015
+       WHERE tran_no = p_tran_no;
+
+      SELECT *
+        INTO l_patient_info
+        FROM s004_t01000
+       WHERE empl_id_no = l_t08015_info.id_no;
+
+      SELECT *
+        INTO l_t08000_info
+        FROM s004_t08000
+       WHERE sele_code = 'SIGNATORY_MED';
+
+      SELECT *
+        INTO l_signatory_info
+        FROM s004_t01000
+       WHERE empl_id_no = l_t08000_info.sele_value;
+
+       l_sig_len1 := LENGTH(l_t08006_info.doctor_name)*1.75;
+       l_sig_len2 := LENGTH(l_signatory_info.empl_first_name || SUBSTR(l_signatory_info.empl_middle_name,1,1) || l_signatory_info.empl_last_name)*2;
+       l_sig_len2 := GREATEST(l_sig_len1,l_sig_len2);
+
+   EXCEPTION
+      WHEN OTHERS THEN NULL;
+
+   END;
+%>
+<body style="background:#FFFFFF" onload="window.print();">
+<table width="600px" border="1" cellpadding="0" cellspacing="0"  align="center">
+   <tr>
+      <td align="center" width="100%">
+
+<table width="100%">
+   <tr>
+      <td colspan="2" align="center">
+         <table>
+            <tr>
+               <td>
+                  <img src="<%= l_image_path %>mcwd_logo2x2.jpg" height="60px" width="60px">
+               </td>
+               <td align="center"><span class="head1 reportTitle">Metropolitan Cebu Water District</span>
+                  <br><span class="reportcriteria">MEDICAL & DENTAL SERVICES CLINIC</span>
+               </td>
+             </tr>
+         </table>
+      </td>
+   </tr>
+   <tr>
+      <td align="left" colspan="2" style="text-decoration: underline;"><%= TO_CHAR(l_t08015_info.tran_date,'Month fmdd, yyyy') %>&nbsp;</td>
+   </tr>
+   <tr>
+      <td align="left" colspan="2" style="text-decoration: underline;">
+<%
+   l_spacer := '';
+   FOR ds IN accredited_drug_stores_cur LOOP
+      htp.p(l_spacer || ds.reference_desc);
+      l_spacer := ' / ';
+   END LOOP;
+%>
+      &nbsp;</td>
+   </tr>
+   <tr>
+      <td colspan="2">&nbsp;</td>
+   </tr>
+
+   <tr>
+      <td align="left" colspan="2">To whom this may concern:</td>
+   </tr>
+   <tr>
+      <td align="left" colspan="2">
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Please allow the bearer <span style="text-decoration:underline; font-weight: bold;"><%= l_patient_info.empl_last_name || ', ' || l_patient_info.empl_first_name  %></span> to purchase the following prescribed medicines on credit not to exceed: P <span><%= zsi_lib.FormatAmount(l_t08015_info.allowed_amt,2) %></span>
+      </td>
+   </tr>
+
+   <tr>
+      <td colspan="2" align="left">Prescription:</td>
+   </tr>
+
+   <tr>
+      <td colspan="2" align="center">
+
+<table border="0" cellpadding="2" cellspacing="1" width="100%">
+   <tr>
+      <th align="left">Description</th>
+      <th width="80px">&nbsp;</th>
+      <th width="120px" align="left">Dosage</th>
+      <th width="50px" align="center">Qty</th>
+   </tr>
+   <tr style="background:#FFFFFF;">
+      <td align="left" colspan="2"><hr size="-1" width="100%"></td>
+      <td align="left"><hr size="-1" width="100%"></td>
+      <td align="center"><hr size="-1" width="100%"></td>
+   </tr>
+<%
+   FOR m IN med_maint_cur LOOP
+%>
+   <tr style="background:#FFFFFF;">
+      <td align="left"><%= m.medsname %></td>
+      <td align="left"><%= m.medsclass %></td>
+      <td align="left"><%= m.meds_dosage %></td>
+      <td align="center"><%= m.meds_qty %></td>
+   </tr>
+<%
+   END LOOP;
+%>
+</table>
+      </td>
+   </tr>
+   <tr>
+      <td colspan="2" align="left"><hr size="-1" width="100%"></td>
+   </tr>
+   <tr valign="top">
+      <td colspan="2" align="left">Note: To ascertain bearer's identity, let him/her present company I.D.<br /></td>
+   </tr>
+   <tr valign="top">
+      <td align="left">
+         <table>
+            <tr>
+               <td align="left"><br /><%= LPAD('_',l_sig_len2,'_') %></td>
+            </tr>
+            <tr>
+               <td align="left" style="font-size: 110%;font-weight:bold;"><%= l_signatory_info.empl_first_name %> <%= SUBSTR(l_signatory_info.empl_middle_name,1,1) %>. <%= l_signatory_info.empl_last_name %></td>
+            </tr>
+            <tr>
+               <td align="left"><%= l_t08000_info.description %></td>
+            </tr>
+         </table>
+      </td>
+
+      <td align="right" nowrap rowspan="2">
+         <table>
+            <tr>
+               <td colspan="2" align="center"><img height="30px" src="get_doc_sig?p_doctor_code=<%= l_t08006_info.doctor_code %>"><br><%= LPAD('_',l_sig_len2,'_')%></td>
+            </tr>
+            <tr>
+               <td align="left" colspan="2" style="font-size: 110%; font-weight:bold;">DR. <%= UPPER(l_t08006_info.doctor_name) %></td>
+            </tr>
+            <tr>
+               <td align="left" width="40px">Lic. No.</td>
+               <td align="left" style="font-weight:bold; text-decoration:underline;">: <%= l_t08006_info.license_no %></td>
+            </tr>
+            <tr>
+               <td align="left">TIN. No.</td>
+               <td align="left" style="font-weight:bold; text-decoration:underline;">: <%= l_t08006_info.tin_no %></td>
+            </tr>
+            <tr>
+               <td align="left">PTR. No.</td>
+               <td align="left" style="font-weight:bold; text-decoration:underline;">: <%= l_t08006_info.ptr_no %></td>
+            </tr>
+            <tr>
+               <td align="left">S2 No.</td>
+               <td align="left" style="font-weight:bold; text-decoration:underline;">: <%= l_t08006_info.s2_no %></td>
+            </tr>
+         </table>
+         <br />
+      </td>
+   </tr>
+   <tr>
+      <td align="left" style="font-weight:bold;">
+         <table border="1" celpadding="0" cellspacing="0">
+            <tr>
+               <td>
+                  <table>
+                     <tr>
+                        <td colspan="3" nowrap>Received: (Pharmacy)<br /><br /></td>
+                     </tr>
+                        <td align="center" nowrap>______________________________</td>
+                        <td>&nbsp;&nbsp;</td>
+                        <td align="center" nowrap>______________</td>
+                     <tr>
+                        <td align="center" nowrap>Name & Signature</td>
+                        <td>&nbsp;&nbsp;</td>
+                        <td align="center" nowrap>Date</td>
+                     </tr>
+                  </table>
+               </td>
+            </tr>
+         </table>
+      </td>
+   </tr>
+</table>
+
+      </td>
+   </tr>
+</table>
+</body>
+</html>

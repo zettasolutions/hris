@@ -1,0 +1,59 @@
+<%@ plsql procedure="empl_dental_rpt_filter"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   08-MAR-15  GT    New
+*/
+   --DECLARATION SECTION
+   l_user                       VARCHAR2(30);
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_amchart_path               VARCHAR2(128);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+   l_user_iswrite               NUMBER(1):=0;
+%>
+<%
+   l_user       := zsi_sessions_lib.GetCookieUser;
+   l_module_id  := zsi_lib.GetModuleID(owa_util.get_procedure);
+   l_user_iswrite := 1;
+   pageheader;
+%>
+<body>
+<form name="frmList">
+<%
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.CMonths(p_mandatory=>'N',p_label_name=>'Month',p_field=>'cmonth',p_value=>TO_CHAR(SYSDATE,'MM'),p_label_size =>1,p_select_size=>2);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Year',p_inputName=>'p_year',p_inputValue=>TO_CHAR(SYSDATE,'yyyy'),p_labelSize =>1, p_inputSize =>1);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.CloseEntryForm;
+%>
+</form>
+<div class="col-xs-12 buttonGroup">
+<%
+      zsi_bs_lib.Offset(1);
+      zsi_bs_lib.Button('btnPrint','Print');
+%>
+</div>
+<script type="text/javascript">
+$("#btnPrint").click(function(){
+   var l_params="";
+   l_params += "p_cmonth=" + $("#p_cmonth").val();
+   l_params += "&p_year=" + $("#p_year").val();
+   window.open("empl_dental_rpt?" + l_params);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<%@ plsql procedure="train_srp_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_spk_code"    type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-SEP-14  BD    Added security logic.
+   16-07-14         New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path     VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path         VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path      VARCHAR2(128) := zsi_lib.StylePath;
+   l_title           VARCHAR2(50);
+   l_frmOffset       VARCHAR2(50):='';
+   l_rec             S004_T07011%ROWTYPE;
+   l_user_iswrite    NUMBER(1):=0;
+   l_spk_type        S004_T07011.spk_type%TYPE;
+%>
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   l_title := 'Speaker/Resource Person ';
+   IF p_spk_code IS NOT NULL THEN
+   SELECT * INTO l_rec FROM S004_T07011 WHERE spk_code = p_spk_code;
+   l_title := 'Code:' || p_spk_code;
+   END IF;
+
+   pageheader();
+
+%>
+<body>
+<form name="frmList" action="train_srp_update" method="POST" >
+<%
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_spk_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_spk_name');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_spk_citations');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_spk_address');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_spk_type');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_spk_contactno');
+
+
+   IF p_spk_code IS NOT NULL THEN
+   SELECT * INTO l_rec FROM S004_T07011 WHERE spk_code = p_spk_code;
+      zsi_bs_lib.OpenEntryForm;
+      zsi_bs_lib.InputHiddenBox(p_inputName=>'p_spk_code',p_inputValue=>l_rec.spk_code);
+      zsi_bs_lib.OpenFormGroup;
+         zsi_bs_lib.InputTextBox('Name','p_spk_name',l_rec.spk_name, p_inputSize =>6);
+      zsi_bs_lib.CloseFormGroup;
+      zsi_bs_lib.OpenFormGroup;
+         zsi_bs_lib.InputTextBox('Citations','p_spk_citations',l_rec.spk_citations, p_inputSize =>6);
+      zsi_bs_lib.CloseFormGroup;
+      zsi_bs_lib.OpenFormGroup;
+         zsi_bs_lib.InputTextBox('Address','p_spk_address',l_rec.spk_address, p_inputSize =>6);
+      zsi_bs_lib.CloseFormGroup;
+      zsi_bs_lib.OpenFormGroup;
+        zsi_bs_lib.SelectBox(p_labelName=>'Type', p_Name=>'p_spk_type', p_labelSize=>2, p_selectSize=>2, p_Attributes=>'SelectedValue="' || l_rec.spk_type || '"');
+      zsi_bs_lib.CloseFormGroup;
+      zsi_bs_lib.OpenFormGroup;
+         zsi_bs_lib.InputTextBox('Contactno','p_spk_contactno',l_rec.spk_contactno, p_inputSize =>6);
+      zsi_bs_lib.CloseFormGroup;
+      zsi_bs_lib.CloseEntryForm;
+      l_frmOffset:='col-xs-offset-3';
+   ELSE
+%>
+   <table class="table">
+   <tr>
+      <th nowrap align="left">Name</th>
+      <th nowrap align="left">Citations</th>
+      <th nowrap align="left">Address</th>
+      <th nowrap align="left">Type</th>
+      <th nowrap align="left">Contactno</th>
+   </tr>
+<%
+   FOR i IN 1..5 LOOP
+%>
+   <tr style="display:none;"><td><input type="hidden" name="p_spk_code" value=""></td></tr>
+   <tr>
+      <td><input type="text" name="p_spk_name" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_spk_citations" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_spk_address" value="" class="form-control input-sm"></td>
+      <td><% zsi_bs_lib.SelectBox(p_Name=>'p_spk_type', p_labelSize=>4, p_selectSize=>2, p_wrapper=>'N'); %></td>
+      <td><input type="text" name="p_spk_contactno" value="" class="form-control input-sm"></td>
+   </tr>
+   <% END LOOP; %>
+</table>
+<% END IF;%>
+<div class="buttonGroup <%=l_frmOffset%>">
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+</form>
+<script type="text/javascript" src="zsi_employee_js"></script>
+<script type="text/javascript">
+   //on page loaded
+   $(document).ready(function(){
+      ctrlSel("#p_spk_type","","N","speaker_type_v","sele_value","sele_value"," ORDER BY sele_value" );
+   });
+
+   zsi.json.checkValueExist("input[name=p_spk_name]","S004_T07011","spk_name");   
+
+</script>
+
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+
+</body>
+</html>

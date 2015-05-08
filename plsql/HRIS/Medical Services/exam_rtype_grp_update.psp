@@ -1,0 +1,109 @@
+<%@ plsql procedure="exam_rtype_grp_update" %>
+<%@ plsql parameter="p_seq_no"       type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_group_desc"   type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_result_type"  type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ape_priority" type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_remarks"      type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   05-JAN-15  GT    Added APE_PRIORITY
+   05-AUG-14  GT    Removed p_seq_no.
+   08-JUL-14  GT    Added p_seq_no.
+   04-JUL-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+
+
+   l_changed VARCHAR2(1) := 'N';
+   l_rec     S004_T08019_GROUP%ROWTYPE;
+   l_group   NUMBER:=1;
+
+%>
+
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Exam Result Types - Group</title>
+</head>
+<body>
+<%
+FOR i IN 2..p_seq_no.COUNT LOOP
+   IF p_seq_no(i) IS  NULL AND p_result_type(i) IS NOT NULL  AND p_group_desc(i) IS NOT NULL THEN        
+      SELECT COUNT(group_code) + 1 INTO l_group FROM S004_T08019_GROUP WHERE result_type = p_result_type(i);
+      INSERT INTO S004_T08019_GROUP (
+          seq_no
+         ,group_code
+         ,group_desc
+         ,result_type
+         ,ape_priority
+         ,remarks
+         ,created_by
+         ,date_created)
+      VALUES
+      (  
+         s004_t08019_group_sq001.nextval
+         ,l_group
+         ,p_group_desc(i)       
+         ,p_result_type(i)
+         ,p_ape_priority(i)
+         ,p_remarks(i)
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+      );
+      ELSIF  p_seq_no(i) IS NOT NULL AND p_result_type(i) IS NOT NULL AND p_group_desc(i) IS NOT NULL THEN
+
+      SELECT * INTO l_rec FROM S004_T08019_GROUP WHERE seq_no=p_seq_no(i);
+
+         IF zsi_lib.IsChanged(l_rec.result_type, TO_NUMBER(p_result_type(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.result_type := p_result_type(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_rec.group_desc, p_group_desc(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.group_desc := p_group_desc(i);
+         END IF;
+         IF zsi_lib.IsChanged(l_rec.ape_priority, TO_NUMBER(p_ape_priority(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.ape_priority := p_ape_priority(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_rec.remarks, p_remarks(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.remarks := p_remarks(i);
+         END IF;
+
+      IF l_changed='Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08019_GROUP SET row = l_rec WHERE seq_no = p_seq_no(i);
+      END IF;
+
+      END IF;
+   END LOOP;
+END;
+%>
+
+<script type="text/javascript">
+   parent.dhxLayout.cells("b").attachURL("exam_rtype_grp_list");
+   parent.w1.close();
+</script>

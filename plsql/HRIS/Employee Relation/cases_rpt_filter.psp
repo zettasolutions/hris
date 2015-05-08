@@ -1,0 +1,91 @@
+<%@ plsql procedure="cases_rpt_filter" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   12-FEB-15  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+<%
+   pageheader(p_dgrid=>'Y');
+%>
+<body>
+<%
+zsi_bs_lib.OpenEntryForm; 
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.SelectBox(p_labelName=>'Case Type', p_Name=>'p_case_type', p_labelSize=>1, p_selectSize=>4);
+      zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+%>
+<div class="buttonGroup">
+<%
+zsi_bs_lib.Offset(1);
+zsi_bs_lib.Button('btnPrint','Print Result');
+%>
+</div>
+
+<script type="text/javascript">
+/*variable declaration*/
+   var ctrlSel = zsi.control.SelectList;
+   var l_page_rows=0;
+/*end of declaration*/
+
+   $(document).ready(function(){
+       ctrlSel("#p_case_type","","N","Case_types_v","sele_value","displayed_text","");
+   });
+
+   function GetParams(){
+      var l_params="";
+      l_params += "p_case_type=" + $("#p_case_type").val();
+      return l_params;
+   }  
+
+   $("#btnPrint").click(function(){
+      window.open("cases_rpt?" + GetParams() + "&p_criteria=" + GetCriterias() );
+   });
+
+   function GetCriterias(){
+      var l_criterias="";
+         l_criterias=setCriteria("#p_case_type","Case Type",l_criterias);
+      return l_criterias;
+   }
+
+   function setCriteria(p_inputName,p_desc, p_result){
+
+
+      var input = $(p_inputName);
+      if (input.prop("tagName")=="SELECT"){
+         if(input.find(":selected").text()){
+            if (p_result!="") p_result += ", ";
+            p_result += input.find(":selected").text();
+         }
+      }
+      else{
+         if(input.val()){
+            if (p_result!="") p_result += ", ";         
+            p_result += input.val(); 
+         }
+      }
+      return p_result;
+   }
+
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

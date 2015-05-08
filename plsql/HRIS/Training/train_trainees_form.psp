@@ -1,0 +1,131 @@
+<%@ plsql procedure="train_trainees_form" %>
+<%@ plsql parameter="p_tran_no" type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_module_id" type="NUMBER"   default="NULL"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   23-OCT-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path    VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_style_path     VARCHAR2(128) := zsi_lib.StylePath;
+   l_js_path        VARCHAR2(128) := zsi_lib.JSPath;
+   l_title          VARCHAR2(50);
+   l_frmOffset      VARCHAR2(50):='';
+   l_user_iswrite   NUMBER(1):=0;
+   l_dhtmlx_sort    VARCHAR2(1024);
+   l_dhtmlx_filter  VARCHAR2(1024);
+
+
+   CURSOR tt_cur IS
+      SELECT seq_no, empl_id_no, empl_name, dept_desc
+        FROM TrainingTrainees_V
+       WHERE tran_no = p_tran_no
+       ORDER BY empl_name asc;
+
+  CURSOR emp_cur IS
+      SELECT empl_id_no, empl_name, dept_desc
+        FROM employee_active_v
+       WHERE empl_id_no IS NOT NULL AND empl_id_no NOT IN (SELECT empl_id_no FROM TrainingTrainees_V WHERE tran_no = p_tran_no)
+       ORDER BY empl_name asc;
+
+%>
+<%
+  pageheader(p_dgrid=>'Y');
+%>
+<body >
+<form name="frmDSList" action="train_traines_update" method="POST" >
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_id_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_cb');
+
+   l_dhtmlx_sort := 'na,str,str,str';
+   l_dhtmlx_filter := '&nbsp;,#text_filter,#text_filter,#text_filter';
+%>
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="410px" id="gridbox1">
+   <tr>
+      <th nowrap align="left" width="30px">&nbsp;</th>
+      <th nowrap align="left" width="80px">ID No.</th>
+      <th nowrap align="left" width="490px">Employee Name</th>
+      <th nowrap align="left" width="490px">Department</th>
+   </tr>
+<%
+   FOR i IN tt_cur LOOP
+%>
+   <tr valign="bottom">
+
+      <td align="center"><input type="hidden" name="p_empl_id_no" value="<%= i.empl_id_no %>">
+          <input type="checkbox" CHECKED name="p_cb" onclick="zsi.table.setCheckBox(this,<%= i.empl_id_no %>);">
+      </td>
+      <td><input type="hidden" name="p_seq_no" value="<%= i.seq_no %>">
+          <%= i.empl_id_no %>
+      </td>
+      <td><%= i.empl_name %></td>
+      <td><%= i.dept_desc %></td>
+   </tr>
+<%
+   END LOOP;
+
+
+   FOR i IN emp_cur LOOP
+%>
+   <tr valign="bottom">
+
+      <td align="center"><input type="hidden" name="p_empl_id_no" value="">
+          <input type="checkbox" name="p_cb" onclick="zsi.table.setCheckBox(this,<%= i.empl_id_no %>);">
+      </td>
+      <td><input type="hidden" name="p_seq_no" value="">
+          <%= i.empl_id_no %>
+      </td>
+      <td><%= i.empl_name %></td>
+      <td><%= i.dept_desc %></td>
+   </tr>
+<%
+   END LOOP;
+
+
+%>
+</table>
+<div class="buttonGroup <%=l_frmOffset%>">
+
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+</form>
+<script type='text/javascript'>
+    var mygrid = dhtmlXGridFromTable("gridbox1");
+    mygrid.setSkin("light");
+    mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+    mygrid.setEditable(false);
+    mygrid.lockRow(0, true);
+    mygrid.enableLightMouseNavigation(true);
+    mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+    mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+    mygrid.attachHeader("<%= l_dhtmlx_filter %>");
+    mygrid.setSizes();
+    zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+
+
+</script>
+</body>
+</html>

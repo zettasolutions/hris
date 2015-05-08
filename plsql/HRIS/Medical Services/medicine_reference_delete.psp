@@ -1,0 +1,38 @@
+<%@ plsql procedure="medicine_reference_delete" %>
+<%@ plsql parameter="p_del_meds" type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   1-JUL-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+
+%>
+<%
+
+
+BEGIN
+
+   IF p_del_meds.COUNT > 0 THEN
+      FOR i IN 1..p_del_meds.COUNT LOOP
+          DELETE FROM S004_T08003 WHERE meds_code = p_del_meds(i);
+      END LOOP;
+   
+    END IF;
+END;
+%>

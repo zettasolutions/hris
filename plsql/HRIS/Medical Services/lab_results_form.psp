@@ -1,0 +1,96 @@
+<%@ plsql procedure="lab_results_form" %>
+<%@ plsql parameter="p_hdr_seq_no"    type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_post_status"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_user_iswrite"  type="NUMBER"   default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   29-OCT-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_ctr                   NUMBER := 1;
+   l_heading               VARCHAR2(100) := zsi_lib.GetDescription('S004_T08020_RESULTS_V','result_desc','hdr_seq_no',p_hdr_seq_no);
+
+
+   CURSOR l_lr_cur IS
+   SELECT * FROM S004_T08020_RESULTS_V WHERE hdr_seq_no = p_hdr_seq_no;
+%>
+<%
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<form name="frmList" action="lab_results_update" method="POST" >
+<%
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_dtl_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_result');
+   
+%>
+<div style="overflow-y:auto; height:500px">
+<center><h2><%= l_heading %></h2></center>
+<%
+zsi_bs_lib.OpenEntryForm;
+%>
+
+   <div class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-2" nowrap align="left">Exam Group</th>
+            <th class="col-xs-2" nowrap align="left">Exam Type</th>
+            <th class="col-xs-3" nowrap align="left">Normal Range</th>
+            <th class="col-xs-6" nowrap align="left">Result</th>
+         </tr>
+      <%
+        FOR i in l_lr_cur LOOP
+      %>
+         <tr>
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_dtl_seq_no',p_inputValue=>i.dtl_seq_no); %>
+                <%= i.group_desc %>
+            </td>
+            <td><%= i.exam_desc %></td>
+            <td><%= i.normal_range %></td>
+            <td><% zsi_bs_lib.InputTextBoxArea(p_labelName =>'', p_inputName=>'p_result',p_labelSize =>0,p_inputValue=>i.result, p_attributes=>'rows="2"');%></td>
+        </tr>
+      <%
+        END LOOP;
+      %>
+
+      </table>
+   </div>
+<%   
+   zsi_bs_lib.CloseEntryForm;
+%>
+</div>
+<div class="col-xs-12 buttonGroup">
+<%
+   IF p_post_status = 0 AND p_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+</form>
+
+<script type="text/javascript">
+</script>
+
+</body>
+</html>
+

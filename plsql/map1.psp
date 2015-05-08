@@ -1,0 +1,105 @@
+<%@ plsql procedure="testform" %>
+<%!
+
+
+
+   l_ctr        NUMBER(10) := 0;
+   l_str        VARCHAR2(1000);
+   
+   CURSOR Test_cur is
+select a.ogc_geometry.sdo_ordinates as ordinate from  S004.BDRY_BARANGAY a where brgy_code='KAM'; 
+
+%>
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Simple Polygon</title>
+    <style>
+      html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+    <script>
+
+function initialize() {
+  var mapOptions = {
+    zoom: 9,
+    center: new google.maps.LatLng(10.39975958361427,123.9811598137021),
+    mapTypeId: google.maps.MapTypeId.TERRAIN
+  };
+
+  var points;
+
+  var map = new google.maps.Map(document.getElementById('map-canvas'),
+      mapOptions);
+
+  // Define the LatLng coordinates for the polygon's path.
+  var _Coords = [
+    new google.maps.LatLng(10.39975958361427,123.9811598137021),
+    new google.maps.LatLng(10.399426517456487, 123.98108873516321),
+    new google.maps.LatLng(10.397912084277705, 123.97982574999332),
+    new google.maps.LatLng(10.3981991160487, 123.97825062274933),
+    new google.maps.LatLng(10.396792974039046, 123.97766757756472),
+    new google.maps.LatLng(10.397930683366916, 123.97756833583117),
+    new google.maps.LatLng(10.400697443204185, 123.97913809865713),
+    new google.maps.LatLng(10.39975958361427,123.9811598137021)
+<%
+
+/*
+For e IN test_cur() LOOP
+    For i IN e.ordinate.first .. e.ordinate.last LOOP
+ 
+        l_ctr := l_ctr + 1;
+        l_str := l_str || ', ' || e.ordinate(i);
+   
+        if mod(l_ctr,2) = 0 then
+           l_str := substr(l_str,3);
+           if i = e.ordinate.last then
+           l_str := 'new google.maps.LatLng(' || l_str || ')';
+           else
+           l_str := 'new google.maps.LatLng(' || l_str || '),';
+           end if;
+           htp.p(l_str);
+           l_str := '';
+        end if;
+        
+ 
+    END LOOP;
+END LOOP ;
+*/ 
+%>   
+   
+  ];
+
+
+  // Construct the polygon.
+  points = new google.maps.Polygon({
+    paths: _Coords ,
+    strokeColor: '#FF0000',
+    strokeOpacity: 0.8,
+    strokeWeight: 2,
+    fillColor: '#FF0000',
+    fillOpacity: 0.35
+  });
+
+
+  points.setMap(map);
+
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+  </head>
+  <body>
+    <div id="map-canvas"></div>
+  </body>
+</html>
+ 
+ 

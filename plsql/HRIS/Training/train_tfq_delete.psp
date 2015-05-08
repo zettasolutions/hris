@@ -1,0 +1,28 @@
+<%@ plsql procedure="train_tfq_delete" %>
+<%@ plsql parameter="p_del_tt" type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   15-07-14   GF    New
+*/
+%>
+<%
+BEGIN
+   IF p_del_tt.COUNT > 0 THEN
+      FOR i IN 1..p_del_tt.COUNT LOOP
+         DELETE FROM S004_T07018 WHERE tran_no = p_del_tt(i);
+      END LOOP;
+   END IF;
+END;
+%>

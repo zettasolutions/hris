@@ -1,0 +1,72 @@
+<%@ plsql procedure="train_atten_typ_update" %>
+<%@ plsql parameter="p_attendee_type" type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_attendee_desc" type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   24-SEP-14  GT    Modified.
+   15-07-14   GF    New
+*/
+--DECLARATION SECTION
+   l_js_path   VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed   VARCHAR2(1) := 'N';
+   l_rec S004_T07002%ROWTYPE;
+   l_date_format VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Training Attendee Type </title>
+</head>
+<body>
+<%
+FOR i IN 2..p_attendee_type.COUNT LOOP
+
+
+   IF p_attendee_type(i) IS NULL  AND p_attendee_desc(i) IS NOT NULL THEN
+      INSERT INTO S004_T07002 (
+         attendee_type,
+         attendee_desc
+      )
+      VALUES
+      (  S004_T07002_SQ001.NEXTVAL,
+         p_attendee_desc(i)
+   );
+   ELSIF p_attendee_type(i) IS NOT NULL AND p_attendee_desc(i) IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T07002 WHERE attendee_type=p_attendee_type(i);
+
+      IF zsi_lib.IsChanged(l_rec.attendee_desc, p_attendee_desc(i)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.attendee_desc := p_attendee_desc(i);
+      END IF;
+      
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T07002 SET row = l_rec WHERE attendee_type=p_attendee_type(i);
+      END IF;      
+
+   END IF;
+END LOOP;
+END;
+%>
+<script type="text/javascript">
+   var ifr = parent.dhxLayout.cells("b").getFrame();
+   ifr.contentWindow.location.reload();
+   parent.w1.close();
+</script>

@@ -1,0 +1,104 @@
+<%@ plsql procedure="train_srp_update" %>
+<%@ plsql parameter="p_spk_code"       type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_spk_name"       type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_spk_citations"  type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_spk_address"    type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_spk_contactno"  type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_spk_type"       type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   24-SEP-14  GT    Modified.
+   16-07-14   GF    New
+*/
+--DECLARATION SECTION
+   l_js_path      VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed      VARCHAR2(1) := 'N';
+   l_rec          S004_T07011%ROWTYPE;
+   l_date_format  VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Speaker/Resource Person  </title>
+</head>
+<body>
+<%
+FOR i IN 2..p_spk_code.COUNT LOOP
+
+
+   IF p_spk_code(i) IS NULL  AND p_spk_name(i) IS NOT NULL THEN
+      INSERT INTO S004_T07011 (
+         spk_code,
+         spk_name,
+         spk_citations,
+         spk_address,
+         spk_contactno,
+         spk_type
+      )
+      VALUES
+      (  S004_T07011_SQ001.NEXTVAL,
+         p_spk_name(i),
+         p_spk_citations(i),
+         p_spk_address(i),
+         p_spk_contactno(i),
+         p_spk_type(i)
+   );
+   ELSIF p_spk_code(i) IS NOT NULL AND p_spk_name(i) IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T07011 WHERE spk_code=p_spk_code(i);
+
+      IF zsi_lib.IsChanged(l_rec.spk_name, p_spk_name(i)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.spk_name := p_spk_name(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.spk_citations, p_spk_citations(i)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.spk_citations := p_spk_citations(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.spk_address, p_spk_address(i)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.spk_address := p_spk_address(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.spk_contactno, p_spk_contactno(i)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.spk_contactno := p_spk_contactno(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.spk_type, p_spk_type(i)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.spk_type := p_spk_type(i);
+      END IF;
+      
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T07011 SET row = l_rec WHERE spk_code=p_spk_code(i);
+      END IF;      
+
+   END IF;
+END LOOP;
+END;
+%>
+<script type="text/javascript">
+   var ifr = parent.dhxLayout.cells("b").getFrame();
+   ifr.contentWindow.location.reload();
+   parent.w1.close();
+</script>

@@ -1,0 +1,36 @@
+<%@ plsql procedure="errorpage" %>
+<%!
+   /*
+   =======================================================================
+   *
+   * Copyright (c) 2014 ZettaSolutions,Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+   */
+
+   /* Modification History
+   Date       By    History
+   ---------  ----  ------------------------------------------------------------------------
+   01-JUL-14  BD    New
+   */
+   l_style_path     VARCHAR2(128) := zsi_lib.StylePath;
+   l_image_path     VARCHAR2(128) := zsi_lib.ImagePath;
+%>
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Error</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="<%= l_style_path %>style.css">
+</head>
+<body>
+<h8>401 Unauthorized</h8>
+<br>
+<h4>Please contact your I.T. Admin</h4>
+</body
+</html>

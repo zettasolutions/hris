@@ -1,0 +1,98 @@
+<% owa_util.mime_header('application/javascript');%>
+<%@ plsql procedure="zsi_employee_js" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   21-JAN-15  GF    Removed EmpLOV function
+   17-JUL-14  GF    New
+*/
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+
+%>
+
+/*variable declaration*/
+var ctrlSel = zsi.control.SelectList;
+
+
+/*end of declaration*/
+
+   function attachURL(winURL,winTitle,winWidth,winHeight) {
+      if (dhtmlxWin.isWindow("w1")) w1.close();
+      w1 = dhtmlxWin.createWindow("w1", 10, 20, winWidth, winHeight);
+      w1.setModal(true);
+      w1.button("close").enable();
+      w1.button("minmax1").enable();
+      w1.button("minmax2").enable();
+      w1.button("park").hide();
+      w1.setText(winTitle);
+      w1.attachURL(winURL);
+   }
+
+ $("#p_empl_id_no").keypress(function(event){
+   return zsi.form.checkNumber(event);
+ });
+
+$("#p_empl_name").keyup(function(){
+   if(this.value.length==0){
+      ClearAll(this.id);
+      return false;
+   }
+});
+
+
+function ClearAll(ctrlId){
+   if(ctrlId!=p_empl_id_no.attr("id"))
+         p_empl_id_no.val("");
+   else
+         p_empl_name.val("");
+
+   p_empl_type_desc.val("");
+   p_empl_job_desc.val("");
+   p_empl_cc_desc.val("");
+   p_empl_dept_desc.val("");
+   p_empl_group_desc.val("");
+   p_empl_type.val("");
+   p_cost_center.val("");
+   p_department.val("");
+   p_group_code.val("");
+   p_age_brak_code.val("");
+   p_plan_coverage.val("");
+   p_plan_curr_bal.val("");
+   p_plan_avail_bal.val("");
+   p_unposted_amt.val("");
+} 
+
+
+
+p_empl_id_no        = $("#p_empl_id_no");
+p_empl_name         = $("#p_empl_name");
+p_empl_type_desc    = $("#p_empl_type_desc");
+p_empl_job_desc     = $("#p_empl_job_desc");
+p_empl_cc_desc      = $("#p_empl_cc_desc");
+p_empl_dept_desc    = $("#p_empl_dept_desc");
+p_empl_group_desc   = $("#p_empl_group_desc");
+p_empl_type         = $("#p_empl_type");
+p_cost_center       = $("#p_cost_center");
+p_department        = $("#p_department");
+p_group_code        = $("#p_group_code");
+p_age_brak_code     = $("#p_age_brak_code");
+p_plan_coverage     = $("#p_plan_coverage");
+p_plan_curr_bal     = $("#p_plan_curr_bal");
+p_plan_avail_bal    = $("#p_plan_avail_bal");
+p_unposted_amt      = $("#p_unposted_amt");
+
+if(typeof dhtmlXWindows !== 'undefined'){
+   dhtmlxWin = new dhtmlXWindows();
+   dhtmlxWin.setImagePath("<%= l_dhtmlx_path %>dhtmlxWindows/codebase/imgs/");
+}

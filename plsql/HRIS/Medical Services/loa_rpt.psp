@@ -1,0 +1,130 @@
+<%@ plsql procedure="loa_rpt" %>
+<%@ plsql parameter="p_empl_id_no"        type="NUMBER"     default="NULL" %>
+<%@ plsql parameter="p_empl_name"      type="VARCHAR2"   default="NULL" %>
+<%@ plsql parameter="p_reference_code" type="VARCHAR2"   default="NULL" %>
+<%@ plsql parameter="p_valid_udate"    type="VARCHAR2"   default="NULL"%>
+<%@ plsql parameter="p_amount"         type="VARCHAR2"   default="NULL"%>
+
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   16-MAR-15  GF    New
+*/
+--DECLARATION SECTION
+l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+l_dhtmlx_sort                VARCHAR2(1024);
+l_year                       NUMBER := 2014;
+l_rec                        reference_v%ROWTYPE;
+l_rec2                       loa_signatory_v%ROWTYPE;
+   
+%>
+<%
+   reportheader(p_output=>'H');   
+   
+   
+ select * into l_rec FROM reference_v where reference_code = p_reference_code;
+ select * into l_rec2 FROM loa_signatory_v;
+   
+%> 
+<body onload="window.print();">
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+
+<div class="rptPage rptFS-11">
+
+   <div class="rptHeader">
+      <div class="rptLogo">&nbsp;</div>
+      <div class="rptHeaderRight">
+         <div class="rptRepublic">Republic of the Philippines</div>
+         <div class="rptCompany">Metropolitan Cebu Water District </div>
+         <div class="rptAddress">
+                  Corner Lapu-lapu & Magallanes Sts.,  Cebu City 
+                  <br />  Tel. Nos. 254-8434 local 326, 256-3471
+         </div>
+         <div class="rptTitle">LETTER OF AUTHORIZATION FOR OPD CONSULTATION / HOSPITALIZATION SERVICES</div>
+      </div>
+   </div>
+
+   <div class="rptNewLine"></div>    
+   <div class="rptNewLine"></div>    
+
+   <div class="rptP alignR"> 
+    Date Issued: <u><%=TO_CHAR(SYSDATE,'MM/DD/YYYY')%> </u>
+    <br /> Date of Validity : <u><%=p_valid_udate%> </u>
+   </div>
+   
+
+   
+   <div class="rptP"> 
+    To: <u> <%=UPPER(l_rec.reference_desc)%> </u>
+    <br /> Account No. : <u><%=l_rec.account_no%> </u>
+   </div>
+   
+   <div class="rptNewLine"></div>    
+   <div class="rptP rptTab">
+      We are referring to you MR./ MISS / MRS. <u> <%=UPPER(p_empl_name)%> </u> a beneficiary of the MCWD in-House Medical Plan for Out-Patient Consultation / Hospitalization services.
+   </div>
+   
+   <div class="rptP rptTab">
+      Please charge to the account of Metropolitan Cebu Water District the amount of his/her confinement up to a maximum of  Php <u> <%=zsi_lib.formatAmount(p_amount,2)%> </u> with the room accommodation of Php <%=zsi_lib.formatAmount(zsi_lib.getdescription('s004_t08000','DISPLAYED_TEXT','SELE_CODE','ROOM_RATE'),2) %> per day.      
+   </div>
+
+   <div class="rptP rptTab"> 
+      Excess of allowed room accommodation and miscellaneous charges shall be paid in cash by employee prior to his/her discharge.
+   </div>
+
+   <div class="rptP"> 
+      Hoping for your usual cooperation. Thank you.
+   </div>
+
+   <div class="rptNewLine"></div>    
+   <div class="rptP"> 
+      Very truly yours,
+   </div>
+   
+   
+   <div class="rptP "> 
+      <span class="rptBy"> <%=l_rec2.emp_name%></span>
+      <br /><%=l_rec2.displayed_text%>
+   </div>
+   
+   <div class="rptNewLine"></div>    
+   <div class="rptP rptfooterCopy"> 
+      c.c clinic file
+   </div>
+   
+
+
+</div>
+
+
+<script type="text/javascript">
+ 
+ 
+//on page loaded
+$(document).ready(function(){    
+   //LoadData();
+   $(".loadingStatus").css("display","none");
+}); 
+   
+ 
+</script>
+
+</body>
+</html>
+

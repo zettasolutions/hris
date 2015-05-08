@@ -1,0 +1,103 @@
+<%@ plsql procedure="train_tfq_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"     type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   23-SEP-14  GT    Modified display.
+   09-SEP-14  BD    Added security logic.
+   15-07-14   GF    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path     VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path         VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path      VARCHAR2(128) := zsi_lib.StylePath;
+   l_title           VARCHAR2(50);
+   l_frmOffset       VARCHAR2(50):='';
+   l_rec             S004_T07018%ROWTYPE;
+   l_user_iswrite    NUMBER(1):=0;
+%>
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   pageheader();
+
+%>
+<body>
+<form name="frmList" action="train_tfq_update" method="POST" >
+<%
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_question_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_question_desc');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_question_desc2');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_remarks');
+
+   IF p_tran_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM S004_T07018 WHERE tran_no = p_tran_no;
+      zsi_bs_lib.OpenEntryForm;
+      zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no',p_inputValue=>l_rec.tran_no);
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox('Quest. No','p_question_no',l_rec.question_no, p_inputSize =>2,p_labelSize =>3);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBoxArea(p_labelName =>'Description1',p_inputName=>'p_question_desc', p_inputValue=>l_rec.question_desc, p_labelSize =>3,  p_inputSize =>8, p_attributes=>'rows="2"');
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBoxArea(p_labelName =>'Description2',p_inputName=>'p_question_desc2',p_inputValue=>l_rec.question_desc2,p_labelSize =>3,  p_inputSize =>8, p_attributes=>'rows="2"');
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBoxArea(p_labelName =>'Remarks',p_inputName=>'p_remarks',p_inputValue=>l_rec.remarks, p_labelSize =>3,  p_inputSize =>8, p_attributes=>'rows="2"');
+      zsi_bs_lib.CloseEntryForm;
+      l_frmOffset:='col-xs-offset-3';
+   ELSE
+%>
+   <table class="table">
+   <tr>
+      <th nowrap align="left">Quest. No</th>
+      <th nowrap align="left">Description1</th>
+      <th nowrap align="left">Description2</th>
+      <th nowrap align="left">Remarks</th>
+   </tr>
+<%
+   FOR i IN 1..5 LOOP
+%>
+   <tr style="display:none;"><td><input type="hidden" name="p_tran_no" value=""></td></tr>
+   <tr>
+      <td><input type="text" name="p_question_no" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_question_desc" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_question_desc2" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_remarks" value="" class="form-control input-sm"></td>
+   </tr>
+<%
+   END LOOP;
+%>
+   </table>
+<%
+   END IF;
+%>
+   <div class="buttonGroup <%=l_frmOffset%>">
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+   </div>
+   </form>
+</body>
+<script type="text/javascript">     
+   zsi.json.checkValueExist("input[name=p_question_desc]","S004_T07018","question_desc");   
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+
+</html>

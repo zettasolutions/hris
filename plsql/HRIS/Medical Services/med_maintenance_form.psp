@@ -1,0 +1,242 @@
+<%@ plsql procedure="med_maintenance_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_id_no"       type="NUMBER" default="NULL"   %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   21-JAN-15  GT    Added print button.
+   25-DEC-14  GT    Modified.
+   09-SEP-14  BD    Added security logic.
+   27-JUL-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_dhtmlx_sort           VARCHAR2(1024);
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_emp_rec               employee_v%ROWTYPE;
+   l_rec                   medicine_maintenance_v%ROWTYPE;
+   l_tran_no               medicine_maintenance_v.tran_no%TYPE := '';
+   l_tran_date             VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_id_no                 medicine_maintenance_v.id_no%TYPE := '';
+   l_empl_type             medicine_maintenance_v.empl_type%TYPE := '';
+   l_cost_center           medicine_maintenance_v.cost_center%TYPE := '';
+   l_department            medicine_maintenance_v.department%TYPE := '';
+   l_group_code            medicine_maintenance_v.group_code%TYPE := '';
+   l_medplan_type          medicine_maintenance_v.medplan_code%TYPE := '';
+   l_medplan_code          medicine_maintenance_v.medplan_code%TYPE := '';
+   l_post_status           medicine_maintenance_v.post_status%TYPE := 0;
+   l_allowed_amt           medicine_maintenance_v.allowed_amt%TYPE := 0;
+   l_post_date             VARCHAR(20);
+   l_released_date         VARCHAR(20);
+   l_age_brak_code         medicine_maintenance_v.age_brak_code%TYPE := '';
+   l_user_iswrite          NUMBER(1):=0; 
+   
+   CURSOR meds_cur IS 
+     SELECT * 
+       FROM Emp_Med_Maintenance_V
+      WHERE id_no = p_id_no;
+   
+   CURSOR tran_meds_cur IS 
+     SELECT * 
+       FROM Med_Maintenance_dtl_V
+      WHERE tran_no = p_tran_no;
+   
+%>
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   IF p_tran_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM medicine_maintenance_v WHERE tran_no = p_tran_no;
+      l_tran_no              :=l_rec.tran_no;
+      l_id_no                :=l_rec.id_no;
+      l_medplan_code         :=l_rec.medplan_code;
+      l_medplan_type         :=l_rec.medplan_type;
+      l_tran_date            :=TO_CHAR(l_rec.tran_date, l_date_format);
+      l_released_date        :=TO_CHAR(l_rec.released_date, l_date_format);
+      l_allowed_amt          :=l_rec.allowed_amt;
+      l_post_status          :=l_rec.post_status;
+      l_post_date            :=TO_CHAR(l_rec.post_date, l_date_format);
+      l_empl_type            :=l_rec.empl_type;
+      l_cost_center          :=l_rec.cost_center;
+      l_department           :=l_rec.department;
+      l_group_code           :=l_rec.group_code;
+     l_age_brak_code         :=l_rec.age_brak_code;
+   ELSE
+      SELECT * INTO l_emp_rec FROM employee_v WHERE empl_id_no = p_id_no;
+      l_empl_type             :=l_emp_rec.empl_type;
+      l_cost_center           :=l_emp_rec.empl_group_code;
+      l_department            :=l_emp_rec.department;
+      l_group_code            :=l_emp_rec.group_code;
+      l_age_brak_code         :=l_emp_rec.age_brak_code;
+   END IF;
+   pageheader(p_dwin=>'Y', p_dgrid=>'Y');
+
+%>
+<body>
+<form name="frmList" action="med_maintenance_update" method="POST" >
+<%
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no',p_inputValue=>p_tran_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_id_no',p_inputValue=>p_id_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_type',p_inputValue=>l_empl_type);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_cost_center',p_inputValue=>l_cost_center);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_department',p_inputValue=>l_department);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_group_code',p_inputValue=>l_group_code);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_age_brak_code',p_inputValue=>l_age_brak_code);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_medplan_type',p_inputValue=>1);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_medplan_code',p_inputValue=>11);
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_dosage');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_qty');
+
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Tran Date',p_inputName=>'p_tran_date',p_inputValue=>l_tran_date, p_labelSize =>2, p_inputSize =>1);
+      zsi_bs_lib.InputTextBox(p_labelName =>'Allowed Amount',p_inputName=>'p_allowed_amt',p_inputValue=>zsi_lib.FormatAmount(l_allowed_amt,2), p_labelSize =>2, p_inputSize =>1);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Release Date',p_inputName=>'p_released_date',p_inputValue=>l_released_date, p_labelSize =>2, p_inputSize =>1);
+      zsi_bs_lib.YesNo(p_label_name=>'Is Posted?',p_field=>'post_status',p_value=>l_post_status,p_label_size =>2,p_select_size =>1);
+   zsi_bs_lib.CloseFormGroup();
+
+zsi_bs_lib.CloseEntryForm;
+%>
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+   <tr valign="bottom">
+         <th nowrap align="left" width="200px">Medicine</th>
+         <th nowrap align="left" width="200px">Class</th>
+         <th nowrap align="left" width="200px">Dosage</th>
+         <th nowrap align="center" width="100px">Qty</th>
+      </tr>
+<%
+IF p_tran_no IS NOT NULL THEN
+   FOR i IN tran_meds_cur LOOP
+      %>
+         <tr>                
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no',p_inputValue=>i.seq_no);
+                   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_code',p_inputValue=>i.meds_code);%>
+                <%= i.medsname%>
+            </td>
+            <td><%= i.medsclass%></td>
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_dosage',p_inputValue=>i.meds_dosage);%><%= i.meds_dosage%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_meds_qty', p_inputValue=>i.meds_qty, p_wrapper=>'N');%></td>
+         </tr>
+      <%   
+   END LOOP;
+ELSE
+   FOR i IN meds_cur LOOP
+      %>
+         <tr>                
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no');
+                   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_code',p_inputValue=>i.meds_code); %>
+                <%= i.medsname%>
+            </td>
+            <td><%= i.medsclass%></td>
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_dosage',p_inputValue=>i.meds_dosage);%>
+                <%= i.meds_dosage%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_meds_qty', p_inputValue=>i.meds_qty, p_wrapper=>'N');%></td>
+         </tr>
+      <%   END LOOP;
+END IF;
+%>
+</table>
+<div class="buttonGroup">
+<%
+   IF l_post_status = 0 AND l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+      zsi_bs_lib.Button('btnPrint','Print');
+   END IF;
+%>
+</div>
+</form>
+
+<script type="text/javascript" src="zsi_employee_js"></script>
+<script type="text/javascript">
+
+var mygrid = dhtmlXGridFromTable("gridbox1");
+mygrid.setSkin("light");
+mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+mygrid.setEditable(false);
+mygrid.lockRow(0, true);
+mygrid.enableLightMouseNavigation(true);
+mygrid.setColSorting("<%= l_dhtmlx_sort %>"); 
+mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+zsi.table.dhtmlx.ResizeGrid(window, mygrid);  
+
+   $("form[name=frmList]").submit(function(){
+      var ischeckDate = false;
+      if( zsi.form.checkMandatory()!=true) return false;
+      
+      ischeckDate = zsi.form.checkDate(
+               [   "p_tran_date"
+                  ,"p_released_date"
+               ]
+               ,
+               [
+                   "Transaction Date"
+                  ,"Released Date"
+               ]
+      );
+
+      return ischeckDate;
+   });   
+
+   //on page loaded
+   $(document).ready(function(){
+
+       zsi.form.markMandatory({       
+         "groupNames":[ 
+               {"names" : 
+                     [  
+                      "p_tran_date" 
+                     ,"p_medplan_type" 
+                     ,"p_medplan_code" 
+                     ]
+               ,"type":"S"
+               }             
+         ]      
+         ,"groupTitles":[ 
+               {"titles" :  
+                     [                       
+                      "Transaction Date"
+                     ,"Medical Plan Type"
+                     ,"Medical Plan "
+                     ]
+               }
+
+         ]
+      });
+      
+      ctrlSel("#p_medplan_type","<%=l_medplan_type%>","N","medplan_types_v","sele_value","displayed_text","");
+      ctrlSel("#p_medplan_code","<%=l_medplan_code%>","N","medplan_code_v","sele_value","displayed_text","");
+
+   });
+   
+$("#btnPrint").click(function(){
+   window.open("meds_maint_rpt?p_tran_no=<%=p_tran_no%>");
+});
+
+</script>
+
+
+</body>
+</html>
+

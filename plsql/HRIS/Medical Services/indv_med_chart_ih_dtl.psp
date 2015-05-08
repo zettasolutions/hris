@@ -1,0 +1,90 @@
+<%@ plsql procedure="indv_med_chart_ih_dtl" %>
+<%@ plsql parameter="p_ldgr_no" type="NUMBER" default="NULL"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   25-JAN-15  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_ttl_bill                   NUMBER:=0;
+   l_ctr                        NUMBER:=0;
+   
+   CURSOR bill_cur IS
+   SELECT * 
+     FROM S004_T08010_BILLING_V
+    WHERE ldgr_no = p_ldgr_no;
+%>
+<%
+   pageheader(p_dgrid=>'Y');
+%>
+
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+   <tr valign="bottom">
+      <th nowrap align="left" width="200px">Med. Service</th>
+      <th nowrap align="left" width="250px">Doctor</th>
+      <th nowrap align="left" width="250px">Establishment</th>
+      <th nowrap align="center" width="100px">Payment Tag</th>
+      <th nowrap align="center" width="115px">Reimbursement?</th>
+      <th nowrap align="right" width="100px">Billed Amount</th>
+   </tr>
+<%
+   l_dhtmlx_sort := 'str,str,str,int,str,na';
+   FOR i IN bill_cur LOOP
+%> 
+   <tr valign="bottom">
+      <td><%= i.medservice %></td>
+      <td><%= i.doctor_name %></td>
+      <td><%= i.hcp %></td>
+      <td><%= i.pay_tag %></td>
+      <td><%= i.forrefund %></td>
+      <td><%= zsi_lib.FormatAmount(i.amnt_billed,2) %></td>
+   </tr>
+<%
+   l_ttl_bill := l_ttl_bill + i.amnt_billed;
+   l_ctr := l_ctr + 1;
+   END LOOP;
+%>
+   <tr>
+      <td align="right">Record(s):</td>
+      <td><%= l_ctr %></td>
+      <td></td>
+      <td></td>
+      <td align="right">Total Billing</td>
+      <td align="right"><%= zsi_lib.FormatAmount(l_ttl_bill,2) %></td>
+   </tr>
+</table>
+ 
+
+<script type="text/javascript">
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+
+</script>
+
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

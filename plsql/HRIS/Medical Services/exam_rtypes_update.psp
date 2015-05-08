@@ -1,0 +1,93 @@
+<%@ plsql procedure="exam_rtypes_update" %>
+<%@ plsql parameter="p_result_type"    type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_result_desc"    type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ape_priority"   type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_remarks"        type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   05-JAN-15  GT    Added APE_PRIORITY
+   05-JUL-14  GT    Change param names.
+   04-JUL-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+
+
+   l_changed VARCHAR2(1) := 'N';
+   l_rec     S004_T08019%ROWTYPE;
+
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Result Types </title>
+</head>
+<body>
+<%
+FOR i IN 2..p_result_type.COUNT LOOP
+   IF p_result_type(i) IS NULL  AND p_result_desc(i) IS NOT NULL THEN        
+      INSERT INTO S004_T08019 (
+         result_type
+         ,result_desc
+         ,ape_priority
+         ,remarks
+         ,created_by
+         ,date_created)
+      VALUES
+      (  S004_T08019_SQ001.NEXTVAL
+         ,p_result_desc(i)
+         ,p_ape_priority(i)
+         ,p_remarks(i)
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+      );
+      ELSIF p_result_type(i) IS NOT NULL AND p_result_desc(i) IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T08019 WHERE result_type=p_result_type(i);
+         
+         IF zsi_lib.IsChanged(l_rec.result_desc, p_result_desc(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.result_desc := p_result_desc(i);
+         END IF;
+         IF zsi_lib.IsChanged(l_rec.ape_priority, TO_NUMBER(p_ape_priority(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.ape_priority := p_ape_priority(i);
+         END IF;
+         IF zsi_lib.IsChanged(l_rec.remarks, p_remarks(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.remarks := p_remarks(i);
+         END IF;
+
+      IF l_changed='Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08019 SET row = l_rec WHERE result_type = p_result_type(i);
+      END IF;
+
+      END IF;
+   END LOOP;
+END;
+%>
+
+<script type="text/javascript">
+   parent.dhxLayout.cells("b").attachURL("exam_rtype_list");
+   parent.w1.close();
+</script>

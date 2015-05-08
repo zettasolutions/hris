@@ -1,0 +1,139 @@
+<%@ plsql procedure="train_mrtc_participants_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"     type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   29-OCT-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_rec                   mrtc_participants_v%ROWTYPE;
+   l_tran_no               mrtc_participants_v.tran_no%TYPE;
+   l_trainee               mrtc_participants_v.trainee%TYPE;     
+   l_job_position          mrtc_participants_v.job_position%TYPE;
+   l_address               mrtc_participants_v.address%TYPE;     
+   l_contact_no            mrtc_participants_v.contact_no%TYPE;  
+   l_agency_code           mrtc_participants_v.agency_code%TYPE; 
+   l_agency_desc           mrtc_participants_v.agency_desc%TYPE; 
+   l_remarks               mrtc_participants_v.remarks%TYPE;     
+   l_user_iswrite          NUMBER(1):=0;
+
+%>
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   IF p_tran_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM mrtc_participants_v WHERE tran_no = p_tran_no;
+      l_tran_no              :=l_rec.tran_no;
+      l_trainee              :=l_rec.trainee;     
+      l_job_position         :=l_rec.job_position; 
+      l_address              :=l_rec.address;     
+      l_contact_no           :=l_rec.contact_no;   
+      l_agency_code          :=l_rec.agency_code;  
+      l_agency_desc          :=l_rec.agency_desc; 
+      l_remarks              :=l_rec.remarks;     
+   END IF;
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<form name="frmList" action="train_mrtc_participants_update" method="POST" >
+<%
+   zsi_bs_lib.OpenEntryForm;
+      zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Trainee',p_inputName=>'p_trainee',p_inputValue=>l_trainee, p_labelSize =>2, p_inputSize =>4);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.SelectBox(p_labelName=>'Agency', p_Name=>'p_agency_code', p_labelSize=>2, p_selectSize=>4);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Job Position',p_inputName=>'p_job_position',p_inputValue=>l_job_position, p_labelSize =>2, p_inputSize =>4);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Address',p_inputName=>'p_address',p_inputValue=>l_address, p_labelSize =>2, p_inputSize =>4);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Contact No.',p_inputName=>'p_contact_no',p_inputValue=>l_contact_no, p_labelSize =>2, p_inputSize =>4);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+          zsi_bs_lib.InputTextBoxArea(p_labelName =>'Remarks',p_inputName=>'p_remarks',p_labelSize =>2, p_inputValue=>l_remarks, p_inputSize =>4, p_attributes=>'rows="2"');
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.CloseEntryForm;
+
+%>
+
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Offset(2);
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+      </div>
+
+</form>
+
+
+<script type="text/javascript">
+var ctrlSel = zsi.control.SelectList;
+   //on page loaded
+   $(document).ready(function(){
+      zsi.form.markMandatory({       
+         "groupNames":[ 
+               {"names" :  [  
+                            "p_trainee"
+                           ,"p_agency_code"
+                           ,"p_job_position"
+                           ,"p_address"
+                           ,"p_contact_no"
+                           ]
+               ,  "type":"S"
+               }             
+         ]      
+         ,"groupTitles":[          
+               {"titles" :  
+                           [                       
+                            "Trainee"
+                           ,"Agency"
+                           ,"Job Position"
+                           ,"Address"
+                           ,"Contact No."
+                           ]
+               }
+
+         ]
+      });
+
+
+
+      ctrlSel("#p_agency_code","<%=l_agency_code%>","N","S004_T07015","agency_code","agency_desc","");
+   });
+
+</script>
+
+
+</body>
+</html>
+

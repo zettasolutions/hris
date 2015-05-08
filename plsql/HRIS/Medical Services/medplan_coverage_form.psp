@@ -1,0 +1,261 @@
+<%@ plsql procedure="medplan_coverage_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_id_no"       type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-SEP-14  BD    Added security logic.
+   27-JUL-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_rec                   medplan_coverage_v%ROWTYPE;
+   l_seq_no                medplan_coverage_v.seq_no%TYPE := '';
+   l_id_no                 medplan_coverage_v.id_no%TYPE := '';
+   l_plan_coverage         VARCHAR(20);
+   l_plan_curr_bal         VARCHAR(20);
+   l_plan_avail_bal        VARCHAR(20);
+   l_avail_ape             medplan_coverage_v.avail_ape%TYPE := '';
+   l_avail_ade             medplan_coverage_v.avail_ade%TYPE := '';
+   l_avail_eyeglass        medplan_coverage_v.avail_eyeglass%TYPE := '';
+   l_allergies             medplan_coverage_v.allergies%TYPE := '';
+   l_remarks               medplan_coverage_v.remarks%TYPE := '';
+   l_emp_name              medplan_coverage_v.emp_name%TYPE := '';
+   l_emp_type              medplan_coverage_v.emp_type%TYPE := '';
+   l_dept_desc             medplan_coverage_v.dept_desc%TYPE := '';
+   l_group_desc            medplan_coverage_v.group_desc%TYPE := '';
+   l_cc_desc               medplan_coverage_v.cc_desc%TYPE := '';
+   l_job_desc              medplan_coverage_v.job_desc%TYPE := '';
+   l_user_iswrite          NUMBER(1):=0;
+%>
+<%
+   IF p_id_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM medplan_coverage_v WHERE id_no = p_id_no;
+      l_id_no                 :=l_rec.id_no;
+      l_seq_no                :=l_rec.seq_no;
+      l_plan_coverage         :=l_rec.plan_coverage;
+      l_plan_curr_bal         :=l_rec.plan_curr_bal;
+      l_plan_avail_bal        :=l_rec.plan_avail_bal;
+      l_avail_ape             :=l_rec.avail_ape;
+      l_avail_ade             :=l_rec.avail_ade;
+      l_avail_eyeglass        :=l_rec.avail_eyeglass;
+      l_allergies             :=l_rec.allergies;
+      l_remarks               :=l_rec.remarks;
+      l_emp_name              :=l_rec.emp_name;
+      l_emp_type              :=l_rec.emp_type;
+      l_dept_desc             :=l_rec.dept_desc;
+      l_group_desc            :=l_rec.group_desc;
+      l_cc_desc               :=l_rec.cc_desc;
+      l_job_desc              :=l_rec.job_desc;
+   END IF;
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<form name="frmList" action="medplan_coverage_update" method="POST" >
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no',p_inputValue=>l_seq_no);
+
+   zsi_bs_lib.OpenDiv('row col-xs-8');
+   zsi_bs_lib.OpenEntryForm;
+%>
+      <div class="row col-xs-12">&nbsp;</div>
+<%
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.InputTextBox(p_labelName =>'Id No.', p_inputName=>'p_empl_id_no', p_inputSize =>1, p_inputValue=>l_id_no, p_attributes=>'autocomplete="off"');
+         zsi_bs_lib.CloseFormGroup();
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.InputTextBox(p_labelName =>'Employee Name', p_inputName=>'p_empl_name', p_inputSize =>5, p_inputValue=>l_emp_name, p_attributes=>'autocomplete="off"');
+         zsi_bs_lib.CloseFormGroup();
+
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.InputTextBox(p_labelName =>'Employee Type',p_inputName=>'p_empl_type_desc',p_inputValue=>l_emp_type, p_labelSize =>2, p_inputSize =>4, p_attributes=>' disabled');
+            zsi_bs_lib.InputTextBox(p_labelName =>'Job Position',p_inputName=>'p_empl_job_desc',p_inputValue=>l_job_desc, p_labelSize =>2, p_inputSize =>4, p_attributes=>'disabled');
+         zsi_bs_lib.CloseFormGroup();
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.InputTextBox(p_labelName =>'Cost Center',p_inputName=>'p_empl_cc_desc',p_inputValue=>l_cc_desc, p_labelSize =>2, p_inputSize =>10, p_attributes=>'disabled');
+         zsi_bs_lib.CloseFormGroup();
+
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.InputTextBox(p_labelName =>'Department',p_inputName=>'p_empl_dept_desc',p_inputValue=>l_dept_desc, p_labelSize =>2, p_inputSize =>10, p_attributes=>'disabled');
+         zsi_bs_lib.CloseFormGroup();
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.InputTextBox(p_labelName =>'Group',p_inputName=>'p_empl_group_desc',p_inputValue=>l_group_desc, p_labelSize =>2, p_inputSize =>10, p_attributes=>'disabled');
+         zsi_bs_lib.CloseFormGroup();
+
+
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.InputTextBox(p_labelName =>'Plan Coverage',  p_inputName=>'p_plan_coverage',p_inputValue=>zsi_lib.FormatAmount(l_plan_coverage,2), p_labelSize =>2, p_inputSize =>2 );
+            zsi_bs_lib.InputTextBox(p_labelName =>'Plan Current Bal.',p_inputName=>'p_plan_curr_bal',p_inputValue=>zsi_lib.FormatAmount(l_plan_curr_bal,2), p_labelSize =>2, p_inputSize =>2);
+            zsi_bs_lib.InputTextBox(p_labelName =>'Plan Available Bal.',p_inputName=>'p_plan_avail_bal',p_inputValue=>zsi_lib.FormatAmount(l_plan_avail_bal,2), p_labelSize =>2, p_inputSize =>2);
+         zsi_bs_lib.CloseFormGroup();
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.YesNo(p_label_name=>'Avail APE',p_field=>'avail_ape',p_value=>l_avail_ape,p_label_size =>2,p_select_size =>2);
+            zsi_bs_lib.YesNo(p_label_name=>'Avail ADE',p_field=>'avail_ade',p_value=>l_avail_ade,p_label_size =>2,p_select_size =>2);
+            zsi_bs_lib.YesNo(p_label_name=>'Avail Eyeglass',p_field=>'avail_eyeglass',p_value=>l_avail_eyeglass,p_label_size =>2,p_select_size =>2);
+         zsi_bs_lib.CloseFormGroup();
+         zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.CloseFormGroup();
+
+         zsi_bs_lib.OpenFormGroup();
+             zsi_bs_lib.InputTextBoxArea(p_labelName =>'Allergies',p_inputName=>'p_allergies',p_labelSize =>2, p_inputValue=>l_allergies, p_inputSize =>10, p_attributes=>'rows="2"');
+         zsi_bs_lib.CloseFormGroup();
+         zsi_bs_lib.OpenFormGroup();
+             zsi_bs_lib.InputTextBoxArea(p_labelName =>'Remarks',p_inputName=>'p_remarks',p_labelSize =>2, p_inputValue=>l_remarks, p_inputSize =>10, p_attributes=>'rows="2"');
+         zsi_bs_lib.CloseFormGroup();
+
+         zsi_bs_lib.CloseEntryForm;
+
+%>
+
+         <div class="col-xs-12 buttonGroup">
+<%
+   IF l_user_iswrite = 1 THEN
+            zsi_bs_lib.Offset(2);
+            zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+            zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+      </div>
+<%
+   zsi_bs_lib.CloseDiv;
+%>
+</form>
+
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript">
+
+   $("form[name=frmList]").submit(function(){
+      if( zsi.form.checkMandatory()!=true) return false;
+      return true;
+   }); 
+
+   $(document).ready(function(){
+
+      new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_id_no]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_id_no"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[0];
+            var td = currentObject.parentNode;
+            $("#p_empl_name").val(unescape(data[43]));            
+         }
+      });    
+      
+     new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_name]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_name"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[43];
+             var td = currentObject.parentNode;
+             $("#p_empl_id_no").val(data[0]);            
+         }
+      });
+
+
+      zsi.form.markMandatory({       
+         "groupNames":[ 
+               {"names" :  
+                  [  
+                      "p_empl_id_no"
+                     ,"p_plan_coverage"
+                     ,"p_plan_curr_bal"
+                     ,"p_avail_ape"
+                     ,"p_avail_ade"
+                     ,"p_avail_eyeglass"
+                     ,"p_allergies"
+                  ]
+               ,"type":"S"
+               }             
+         ]      
+         ,"groupTitles":[ 
+               {"titles" :  
+                  [                       
+                      "Employee ID#"
+                     ,"Plan Coverage"
+                     ,"Plan Current Balance"
+                     ,"Avail APE"
+                     ,"Avail ADE"
+                     ,"Avail Eyeglass"
+                     ,"Allergies"
+                  ]
+               }
+
+         ]
+      });
+
+
+      $("#p_plan_coverage,#p_plan_curr_bal").keyup(function(){
+
+         var p_plan_coverage;
+         var p_plan_curr_bal;
+         var p_plan_avail_bal= $("#p_plan_avail_bal");
+
+         if(this.id =="p_plan_coverage"){
+            p_plan_coverage = $(this);
+            p_plan_curr_bal =  p_plan_coverage.val();
+
+
+         }
+         else if(this.id =="p_plan_curr_bal"){
+            p_plan_coverage = $("#p_plan_coverage");
+            p_plan_curr_bal =  $(this);
+         }
+
+         p_plan_avail_bal.val( compute(p_plan_coverage.val() ,  p_plan_curr_bal.val() ));
+
+
+         function compute(coverage,curr_bal){
+            var result = (curr_bal);
+            if (result<0) result=0;
+            if (isNaN(result)) result=0;
+            return (result);
+         }
+
+      });  
+      
+   });
+   
+
+   $("#p_plan_coverage,#p_plan_curr_bal,#p_plan_avail_bal").keypress(function(event){
+
+      return zsi.form.checkNumber(event,'.,');
+
+
+   });
+
+    $("#p_plan_coverage,#p_plan_curr_bal,#p_plan_avail_bal").blur(function(){
+          var obj= this;
+        zsi.form.checkNumberFormat(this);
+
+   });
+
+</script>
+</body>
+</html>
+

@@ -1,0 +1,173 @@
+<%@ plsql procedure="health_monitoring_rpt" %>
+<%@ plsql parameter="p_cmonth"    type="NUMBER" %>
+<%@ plsql parameter="p_cyear"     type="NUMBER"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   10-MAR-15  BD    New
+*/
+--DECLARATION SECTION
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+
+   CURSOR age_bracket_cur IS
+      SELECT seq_no, sele_code, sele_value, displayed_text
+        FROM age_bracket_v
+       ORDER BY seq_no;
+
+   CURSOR ccnt_groups_cur IS
+      SELECT ccnt_cd, ccnt_abbrv, ccnt_type
+        FROM ccnt_groups_v
+        ORDER BY 2;
+
+   CURSOR illness_cur IS
+      SELECT illness_code, illness_name
+        FROM illnesses_v
+       ORDER BY illness_name;
+
+   TYPE T_AGE_BRACKET_TABLE IS TABLE OF age_bracket_cur%ROWTYPE INDEX BY BINARY_INTEGER;
+   TYPE T_CCNT_GROUP_TABLE IS TABLE OF ccnt_groups_cur%ROWTYPE INDEX BY BINARY_INTEGER;
+   l_age_bracket_arr            T_AGE_BRACKET_TABLE;
+   l_ccnt_groups_arr            T_CCNT_GROUP_TABLE;
+   l_age_bracket_ctr            NUMBER(10) := 0;
+   l_ccnt_group_ctr             NUMBER(10) := 0;
+   l_total_arr                  zsi_lib.num_arr;
+   l_total_ctr                  NUMBER := 0;
+   l_illness_count              NUMBER(10);
+   l_grand_total_arr            zsi_lib.num_arr;
+   l_period                     DATE;
+
+   FUNCTION GetIllnessCount (p_illness_code NUMBER, p_age_bracket_code NUMBER, p_ccnt_code VARCHAR2) RETURN NUMBER IS
+      l_count      NUMBER;
+   BEGIN
+      SELECT COUNT(*)
+        INTO l_count
+        FROM s004_t08010_illness_v
+       WHERE illness_code = p_illness_code
+         AND age_brak_code = p_age_bracket_code
+         AND group_code = p_ccnt_code
+         AND TRUNC(tran_date,'MM') = l_period;
+
+      IF l_count = 0 THEN
+         RETURN NULL;
+      END IF;
+      RETURN l_count;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+         RETURN NULL;
+   END;
+%>
+<%
+   reportheader(p_output=>'H');
+   l_period := TO_DATE(p_cmonth || '/01/' || p_cyear,'MM/DD/YYYY');
+
+   OPEN age_bracket_cur;
+   FETCH age_bracket_cur BULK COLLECT INTO l_age_bracket_arr;
+   CLOSE age_bracket_cur;
+
+   OPEN ccnt_groups_cur;
+   FETCH ccnt_groups_cur BULK COLLECT INTO l_ccnt_groups_arr;
+   CLOSE ccnt_groups_cur;
+%>
+<body onload="window.print();">
+
+<table>
+   <tr valign="top">
+      <td align="left" class="head1 reportTitle">Health Monitoring for <%= TO_CHAR(l_period,'Month YYYY') %></td>
+      <td align="right" class="reportcriteria">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss')) %></td>
+   </tr>
+</table>
+
+
+<table>
+   <thead>
+      <tr>
+         <th rowspan="2" align="center">Illness</th>
+<%
+   FOR i IN 1..l_age_bracket_arr.COUNT LOOP
+%>
+         <th border="1" colspan="<%= l_ccnt_groups_arr.COUNT %>"><%= l_age_bracket_arr(i).displayed_text %></th>
+<%
+   END LOOP;
+%>
+      </tr>
+      <tr>
+<%
+   FOR i IN 1..l_age_bracket_arr.COUNT LOOP
+      FOR j IN 1..l_ccnt_groups_arr.COUNT LOOP
+         l_total_ctr := l_total_ctr + 1;
+         l_total_arr(l_total_ctr) := 0;
+%>
+         <th><%= l_ccnt_groups_arr(j).ccnt_abbrv %></th>
+<%
+      END LOOP;
+   END LOOP;
+%>
+      </tr>
+   </thead>
+   <tbody>
+<%
+   FOR l IN illness_cur LOOP
+%>
+   <tr>
+      <td nowrap><%= l.illness_name %></td>
+<%
+      l_total_ctr := 0;
+      FOR i IN 1..l_age_bracket_arr.COUNT LOOP
+         FOR j IN 1..l_ccnt_groups_arr.COUNT LOOP
+         l_total_ctr := l_total_ctr + 1;
+         l_illness_count := GetIllnessCount(l.illness_code,l_age_bracket_arr(i).sele_value,l_ccnt_groups_arr(j).ccnt_cd);
+         l_total_arr(l_total_ctr) := l_total_arr(l_total_ctr) + NVL(l_illness_count,0);
+%>
+         <td align="center"><%= l_illness_count %></td>
+<%
+         END LOOP;
+      END LOOP;
+%>
+   </tr>
+<%
+   END LOOP;
+%>
+   </tbody>
+   <tr>
+      <td style="font-weight:bold;" align="left">Total</td>
+<%
+      l_total_ctr := 0;
+      FOR i IN 1..l_age_bracket_arr.COUNT LOOP
+         l_grand_total_arr(i) := 0;
+         FOR j IN 1..l_ccnt_groups_arr.COUNT LOOP
+            l_total_ctr := l_total_ctr + 1;
+            l_illness_count := l_total_arr(l_total_ctr);
+            l_grand_total_arr(i) := l_grand_total_arr(i) + l_illness_count;
+%>
+         <td align="center"><%= l_illness_count %></td>
+<%
+         END LOOP;
+      END LOOP;
+%>
+   </tr>
+   <tr>
+      <td style="font-weight:bold;" align="left">Grand Total</td>
+<%
+      FOR i IN 1..l_age_bracket_arr.COUNT LOOP
+%>
+         <td align="center" colspan="<%= l_ccnt_groups_arr.COUNT %>"><%= l_grand_total_arr(i) %></td>
+<%
+      END LOOP;
+%>
+   </tr>
+</table>
+</body>
+</html>
+

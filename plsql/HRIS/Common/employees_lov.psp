@@ -1,0 +1,256 @@
+<%@ plsql procedure="employees_lov" %>
+<%@ plsql parameter="p_empl_id_no"              type="VARCHAR2"  default="NULL" %>
+<%@ plsql parameter="p_empl_name"               type="VARCHAR2"  default="NULL" %>
+<%@ plsql parameter="p_array_index"             type="NUMBER"    default="0" %>
+<%@ plsql parameter="p_form"                    type="VARCHAR2"  default="NULL" %>
+<%@ plsql parameter="p_out_empl_id_no"          type="VARCHAR2"  default="NULL" %>
+<%@ plsql parameter="p_out_empl_name"           type="VARCHAR2"  default="NULL" %>
+<%@ plsql parameter="p_out_empl_type"           type="VARCHAR2"  default="NULL" %>
+<%@ plsql parameter="p_out_cost_center"         type="VARCHAR2"  default="NULL" %>
+<%@ plsql parameter="p_out_department"          type="VARCHAR2"  default="NULL" %>
+<%@ plsql parameter="p_out_group_code"          type="VARCHAR2"  default="NULL" %>
+<%@ plsql parameter="p_out_empl_type_desc"      type="VARCHAR2"  default="NULL" %>
+<%@ plsql parameter="p_out_empl_cc_desc"        type="VARCHAR2"  default="NULL" %>
+<%@ plsql parameter="p_out_empl_dept_desc"      type="VARCHAR2"  default="NULL" %>
+<%@ plsql parameter="p_out_empl_group_desc"     type="VARCHAR2"  default="NULL" %>
+<%@ plsql parameter="p_out_empl_job_desc"       type="VARCHAR2"  default="NULL" %>
+<%@ plsql parameter="p_out_age_brak_code"       type="VARCHAR2"  default="NULL" %>
+<%!
+   /*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+   */
+   /*
+   Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   02-AUG-14  GT    Added age_brak_code.
+   26-JUL-14  BD    Clean up.
+   23-JUL-14  GF    Add parent focus.
+   21-JUL-14  GT    Used Employee_Active_v. Added additional params.
+   21-JUL-14  BD    New
+   */
+
+   --DECLARATION SECTION
+   l_dhtmlx_path              VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                  VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path               VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                    VARCHAR2(50);
+   l_rec                      S004_T08021%ROWTYPE;
+   l_date_format              VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                     VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_sql                      VARCHAR2(32000);
+   l_dhtmlx_sort              VARCHAR2(1024);
+   emp_cur                    SYS_REFCURSOR;
+   l_empl_id_no               Employee_Active_v.empl_id_no%TYPE;
+   l_empl_name                Employee_Active_v.empl_name%TYPE;
+   l_empl_type                Employee_Active_v.empl_type%TYPE;
+   l_empl_type_desc           Employee_Active_v.type_desc%TYPE;
+   l_empl_cc_desc             Employee_Active_v.cc_desc%TYPE;
+   l_empl_dept_desc           Employee_Active_v.dept_desc%TYPE;
+   l_empl_group_desc          Employee_Active_v.group_desc%TYPE;
+   l_empl_job_desc            Employee_Active_v.job_desc%TYPE;
+   l_cost_center              Employee_Active_v.empl_group_code%TYPE;
+   l_department               Employee_Active_v.department%TYPE;
+   l_group_code               Employee_Active_v.group_code%TYPE;
+   l_age_brak_code            Employee_Active_v.age_brak_code%TYPE;
+
+   l_caller_form              VARCHAR2(256);
+   l_array_index              VARCHAR2(100);
+%>
+<%
+   pageheader(p_dgrid=>'Y');
+   l_sql := 'SELECT empl_id_no, empl_name, empl_type, type_desc, cc_desc, dept_desc, group_desc, job_desc, empl_group_code, department, group_code, age_brak_code FROM Employee_Active_v WHERE 1=1 ';
+   IF p_form IS NOT NULL THEN
+      l_caller_form := 'window.parent.document.' || p_form;
+   ELSE
+      l_caller_form := 'window.parent.document.forms[0]';
+   END IF;
+   IF NVL(p_array_index,0) > 0 THEN
+      l_array_index := '[' || p_array_index || ']';
+   END IF;
+
+   IF p_empl_id_no IS NOT NULL THEN
+      l_sql := l_sql || ' AND empl_id_no = ' || p_empl_id_no;
+   END IF;
+   IF p_empl_id_no IS NULL AND p_empl_name IS NOT NULL THEN
+      l_sql := l_sql || ' AND UPPER(empl_name) LIKE ''' || UPPER(p_empl_name) || '%''';
+   END IF;
+
+   l_sql := l_sql || ' ORDER BY empl_last_name, empl_first_name, empl_middle_name ';
+
+%>
+<body>
+<%
+   zsi_bs_lib.openModalWindow('modalWindow','Search Employees','av_search_frm','employees_lov');
+%>
+   <input type="hidden" name="p_array_index"             value="<%= p_array_index %>">
+   <input type="hidden" name="p_form"                    value="<%= p_form %>">
+   <input type="hidden" name="p_out_empl_id_no"          value="<%= p_out_empl_id_no %>">
+   <input type="hidden" name="p_out_empl_name"           value="<%= p_out_empl_name %>">
+   <input type="hidden" name="p_out_empl_type"           value="<%= p_out_empl_type %>">
+   <input type="hidden" name="p_out_empl_type_desc"      value="<%= p_out_empl_type_desc %>">
+   <input type="hidden" name="p_out_empl_dept_desc"      value="<%= p_out_empl_dept_desc%>">
+   <input type="hidden" name="p_out_empl_cc_desc"        value="<%= p_out_empl_cc_desc %>">
+   <input type="hidden" name="p_out_empl_group_desc"     value="<%= p_out_empl_group_desc%>">
+   <input type="hidden" name="p_out_empl_job_desc"       value="<%= p_out_empl_job_desc %>">
+   <input type="hidden" name="p_out_cost_center"         value="<%= p_out_cost_center%>">
+   <input type="hidden" name="p_out_department"          value="<%= p_out_department%>">
+   <input type="hidden" name="p_out_group_code"          value="<%= p_out_group_code%>">
+   <input type="hidden" name="p_out_age_brak_code"       value="<%= p_out_age_brak_code %>">
+<%
+zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.inputTextBox(p_labelName =>'ID No.',p_inputName=>'p_empl_id_no',p_inputSize =>3,p_labelSize=>3);
+zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.inputTextBox(p_labelName =>'Employee Name',p_inputName=>'p_empl_name',p_inputSize =>7,p_labelSize=>3);
+zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.closeModalWindow('submit','Search');
+zsi_bs_lib.CloseFormGroup();
+%>
+<table class="dhtmlxGrid" gridWidth="99.99%" gridHeight="500px" id="gridbox1">
+   <tr valign="bottom">
+      <th nowrap align="center" width="100px">ID No.</th>
+      <th nowrap align="left" width="350px">Employee Name</th>
+   </tr>
+<%
+   l_dhtmlx_sort   := 'int,str';
+   OPEN emp_cur FOR l_sql;
+   LOOP
+      FETCH emp_cur INTO l_empl_id_no,
+                         l_empl_name,
+                         l_empl_type,
+                         l_empl_type_desc,
+                         l_empl_cc_desc,
+                         l_empl_dept_desc,
+                         l_empl_group_desc,
+                         l_empl_job_desc,
+                         l_cost_center,
+                         l_department,
+                         l_group_code,
+                         l_age_brak_code;
+      EXIT WHEN emp_cur%NOTFOUND;
+%>
+<tr valign="bottom">
+   <td nowrap align="center"><a href="javascript:void(0)" TITLE="Click here to select this row." onClick="SelectRow('<%= l_empl_id_no %>','<%= l_empl_name %>','<%= l_empl_type %>','<%= l_empl_type_desc %>','<%= l_empl_cc_desc %>','<%= l_empl_dept_desc %>','<%= l_empl_group_desc %>','<%= l_empl_job_desc %>','<%= l_cost_center %>','<%= l_department %>','<%= l_group_code %>','<%= l_age_brak_code %>')"><%= l_empl_id_no %></a></td>
+   <td nowrap align="left"><%=l_empl_name %></td>
+</tr>
+<%
+   END LOOP;
+%>
+</table>
+<div class="bottomNav">
+<div class="buttonGroup">
+<%
+zsi_bs_lib.Button('btnSearch','Search',p_data_toggle =>'modal',p_data_target =>'#modalWindow');
+%>
+</div>
+</div>
+<script type="text/javascript">
+   function SelectRow(p_id, p_en, p_et, p_etd, p_ccd, p_dd, p_gd, p_jd, p_cc, p_dc, p_gc, p_abc) {
+<%
+      IF p_out_empl_id_no IS NOT NULL THEN
+%>
+      <%= l_caller_form %>.<%= p_out_empl_id_no %><%= l_array_index %>.value = p_id;
+<%
+      END IF;
+      IF p_out_empl_name IS NOT NULL THEN
+%>
+      <%= l_caller_form %>.<%= p_out_empl_name %><%= l_array_index %>.value = p_en;
+<%
+      END IF;
+      IF p_out_empl_type IS NOT NULL THEN
+%>
+      <%= l_caller_form %>.<%= p_out_empl_type %><%= l_array_index %>.value = p_et;
+<%
+      END IF;
+      IF p_out_empl_type_desc IS NOT NULL THEN
+%>
+      <%= l_caller_form %>.<%= p_out_empl_type_desc %><%= l_array_index %>.value = p_etd;
+<%
+      END IF;
+      IF p_out_empl_cc_desc IS NOT NULL THEN
+%>
+      <%= l_caller_form %>.<%= p_out_empl_cc_desc %><%= l_array_index %>.value = p_ccd;
+<%
+      END IF;
+      IF p_out_empl_dept_desc IS NOT NULL THEN
+%>
+      <%= l_caller_form %>.<%= p_out_empl_dept_desc %><%= l_array_index %>.value = p_dd;
+<%
+      END IF;
+
+      IF p_out_empl_group_desc IS NOT NULL THEN
+%>
+      <%= l_caller_form %>.<%= p_out_empl_group_desc %><%= l_array_index %>.value = p_gd;
+<%
+      END IF;
+      IF p_out_empl_job_desc IS NOT NULL THEN
+%>
+      <%= l_caller_form %>.<%= p_out_empl_job_desc %><%= l_array_index %>.value = p_jd;
+<%
+      END IF;
+      IF p_out_cost_center IS NOT NULL THEN
+%>
+      <%= l_caller_form %>.<%= p_out_cost_center %><%= l_array_index %>.value = p_cc;
+<%
+      END IF;
+      IF p_out_department IS NOT NULL THEN
+%>
+      <%= l_caller_form %>.<%= p_out_department %><%= l_array_index %>.value = p_dc;
+<%
+      END IF;
+      IF p_out_group_code IS NOT NULL THEN
+%>
+      <%= l_caller_form %>.<%= p_out_group_code %><%= l_array_index %>.value = p_gc;
+<%
+      END IF;
+      IF p_out_age_brak_code IS NOT NULL THEN
+%>
+      <%= l_caller_form %>.<%= p_out_age_brak_code %><%= l_array_index %>.value = p_abc;
+<%
+      END IF;
+
+      IF p_out_empl_id_no IS NOT NULL THEN
+%>
+      <%= l_caller_form %>.<%= p_out_empl_id_no %><%= l_array_index %>.focus();
+<%
+      END IF;
+%>
+
+      setTimeout(function(){       
+         window.parent.w1.close();
+
+      }, 100);
+               
+      return true;
+   }
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid);
+
+   //on window resize
+   $(window).resize(function(){
+      zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+
+   $(document).ready(function(){
+      zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

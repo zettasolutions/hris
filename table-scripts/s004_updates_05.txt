@@ -1,0 +1,4 @@
+@@ "s004_t08021 v2.sql"
+@@ "s004_t08021 updated.sql"
+alter trigger s004_t01000_tr001 disable;
+@@ "s004_t01000_data_gmofc.sql"

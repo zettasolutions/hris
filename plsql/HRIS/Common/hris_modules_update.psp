@@ -1,0 +1,144 @@
+<%@ plsql procedure="hris_modules_update" %>
+<%@ plsql parameter="p_module_id"       type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_module_name"     type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_module_url"      type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_module_desc"     type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_module_group_id" type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_sysgroup"        type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_seq_no"          type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ismenu"          type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_proc_desc"       type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_proc_type"       type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   01-MAR-15  GT    Added proc_type, module_desc, proc_desc
+   25-AUG-14  GT    New
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_sql                        VARCHAR2(1000);
+   l_changed                    VARCHAR2(1) := 'N';
+   l_rec                        S004_MODULES%ROWTYPE;
+
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update HRIS Modules </title>
+</head>
+<body>
+<%
+
+FOR i IN 2..p_module_id.COUNT LOOP
+   IF p_module_id(i) IS NULL  AND (p_module_name(i) IS NOT NULL OR p_module_url IS NOT NULL) THEN      
+      INSERT INTO S004_MODULES
+      (   module_id
+         ,module_name
+         ,module_desc
+         ,module_group_id
+         ,module_url
+         ,proc_type
+         ,proc_desc
+         ,sys_group_id
+         ,seq_no
+         ,ismenu
+         ,created_by
+         ,date_created
+      )
+      VALUES
+      (   S004_MODULES_SQ001.NEXTVAL
+         ,p_module_name(i)
+         ,p_module_desc(i)
+         ,p_module_group_id(i)
+         ,p_module_url(i)
+         ,p_proc_type(i)
+         ,p_proc_desc(i)
+         ,p_sysgroup(i)
+         ,p_seq_no(i)
+         ,p_ismenu(i)
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+      );
+      
+      ELSIF p_module_id(i) IS NOT NULL AND (p_module_name(i) IS NOT NULL OR p_module_url IS NOT NULL)  THEN
+      
+      SELECT * INTO l_rec FROM S004_MODULES WHERE module_id=p_module_id(i);
+
+      IF zsi_lib.IsChanged(l_rec.module_name, p_module_name(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.module_name := p_module_name(i);
+      END IF;
+      
+      IF zsi_lib.IsChanged(l_rec.module_desc, p_module_desc(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.module_desc := p_module_desc(i);
+      END IF;
+      
+      IF zsi_lib.IsChanged(l_rec.module_group_id, TO_NUMBER(p_module_group_id(i))) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.module_group_id := p_module_group_id(i);
+      END IF;
+      
+      IF zsi_lib.IsChanged(l_rec.sys_group_id, TO_NUMBER(p_sysgroup(i))) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.sys_group_id := p_sysgroup(i);
+      END IF;
+      
+      IF zsi_lib.IsChanged(l_rec.module_url, p_module_url(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.module_url := p_module_url(i);
+      END IF;
+      
+      IF zsi_lib.IsChanged(l_rec.proc_type, p_proc_type(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.proc_type := p_proc_type(i);
+      END IF;
+           
+      IF zsi_lib.IsChanged(l_rec.proc_desc, p_proc_desc(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.proc_desc := p_proc_desc(i);
+      END IF;
+     
+      IF zsi_lib.IsChanged(l_rec.seq_no, TO_NUMBER(p_seq_no(i))) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.seq_no := p_seq_no(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.ismenu, TO_NUMBER(p_ismenu(i))) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.ismenu := p_ismenu(i);
+      END IF;
+
+      IF l_changed='Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modified := SYSDATE;
+         UPDATE S004_Modules SET row = l_rec WHERE module_id = p_module_id(i);
+      END IF;
+
+      END IF;
+   END LOOP;
+END;
+%>
+
+<script type="text/javascript">
+   parent.dhxLayout.cells("b").attachURL("hris_modules_list");
+   parent.w1.close();
+</script>

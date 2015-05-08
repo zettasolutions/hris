@@ -1,0 +1,230 @@
+<%@ plsql procedure="availed_vaccination_list" %>
+<%@ plsql parameter="p_id_no"           type="NUMBER" default="NULL"   %>
+
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   03-JAN-15  GT    Added timer.
+   08-SEP-14  BD    Passed p_module_id to form url.
+   13-JUL-14  RN    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_dhtmlx_filter              VARCHAR2(4096);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+   l_emp_rec                    employee_v%ROWTYPE;
+%>
+<%
+   SELECT * INTO l_emp_rec FROM employee_v WHERE empl_id_no = p_id_no;
+   pageheader(p_dwin=>'Y', p_dgrid=>'Y');
+%>
+<body>
+<div class="col-xs-12 form-header">
+<div class="container-fluid">
+<div class="form-horizontal">
+   <div class="form-group">
+      <label class="col-xs-1 control-label">Name:</label>
+      <div class="col-xs-6">
+         <label class="control-label"><%= l_emp_rec.empl_name %></label>
+      </div>
+   </div>
+   <div class="form-group">
+      <label class="col-xs-1 control-label">Department:</label>
+      <div class="col-xs-6">
+         <label class="control-label"><%= l_emp_rec.dept_desc %>{<%= l_emp_rec.department %>}</label>
+      </div>
+   </div>
+   <div class="form-group">
+      <label class="col-xs-1 control-label">Cost Center:</label>
+      <div class="col-xs-6">
+         <label class="control-label"><%= l_emp_rec.cc_desc %>{<%= l_emp_rec.empl_group_code %>}</label>
+      </div>
+   </div>
+   <div class="form-group">
+      <label class="col-xs-1 control-label">Group:</label>
+      <div class="col-xs-6">
+         <label class="control-label"><%= l_emp_rec.group_desc %>{<%= l_emp_rec.group_code %>}</label>
+      </div>
+   </div>   
+   <div class="form-group">
+      <label class="col-xs-1 control-label">Job Desc.:</label>
+      <div class="col-xs-6">
+         <label class="control-label"><%= l_emp_rec.job_desc %>{<%= l_emp_rec.empl_jobp_code %>}</label>
+      </div>
+   </div>
+</div>
+</div>
+</div>
+<br /> 
+<%
+zsi_bs_lib.openModalWindow('modalWindow','Availed Vaccination','av_search_frm','availed_vaccination_list');
+zsi_bs_lib.OpenEntryForm();
+zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBox(p_labelName =>'Tran No',p_inputName=>'p_tran_no',p_labelSize =>3, p_inputSize =>4);
+zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBox(p_labelName =>'Tran Date',p_inputName=>'p_tran_date',p_labelSize =>3, p_inputSize =>4);
+zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBox(p_labelName =>'Dependent Name',p_inputName=>'p_dep_name',p_labelSize =>3, p_inputSize =>4);
+zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.SelectBox(p_labelName=>'Vaccine Code', p_Name=>'p_vaccine_code', p_labelSize=>3, p_selectSize=>4);
+zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.YesNo(p_label_name=>'Is Posted',p_field=>'post_status',p_label_size =>3,p_select_size =>2);
+zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.CloseEntryForm();
+zsi_bs_lib.closeModalWindow('button','Search',p_btn_attributes=>'onclick="LoadData(GetParams());"' );
+%>
+<%
+   l_dhtmlx_sort := 'int,date,str,str,str,str,na';
+   l_dhtmlx_filter := '#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#select_filter,&nbsp;';
+%>
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+<tr valign="bottom">
+<th nowrap align="center" width="100px">Tran No</th>
+<th nowrap align="center" width="100px">Tran Date</th>
+<th nowrap align="left" width="200px">Dependent Name</th>
+<th nowrap align="left" width="300px">Vaccine</th>
+<th nowrap align="center" width="100px">Posted?</th>
+<th align="center" width="60px">Delete</th>
+
+</table>
+
+<div class="bottomNav">
+<div class="buttonGroup">
+<%
+zsi_bs_lib.Button('btnSearch','Search',p_data_toggle =>'modal',p_data_target =>'#modalWindow');
+zsi_bs_lib.Button('btnAdd','Add',p_onclick =>'attachURL(''availed_vaccination_form?p_id_no=' || p_id_no || '&p_module_id=' || l_module_id || '&p_tran_no='',''Add Availed Vaccination'', 1350, 600);w1.maximize();');
+zsi_bs_lib.Button('btnDelete','Delete',p_onclick =>'return checkDelete(''availed_vaccination_delete?p_del_av='');');
+%>
+</div>
+<div class="pageholder">
+<div class="pagectrl">
+<label id="page">Page </label>
+<select onchange="gotoPage(this)" name="p_page_no"> </select>
+<label id="of"> </label>
+</div>
+<div class="pagestatus"></div>
+</div>
+</div>
+
+<script type="text/javascript">
+/*variable declaration*/
+var ctrlSel = zsi.control.SelectList;
+var l_page_rows=0;
+
+
+$(document).ready(function(){
+
+    //parent.HomeWindow=window;
+    ctrlSel("#p_vaccine_code","","N","S004_T08005","vaccine_code","vaccine_name","");
+    ctrlSel("#p_empl_type","","N","employee_types_v","sele_value","displayed_text","");
+    ctrlSel("#p_cost_center","","N","cost_center_v","ccnt_cd","ccnt_desc","");
+      setTimeout(function(){  
+            LoadData(GetParams());
+      }, 1000);
+});
+
+
+function GetParams(){
+   var l_params="";
+   l_params += '?p_tran_no=' + $("#p_tran_no").val();
+   l_params += '&p_tran_date=' + $("#p_tran_date").val();
+   l_params += '&p_dep_name=' + $("#p_dep_name").val();
+   l_params += '&p_vaccine_code=' + $("#p_vaccine_code").val();
+   l_params += '&p_post_status=' + $("#p_post_status").val();
+   l_params += '&p_id_no=<%=p_id_no%>';
+   return l_params;
+}
+
+function checkDelete(l_cmd) {
+   var l_stmt, l_count
+   l_stmt = zsi.table.getCheckBoxesValues("input[name=p_cb]:checked","p_del_av=","&");
+
+   if (l_stmt!="") {
+      if(confirm("Are you sure you want to delete ALL SELECTED Availed Vaccination?")) {
+         $.post( l_cmd + "&" + l_stmt, function(d){
+            parent.ShowHideProgressWindow(false);
+            parent.parent.HomeWindow.LoadData("?p_id_no=<%=p_id_no %>");
+            window.location.reload();
+         });
+      }
+   }
+}
+
+
+function gotoPage(p_this){
+   var l_params = GetParams() + "&p_rows="+ l_page_rows + "&p_page_no=" + p_this.value;
+   LoadData(l_params );
+};
+
+
+
+ var mygrid = dhtmlXGridFromTable("gridbox1");
+ mygrid.setSkin("light");
+ mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+ mygrid.setEditable(false);
+ mygrid.lockRow(0, true);
+ mygrid.enableLightMouseNavigation(true);
+ mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+ mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+ //mygrid.attachHeader("<%=l_dhtmlx_filter %>");
+ //LoadData(GetParams());
+ zsi.table.dhtmlx.ResizeGrid(window, mygrid);
+
+
+$('input[type=date]').datepicker({});
+
+function LoadData(p_params){
+   $.getJSON("availed_vaccination_json" + p_params,onLoadComplete);
+}
+
+function onLoadComplete(data){
+   mygrid.clearAll();
+   zsi.table.dhtmlx.Unescape(data,2);
+   mygrid.parse(data, "json");
+   l_page_rows=data.page_rows;
+   zsi.page.DisplayRecordPage(data.page_no,data.page_rows,data.row_count);
+   $("#modalWindow").modal('hide');
+}
+dhtmlxWin = new dhtmlXWindows();
+dhtmlxWin.setImagePath("<%= l_dhtmlx_path %>dhtmlxWindows/codebase/imgs/");
+function attachURL(winURL,winTitle,winWidth,winHeight) {
+//var w1;
+   if (dhtmlxWin.isWindow("w1")) w1.close();
+   //w1 = dhtmlxWin.createWindow("w1", 20, 50, winWidth, winHeight); // x,y,width,height
+   var w = $(document).width();
+   var x = (w - winWidth) / 2;
+   var h = $(document).height();
+   var y = (h - winHeight) / 2;
+   w1 = dhtmlxWin.createWindow("w1", x, y, winWidth, winHeight); // x,y,width,height
+   w1.setModal(true);
+   w1.button("close").enable();
+   w1.button("minmax1").enable();
+   w1.button("minmax2").enable();
+   w1.button("park").hide();
+   w1.setText(winTitle);
+   w1.attachURL(winURL);
+}
+
+
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

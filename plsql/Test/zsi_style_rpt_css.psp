@@ -1,0 +1,261 @@
+<% owa_util.mime_header('text/css');%>
+<%@ plsql procedure="zsi_style_rpt_css" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-15 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+Date       By    History
+---------  ----  -------------------------------------------------------------------------------------------
+28-JAN-15  GF    New.
+*/
+%>
+
+body {background: #FFFFFF; color: #333; padding: 1px 2px 1px 2px; margin: 0; }
+body, div, h2, h3, h4 { /* redundant rules for bad browsers  */  
+   font-family: Verdana, Arial, Helvetica, sans-serif;
+   background: #FFFFFF;
+}  
+a         { font-weight: normal; color: #000; text-decoration: none;}
+a:hover   { font-weight: normal; color: #000; }
+a:active  { font-weight: normal; color: #000; }
+a:visited { font-weight: normal; color: #000; }
+
+p { line-height: 100%; }
+
+h1, h2, h3, h4, h5, h6 { font-weight: bold; color: #333; }
+h1 { font-size: 180%; margin: 0; }
+h1 a { text-decoration: none; color: #333; }
+h1 a:hover { border-bottom: 1px dotted #666; color: #000; }
+h2 { font-size: 160%; padding-bottom: 2px; border-bottom: 1px solid #CCC; margin: 0; }
+h3 { font-size: 140%; padding-bottom: 2px; border-bottom: 1px solid #CCC; margin: 0; }
+h4 { font-size: 120%; padding-bottom: 2px; border-bottom: 1px solid #CCC; margin: 0; }
+h5 { font-size: 100%; padding-bottom: 2px; border-bottom: 1px solid #CCC; margin: 0; }
+h6 { font-size: 80%;  padding-bottom: 2px; border-bottom: 1px solid #CCC; margin: 0; }
+
+.head1 { font-size: 180%; padding-bottom: 2px; font-weight: bold; color: #000; margin: 0; }
+.head2 { font-size: 160%; padding-bottom: 2px; font-weight: bold; color: #000; margin: 0; }
+.head3 { font-size: 140%; padding-bottom: 2px; font-weight: bold; color: #000; margin: 0; }
+.head4 { font-size: 120%; padding-bottom: 2px; font-weight: bold; color: #000; margin: 0; }
+.head5 { font-size: 100%; padding-bottom: 2px; font-weight: bold; color: #000; margin: 0; }
+.head6 { font-size: 80%; padding-bottom: 2px; font-weight: bold; color: #000; margin: 0; }
+.head7 { font-size: 60%;  padding-bottom: 2px; padding-top: 2px; font-weight: bold; color: #000; margin: 0; }
+.head8 { font-size: 40%;  padding-bottom: 2px; padding-top: 2px; font-weight: bold; color: #000; margin: 0; }
+.heading { font-size: 95%; font-weight: bold; color: #000; margin: 0; }
+
+img {border: 0px none; vertical-align: middle }
+
+
+table thead tr th, table tbody tr td{
+   padding-left:5px;
+   padding-right:5px;
+
+}
+
+table thead tr th{
+   background-color:#D9EAFF;      
+}
+
+
+@media screen{ 
+
+   body {
+      font-size: 11px;
+      margin-top:10px;
+   }
+   
+   table {
+      width:100%;  
+      border-collapse: collapse;
+      max-width:800px;
+      margin:5px auto;
+   }
+}
+
+
+@media print {
+
+   body { 
+         font-size: 10px;     
+   }
+   table {
+      width:100%;  
+      border-collapse: collapse;
+   }
+
+      
+   table thead { display:table-header-group; }
+   table tbody { display:table-row-group;    }
+
+   .button ,.noprint ,.printbutton ,.xsbutton { 
+      display: none; 
+   }
+   
+   .pgbreakbefore { page-break-before:always }
+   .pgbreakafter  { page-break-after:always }
+   .pagebreak     {   
+      overflow: auto;
+      page-break-after: always;
+  }
+
+}
+
+
+/* Report */
+
+.reportcriteria{
+   font-size:10pt;
+   margin-bottom: 3px;
+}
+
+.reportTitle{
+   font-size: 11pt;
+   font-weight: bold;
+   margin-bottom: 2px;
+   margin-top: 5px;
+}
+
+
+.rptPage{ 
+   width: 8.5in;
+   margin: 0 auto; 
+
+}
+
+.rptHeader{
+   overflow: auto;
+}
+.rptLogo{
+   float: left;
+   height: 100px;
+   width: 100px;
+   background: url("../apps/s004/images/mcwd_logo2x2.jpg") no-repeat scroll 0 0 / 95px 95px;  
+}
+
+.rptLogo-sm{
+   float: left;
+   height: 70px;
+   width: 70px;
+   background: url("../apps/s004/images/mcwd_logo2x2.jpg") no-repeat scroll 0 0 / 70px 70px;  
+}
+
+
+
+.rptHeaderRight{
+   float: left;
+   margin-left: 20px;
+   text-align: center;
+}
+.rptRepublic{
+   font-size: 10pt;
+}
+.rptCompany{
+   font-size: 15pt;
+}
+
+.rptCompany-sm{
+   font-size: 12pt;
+}
+
+
+.rptAddress{
+   /*font-size: 11pt;*/
+}
+.rptTitle{
+   border-bottom: 2pt solid #000;
+   font-size: 10.2pt;
+   font-weight: bold;
+   margin-top: 16px;
+}
+
+.rptNewLine{
+   height: 20px;
+}
+
+.rptP {
+    margin: 15px 0 15pt;
+    text-align: justify;
+}
+.rptP-sm {
+   margin: 8px 0 8pt;
+   text-align: justify;
+}
+
+.rptTab:first-letter { 
+     padding-left: 50px;
+}
+
+.rptFS-11{
+   font-size: 11pt;   
+}
+
+.rptFS-sm{
+   font-size: 8pt;   
+}
+
+
+
+.rptP.alignR {
+    text-align: right;
+}
+
+.rptBy{
+   font-weight: bold;   
+}
+
+
+.rptOne4thSize{  
+    border: 1pt solid;
+    float: left;
+    padding: 5px;
+    width: 390px; 
+}
+
+
+.loadingStatus{
+   color: red;
+   font-size: 10pt;
+   font-weight: bold;
+   margin: 0 auto 30px;
+   width: 220px;   
+}
+.loadingImg{
+   background :url("/apps/s004/images/loading.gif") no-repeat;
+   width:30px;   
+   height:19px;   
+   float: left;
+}
+
+.loadIconR{
+   background-image: url("/apps/s004/images/loading.gif") ;
+   background-repeat: no-repeat;
+   background-size: 17px 15px;
+   background-position: right center;   
+}
+
+
+
+.loadingText{
+   float: left;
+   margin-left: 5px;   
+}
+
+.alignCenter{
+   text-align:center;
+}
+
+.alignLeft{
+   text-align:left;
+}
+
+/*end of Report*/
+
+
+

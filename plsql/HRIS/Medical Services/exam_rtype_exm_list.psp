@@ -1,0 +1,269 @@
+<%@ plsql procedure="exam_rtype_exm_list" %>
+<%@ plsql parameter="p_result_type"    type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_exam_group"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_exam_code"      type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_exam_desc"      type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_normal_range"   type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_rows"           type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_page_no"        type="NUMBER"   default="1"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   05-JAN-15  GT    Added MINIMUM/MAXIMUM RESULT AND APE_PRIORITY
+   08-JUL-14  GT    Added p_seq_no.
+   04-JUL-14  GT    Modified.
+   01-JUL-14  RN    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(4000);
+   l_where                      VARCHAR2(4000);
+   l_sql                        VARCHAR2(8000);
+   l_from                       VARCHAR2(1000);
+
+   TYPE erte_cur IS REF CURSOR;
+   erteef          erte_cur;
+   l_seq_no                     S004_T08019_EXAM.seq_no%TYPE;
+   l_exam_code                  S004_T08019_EXAM.exam_code%TYPE;
+   l_exam_desc                  S004_T08019_EXAM.exam_desc%TYPE;
+   l_result_type                S004_T08019_EXAM.result_type%TYPE;
+   l_exam_group                 S004_T08019_EXAM.exam_group%TYPE;
+   l_normal_range               S004_T08019_EXAM.normal_range%TYPE;
+   l_minimum_result             S004_T08019_EXAM.minimum_result%TYPE;
+   l_maximum_result             S004_T08019_EXAM.maximum_result%TYPE;
+   l_ape_priority               S004_T08019_EXAM.ape_priority%TYPE;
+   l_remarks                    S004_T08019_EXAM.remarks%TYPE;
+   l_row_no                     NUMBER(10);
+   l_rows                       NUMBER(10);
+   l_max_rows                   NUMBER(10) := zsi_lib.MaxRowsInList;
+   l_url                        VARCHAR2(32000) := 'exam_rtype_exm_list';
+   l_row_count                  NUMBER(10) := 0;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+<%
+  pageheader(p_dgrid=>'Y');
+%>
+<%
+
+  l_select := 'SELECT seq_no,
+                      result_type,
+                      exam_group,
+                      exam_code,
+                      exam_desc,
+                      normal_range,
+                      minimum_result,
+                      maximum_result,
+                      ape_priority,  
+                      remarks ';
+  l_from   := ' FROM S004_T08019_EXAM' ;
+  l_where := ' WHERE 1=1';
+
+  IF p_result_type IS NOT NULL THEN
+       l_where := l_where || ' AND result_type= ' || p_result_type;
+  END IF;
+   l_url := l_url ||'?p_result_type=' || p_result_type;
+
+  IF p_exam_group IS NOT NULL THEN
+       l_where := l_where || ' AND exam_group= ' || p_exam_group;
+  END IF;
+   l_url := l_url ||'&p_exam_group=' || p_exam_group;
+
+  IF p_exam_code IS NOT NULL THEN
+     l_where := l_where || ' AND exam_code= ' || p_exam_code;
+  END IF;
+   l_url := l_url ||'&p_exam_code=' || p_exam_code;
+
+  IF p_exam_desc IS NOT NULL THEN
+         l_where := l_where ||' AND upper(exam_desc) LIKE '|| '''' || '%' ||  upper(p_exam_desc) || '%' || '''' || ' ';
+  END IF;
+    l_url := l_url ||'&p_exam_desc=' || p_exam_desc;
+
+  IF p_normal_range IS NOT NULL THEN
+       l_where := l_where || ' AND normal_range= ' || p_normal_range;
+  END IF;
+    l_url := l_url ||'&p_normal_range=' || p_normal_range;
+
+
+   IF p_page_no = 1 AND p_rows IS NULL THEN
+      l_sql := 'SELECT COUNT(*) ' || l_from || l_where;
+      OPEN erteef FOR l_sql;
+      LOOP
+         FETCH erteef INTO l_rows;
+         EXIT WHEN erteef%NOTFOUND;
+      END LOOP;
+      CLOSE erteef;
+   ELSE
+      l_rows := p_rows;
+   END IF;
+   l_url := l_url ||'&p_rows=' || l_rows;
+
+   l_sql := l_select ||', row_number() OVER (ORDER BY result_type, exam_group, exam_code) rn ' || l_from || l_where;
+
+   l_sql := 'SELECT * FROM ( ' || l_sql || ') ' || zsi_lib.GeneratePagingWhere(p_page_no);
+
+
+%>
+<body>
+<%
+
+      zsi_bs_lib.openModalWindow('modalWindow','Search Examination Result Type - Exam','erte_search_frm','exam_rtype_exm_list');
+
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.SelectBox(p_labelName=>'Group', p_Name=>'p_exam_group', p_labelSize=>3, p_selectSize=>9);
+      zsi_bs_lib.CloseFormGroup();
+
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Exam Group',p_inputName=>'p_exam_group', p_labelSize =>3, p_inputSize =>9);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Code',p_inputName=>'p_exam_code', p_labelSize =>3, p_inputSize =>9);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Description',p_inputName=>'p_exam_desc', p_labelSize =>3, p_inputSize =>9);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Normal Range',p_inputName=>'p_normal_range', p_labelSize =>3, p_inputSize =>9);
+      zsi_bs_lib.CloseFormGroup();
+
+
+   zsi_bs_lib.closeModalWindow('submit','Search');
+%>
+
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+   <tr valign="bottom">
+      <th nowrap align="left" width="100px">Type</th>
+      <th nowrap align="left" width="100px">Group</th>
+      <th nowrap align="center" width="50px">Code</th>
+      <th nowrap align="left" width="200px">Description</th>
+      <th nowrap align="center" width="200px">Normal Range</th>
+      <th nowrap align="center" width="75px">Min. Result</th>
+      <th nowrap align="center" width="75px">Max. Result</th>
+      <th nowrap align="center" width="100px">APE Priority</th>
+      <th width="200px">Remarks</th>
+      <th align="center" width="60px">Delete</th>
+   </tr>
+<%
+   l_dhtmlx_sort := 'str,str,str,str,str,str,na';
+
+   OPEN erteef FOR l_sql;
+   LOOP
+      FETCH erteef INTO l_seq_no,
+                        l_result_type,
+                        l_exam_group,
+                        l_exam_code,
+                        l_exam_desc,
+                        l_normal_range,
+                        l_minimum_result,
+                        l_maximum_result,
+                        l_ape_priority, 
+                        l_remarks,
+                        l_row_no;
+      EXIT WHEN erteef%NOTFOUND;
+      l_row_count := l_row_count + 1;
+%>
+   <tr valign="bottom">
+      <td><%= zsi_lib.GetDescription('S004_T08019','result_desc','result_type', l_result_type)%></td>
+      <td><%= zsi_lib.GetDescription('S004_T08019_GROUP','group_desc','seq_no', l_exam_group)%></td>
+       <td nowrap align="center">
+         <a href="javascript:void(0)" TITLE="Click here to Edit Examination Result Type - Exam" onClick="parent.attachURL('exam_rtype_exm_form?p_module_id=<%= l_module_id %>&p_seq_no=<%= l_seq_no %>','Edit Examination Result Type - Exam Code &raquo; <%= l_exam_code %>', 600, 265)"><%=l_exam_code %></a>
+      </td>
+      <td><%=l_exam_desc %></td>
+     <td nowrap align="center"><%=l_normal_range %></td>
+     <td nowrap align="center"><%=l_minimum_result %></td>
+     <td nowrap align="center"><%=l_maximum_result %></td>
+     <td nowrap align="center"><%=l_ape_priority %></td>
+      <td><%=l_remarks %></td>
+      <td><input type="checkbox" name="p_cb" onclick="zsi.table.setCheckBox(this,<%= l_seq_no %>);">
+                         <input type="hidden" name="p_del_erte" value=""></td>
+   </tr>
+<%
+   END LOOP;
+%>
+</table>
+<div class="bottomNav">
+   <div class="buttonGroup">
+   <%
+            zsi_bs_lib.Button('btnSearch','Search',p_data_toggle =>'modal',p_data_target =>'#modalWindow');
+            zsi_bs_lib.Button('btnAdd','Add',p_onclick =>'parent.attachURL(''exam_rtype_exm_form?p_module_id=' || l_module_id || '&p_seq_no='',''Add Examination Result Type - Exam'', 1150, 400)');
+            zsi_bs_lib.Button('btnDelete','Delete',p_onclick =>'return checkDelete(''S004_DELETE?p_value=0'');');
+   %>
+   </div>
+<% zsi_lib.ShowPaging(p_page_no,l_rows,l_row_count); %>
+</div>
+
+<script type="text/javascript">
+/*variable declaration*/
+   var ctrlSel = zsi.control.SelectList;
+
+
+/*end of declaration*/
+
+   $(document).ready(function(){
+      $('.modal-dialog').css('width', '450px');
+
+      ctrlSel("#p_exam_group","","N","S004_T08019","result_type","result_desc","");
+
+   });
+
+
+
+   //on window resize
+   $(window).resize(function(){
+       zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+
+  function checkDelete(l_cmd) {
+    var l_stmt, l_count
+      l_stmt = zsi.table.getCheckBoxesValues("input[name=p_cb]:checked","p_value=","&");
+      //alert(l_stmt);
+    if (l_stmt!="") {
+        if(confirm("Are you sure you want to delete ALL SELECTED Examination Result Type - Exam?")) {
+          $.post( l_cmd + "&" + l_stmt + "&p_table=S004_T08019_EXAM&p_field=seq_no", function(d){
+            parent.ShowHideProgressWindow(false);
+            window.location.reload();
+          });
+        }
+     }
+  }
+
+   function gotoPage(p_this){
+       var url = "<%= l_url %>&p_page_no=" + p_this.value;
+       window.location.href = url;
+    };
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+
+</script>
+
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

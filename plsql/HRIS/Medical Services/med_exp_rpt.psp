@@ -1,0 +1,164 @@
+<%@ plsql procedure="med_exp_rpt" %>
+<%@ plsql parameter="p_cmonth"    type="NUMBER" %>
+<%@ plsql parameter="p_year"      type="NUMBER" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   11-MAR-15  BD    New
+   27-APR-15  BD    Fixed bug.
+*/
+--DECLARATION SECTION
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+
+   l_ctr                        NUMBER(10) := 0;
+   l_month                      DATE;
+   l_regular_meds_count         NUMBER;
+   l_nonreg_meds_count          NUMBER;
+   l_dental_meds_count          NUMBER;
+   l_total                      NUMBER;
+   l_begbal_qty                 NUMBER;
+   l_balance                    NUMBER;
+
+   l_tot_regular_meds_count     NUMBER := 0;
+   l_tot_nonreg_meds_count      NUMBER := 0;
+   l_tot_dental_meds_count      NUMBER := 0;
+   l_tot_total                  NUMBER := 0;
+   l_tot_begbal_qty             NUMBER := 0;
+   l_tot_balance                NUMBER := 0;
+
+
+   CURSOR meds_cur (p_month IN DATE) IS
+      SELECT meds_code, meds_name
+        FROM meds_code_v m
+       WHERE EXISTS (SELECT 1 FROM S004_T08020_MEDS t WHERE t.meds_code = m.meds_code AND TRUNC(t.tran_date,'MM') = p_month)
+       ORDER BY meds_name;
+
+
+   FUNCTION GetMonth (p_month IN NUMBER) RETURN VARCHAR2 IS
+      l_date   DATE;
+   BEGIN
+      l_date := TO_DATE(p_month||'/01/2015','MM/DD/YYYY');
+      RETURN TO_CHAR(l_date,'Month');
+   END;
+
+
+   FUNCTION GetMedsBegBalQty (p_meds_code IN NUMBER,
+                              p_month     IN DATE) RETURN NUMBER IS
+      CURSOR begbal_cur  IS
+         SELECT i.begbal_qty
+           FROM med_inv_ledger_v i
+          WHERE i.meds_code = i.meds_code
+            AND TRUNC(i.tran_date,'MM') = p_month;
+      l_qty NUMBER;
+   BEGIN
+      OPEN begbal_cur;
+      FETCH begbal_cur INTO l_qty;
+      CLOSE begbal_cur;
+      RETURN l_qty;
+   END;
+
+   FUNCTION GetMedsExpQty(p_meds_code IN NUMBER,
+                          p_emp_grouping   IN VARCHAR2,
+                          p_is_dental   IN NUMBER default -1 ) RETURN NUMBER IS
+
+      l_count  NUMBER;
+      CURSOR meds_count_cur IS
+         SELECT SUM(meds_qty)
+           FROM s004_t08016 t,
+                s004_t08014 f,
+                employee_v e
+          WHERE t.id_no = e.empl_id_no
+            AND t.treatment_for = f.treatment_for
+            AND EXTRACT(MONTH FROM t.tran_date) = p_cmonth
+            AND EXTRACT(YEAR FROM t.tran_date) = p_year
+            AND t.meds_code = p_meds_code
+            AND e.emp_grouping = p_emp_grouping
+            AND DECODE(p_is_dental,-1,p_is_dental,NVL(f.is_dental,0)) = p_is_dental;
+   BEGIN
+      OPEN meds_count_cur;
+      FETCH meds_count_cur INTO l_count;
+      CLOSE meds_count_cur;
+      RETURN l_count;
+   END;
+
+%>
+<%
+   reportheader(p_output=>'H');
+   l_month := TO_DATE(p_cmonth || '/01/' || p_year,'mm/dd/yyyy');
+%>
+<body onload="window.print();">
+
+<table>
+   <tr valign="top">
+      <td align="left" class="head1 reportTitle">Monthly Medicine Expenses for the Month of <%= GetMonth(p_cmonth) %> <%= p_year %></td>
+      <td align="right" class="reportcriteria">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss')) %></td>
+   </tr>
+</table>
+
+
+<table >
+   <thead>
+   <tr>
+      <th align="center">Description</th>
+      <th align="center">Previous Balance</th>
+      <th align="center">Regular</th>
+      <th align="center">Casual</th>
+      <th align="center">Dental</th>
+      <th align="center">Total</th>
+      <th align="center">Current Balance</th>
+   </tr>
+   </thead>
+   <tbody>
+<%
+   FOR m IN meds_cur(l_month) LOOP
+      l_begbal_qty := GetMedsBegBalQty(m.meds_code,l_month);
+      l_regular_meds_count := GetMedsExpQty(m.meds_code,'REGULAR',0);
+      l_nonreg_meds_count := GetMedsExpQty(m.meds_code,'NONREG',0);
+      l_dental_meds_count := GetMedsExpQty(m.meds_code,'REGULAR',1);
+      l_total := NVL(l_regular_meds_count,0) + NVL(l_nonreg_meds_count,0) + NVL(l_dental_meds_count,0);
+      l_balance := NVL(l_begbal_qty,0) - NVL(l_total,0);
+%>
+   <tr>
+      <td align="left"><%= m.meds_name %></td>
+      <td align="center"><%= l_begbal_qty  %></td>
+      <td align="center"><%= l_regular_meds_count %></td>
+      <td align="center"><%= l_nonreg_meds_count %></td>
+      <td align="center"><%= l_dental_meds_count %></td>
+      <td align="center"><%= l_total %></td>
+      <td align="center"><%= l_balance %></td>
+   </tr>
+<%
+      l_tot_begbal_qty := l_tot_begbal_qty + NVL(l_begbal_qty,0);
+      l_tot_regular_meds_count := l_tot_regular_meds_count + NVL(l_regular_meds_count,0);
+      l_tot_nonreg_meds_count := l_tot_nonreg_meds_count + NVL(l_nonreg_meds_count,0);
+      l_tot_dental_meds_count := l_tot_dental_meds_count + NVL(l_dental_meds_count,0);
+      l_tot_total := l_tot_total + NVL(l_total,0);
+      l_tot_balance := l_tot_balance + NVL(l_balance,0);
+   END LOOP;
+%>
+   </tbody>
+   <tr style="font-weight:bold;">
+      <td align="left">Total</td>
+      <td align="center"><%= l_tot_begbal_qty  %></td>
+      <td align="center"><%= l_tot_regular_meds_count %></td>
+      <td align="center"><%= l_tot_nonreg_meds_count %></td>
+      <td align="center"><%= l_tot_dental_meds_count %></td>
+      <td align="center"><%= l_tot_total %></td>
+      <td align="center"><%= l_tot_balance %></td>
+   </tr>
+</table>
+</body>
+</html>
+

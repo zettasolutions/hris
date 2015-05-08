@@ -1,0 +1,37 @@
+<%@ plsql procedure="pagewelcome" %>
+<%!
+   /*
+   =======================================================================
+   *
+   * Copyright (c) 2014 ZettaSolutions,Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+   */
+
+   /* Modification History
+   Date       By    History
+   ---------  ----  ------------------------------------------------------------------------
+   Jun-25-14  BD    Used s004_lib for the paths.
+   Jun-22-14  GF    New
+   */
+   l_image_path     VARCHAR2(128) := zsi_lib.ImagePath;
+%>
+<%
+  pageheader;
+%>
+<body>
+<style>
+body{
+   background:url("<%=l_image_path%>bg.png") #c1e3ff;
+} </style>
+<div class="welcome-container">
+   <div class="screen-holder welcome-container">
+   <img src="<%= l_image_path %>screen.png" alt="" />
+   </div>
+
+</div>
+</body
+</html>

@@ -1,0 +1,197 @@
+<%@ plsql procedure="clearance_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_id_no"       type="NUMBER" default="NULL"   %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-SEP-14  BD    Added security logic.
+   01-AUG-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_emp_rec               employee_v%ROWTYPE;
+   l_rec                   clearance_v%ROWTYPE;
+   l_tran_no               clearance_v.tran_no%TYPE := '';
+   l_tran_date             VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_id_no                 clearance_v.id_no%TYPE := '';
+   l_empl_type             clearance_v.empl_type%TYPE := '';
+   l_cost_center           clearance_v.cost_center%TYPE := '';
+   l_department            clearance_v.department%TYPE := '';
+   l_group_code            clearance_v.group_code%TYPE := '';
+   l_sport_type            clearance_v.sport_type%TYPE := '';
+   l_clearance_type        clearance_v.clearance_type%TYPE := '';
+   l_doctor_code           clearance_v.doctor_code%TYPE := '';
+   l_is_cleared            clearance_v.is_cleared%TYPE := 0;
+   l_post_status           clearance_v.post_status%TYPE := 0;
+   l_post_date             VARCHAR(20);
+   l_emp_name              clearance_v.emp_name%TYPE := '';
+   l_emp_type              clearance_v.emp_type%TYPE := '';
+   l_dept_desc             clearance_v.dept_desc%TYPE := '';
+   l_group_desc            clearance_v.group_desc%TYPE := '';
+   l_cc_desc               clearance_v.cc_desc%TYPE := '';
+   l_job_desc              clearance_v.job_desc%TYPE := '';
+   l_age_brak_code         clearance_v.age_brak_code%TYPE := '';
+   l_user_iswrite       NUMBER(1):=0;
+
+%>
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   IF p_tran_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM clearance_v WHERE tran_no = p_tran_no;
+      l_tran_no              :=l_rec.tran_no;
+      l_tran_date            :=TO_CHAR(l_rec.tran_date, l_date_format);
+      l_id_no                :=l_rec.id_no;
+      l_empl_type            :=l_rec.empl_type;
+      l_cost_center          :=l_rec.cost_center;
+      l_department           :=l_rec.department;
+      l_group_code           :=l_rec.group_code;
+      l_sport_type           :=l_rec.sport_type;
+      l_clearance_type       :=l_rec.clearance_type;
+      l_doctor_code          :=l_rec.doctor_code;
+      l_is_cleared           :=l_rec.is_cleared;
+      l_post_status          :=l_rec.post_status;
+      l_post_date            :=TO_CHAR(l_rec.post_date, l_date_format);
+      l_emp_name             :=l_rec.emp_name;
+      l_emp_type             :=l_rec.emp_type;
+      l_dept_desc            :=l_rec.dept_desc;
+      l_group_desc           :=l_rec.group_desc;
+      l_cc_desc              :=l_rec.cc_desc;
+      l_job_desc             :=l_rec.job_desc;
+      l_age_brak_code        :=l_rec.age_brak_code;
+   ELSE
+      SELECT * INTO l_emp_rec FROM employee_v WHERE empl_id_no = p_id_no;
+      l_empl_type             :=l_emp_rec.empl_type;
+      l_cost_center           :=l_emp_rec.empl_group_code;
+      l_department            :=l_emp_rec.department;
+      l_group_code            :=l_emp_rec.group_code;
+      l_age_brak_code         :=l_emp_rec.age_brak_code;
+   END IF;
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<form name="frmList" action="clearance_update" method="POST" >
+<%
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no',p_inputValue=>p_tran_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_id_no',p_inputValue=>p_id_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_type',p_inputValue=>l_empl_type);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_cost_center',p_inputValue=>l_cost_center);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_department',p_inputValue=>l_department);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_group_code',p_inputValue=>l_group_code);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_age_brak_code',p_inputValue=>l_age_brak_code);
+
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Date',p_inputName=>'p_tran_date',p_inputValue=>l_tran_date,p_labelSize =>4, p_inputSize =>1, p_attributes=>'style="width: 110px;"');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Clearance Type', p_Name=>'p_clearance_type', p_labelSize=>4, p_selectSize=>4);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Sport Type', p_Name=>'p_sport_type', p_labelSize=>4, p_selectSize=>4);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Doctor', p_Name=>'p_doctor_code', p_labelSize=>4, p_selectSize=>4);
+   zsi_bs_lib.CloseFormGroup();
+   
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.YesNo(p_label_name=>'Is Cleared',p_field=>'is_cleared',p_value=>l_is_cleared,p_label_size =>4,p_select_size =>1);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.YesNo(p_label_name=>'Is Posted?',p_field=>'post_status',p_value=>l_post_status ,p_label_size =>4,p_select_size =>1);
+   zsi_bs_lib.CloseFormGroup();
+  zsi_bs_lib.CloseEntryForm;
+
+%>
+
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_post_status = 0 AND l_user_iswrite = 1 THEN
+      zsi_bs_lib.Offset(4);
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+      </div>
+
+</form>
+
+
+<script type="text/javascript" src="zsi_employee_js"></script>
+<script type="text/javascript">
+
+   $("form[name=frmList]").submit(function(){
+      var ischeckDate = false;
+      if( zsi.form.checkMandatory()!=true) return false;
+      ischeckDate = zsi.form.checkDate(
+                  [p_tran_date]
+                  ,
+                  ["Transaction Date"]
+      );
+
+      return ischeckDate;
+
+   }); 
+                      
+   //on page loaded
+   $(document).ready(function(){
+      zsi.form.markMandatory({       
+         "groupNames":[ 
+               {"names" :  [  
+                            "p_tran_date"
+                           ,"p_empl_id_no"
+                           ,"p_clearance_type"
+                           ,"p_sport_type"
+                           ,"p_doctor_code"
+                           ]
+               ,  "type":"S"
+               }             
+         ]      
+         ,"groupTitles":[          
+               {"titles" :  
+                           [                       
+                            "Transaction Date"
+                           ,"Employee ID#"
+                           ,"Clearance Type"
+                           ,"Sport Type "
+                           ,"Doctor"
+                           ]
+               }
+
+         ]
+      });
+
+
+
+      ctrlSel("#p_clearance_type","<%=l_clearance_type%>","N","clearance_types_v","sele_value","displayed_text","");
+      ctrlSel("#p_sport_type","<%=l_sport_type%>","N","sport_types_v","sele_value","displayed_text","");
+      ctrlSel("#p_doctor_code","<%=l_doctor_code%>","N","S004_T08006","doctor_code","doctor_name","");
+   });
+
+</script>
+
+
+</body>
+</html>
+

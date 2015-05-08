@@ -1,0 +1,169 @@
+<%@ plsql procedure="cases_inq" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   10-DEC-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+<%
+   pageheader(p_dgrid=>'Y');
+%>
+<body>
+<%
+zsi_bs_lib.OpenEntryForm; 
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Tran No',p_inputName=>'p_tran_no', p_labelSize =>1, p_inputSize =>2);
+         zsi_bs_lib.InputTextBox(p_labelName =>'Respondents',p_inputName=>'p_respondents', p_labelSize =>2, p_inputSize =>2);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Case No',p_inputName=>'p_case_no', p_labelSize =>1, p_inputSize =>2);
+         zsi_bs_lib.SelectBox(p_labelName=>'Case Type', p_Name=>'p_case_type', p_labelSize=>2, p_selectSize=>4);
+         zsi_bs_lib.Button('btnSubmit','Search');
+      zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.CloseEntryForm; 
+%>
+ <br />   
+
+
+   <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+      <tr valign="top">
+         <th nowrap align="center" width="60px">Tran No</th>
+         <th nowrap align="center" width="60px">Year</th>
+         <th nowrap align="center" width="60px">Seq No</th>
+         <th nowrap align="left"   width="150px">Case Type</th>
+         <th nowrap align="center" width="90px">Cases No</th>
+         <th nowrap align="left" width="150px">Charges</th>
+         <th nowrap align="left" width="150px">Group Resp.</th>
+         <th nowrap align="center" width="80px">P.I. Date</th>
+         <th nowrap align="left" width="175px">Respondent(s)</th>
+         <th nowrap align="left" width="250px">Status / Handled By</th>
+      </tr>
+<%
+   l_dhtmlx_sort := 'str,int,int,str,str,str,str,str,str,na';
+%>
+</table>
+
+<div class="bottomNav">
+<div class="buttonGroup">
+<%
+zsi_bs_lib.Button('btnPrint','Print Result');
+%>
+
+</div>
+   <% zsi_bs_lib.ShowPagingCtrl; %>
+</div>
+
+<script type="text/javascript">
+/*variable declaration*/
+   var ctrlSel = zsi.control.SelectList;
+   var l_page_rows=0;
+/*end of declaration*/
+
+   $(document).ready(function(){
+
+       parent.HomeWindow=window;
+       ctrlSel("#p_case_type","","N","Case_types_v","sele_value","displayed_text","");
+   });
+
+
+   //on window resize
+   $(window).resize(function(){
+      zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+   function GetParams(){
+      var l_params="";
+      l_params += "p_tran_no=" + $("#p_tran_no").val();
+      l_params += "&p_case_type=" + $("#p_case_type").val();
+      l_params += "&p_case_no=" + $("#p_case_no").val();
+      l_params += "&p_respondents=" + $("#p_respondents").val();
+      return l_params;
+   }  
+
+   function gotoPage(p_this){
+      var l_params = GetParams() + "&p_rows="+ l_page_rows + "&p_page_no=" + p_this.value;
+      LoadData(l_params );
+   };
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid);
+
+   function LoadData(p_params){
+      $.getJSON("cases_inq_json?" + p_params,onLoadComplete);
+   }
+
+   function onLoadComplete(data){
+      mygrid.clearAll();
+      zsi.table.dhtmlx.Unescape(data,6);
+      zsi.table.dhtmlx.Unescape(data,8);
+      zsi.table.dhtmlx.Unescape(data,9);
+      mygrid.parse(data, "json");
+      l_page_rows=data.page_rows;
+      zsi.page.DisplayRecordPage(data.page_no,data.page_rows,data.row_count);
+      $("#modalWindow").modal('hide');
+   }
+   
+   $("#btnSubmit").click(function(){
+       LoadData(GetParams() ); 
+   });
+
+   $("#btnPrint").click(function(){
+      window.open("cases_inq_rpt?" + GetParams() + "&p_criteria=" + GetCriterias() );
+   });
+
+   function GetCriterias(){
+      var l_criterias="";
+
+         l_criterias=setCriteria("#p_tran_no","Tran No",l_criterias);
+         l_criterias=setCriteria("#p_case_type","Case Type",l_criterias);
+         l_criterias=setCriteria("#p_case_no","Case No",l_criterias);
+         l_criterias=setCriteria("#p_respondents","Group Respondent(s)",l_criterias);
+      return l_criterias;
+   }
+
+   function setCriteria(p_inputName,p_desc, p_result){
+
+
+      var input = $(p_inputName);
+      if (input.prop("tagName")=="SELECT"){
+         if(input.find(":selected").text()){
+            if (p_result!="") p_result += ", ";
+            p_result += p_desc + ":" +  input.find(":selected").text();
+         }
+      }
+      else{
+         if(input.val()){
+            if (p_result!="") p_result += ", ";         
+            p_result += p_desc + ":" + input.val(); 
+         }
+      }
+      return p_result;
+   }
+
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,650 @@
+<%@ plsql procedure="medplan_summ_rpt" %>
+<%@ plsql parameter="p_cyear"       type="NUMBER" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   16-MAR-15  BD    Fixed bug.
+   17-NOV-14  BD    New
+*/
+--DECLARATION SECTION
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+
+   l_h_emp_count                NUMBER;
+   l_h_coverage_amt             NUMBER;
+   l_c_emp_count                NUMBER;
+   l_c_coverage_amt             NUMBER;
+   l_l_emp_count                NUMBER;
+   l_l_coverage_amt             NUMBER;
+   l_m_emp_count                NUMBER;
+   l_m_coverage_amt             NUMBER;
+   l_cr_emp_count               NUMBER;
+   l_cr_coverage_amt            NUMBER;
+   l_dntl_emp_count             NUMBER;
+   l_dntl_coverage_amt          NUMBER;
+   l_pe_reg_emp_count           NUMBER;
+   l_pe_reg_coverage_amt        NUMBER;
+   l_pe_nr_emp_count            NUMBER;
+   l_pe_nr_coverage_amt         NUMBER;
+   l_dt_reg_emp_count           NUMBER;
+   l_dt_reg_coverage_amt        NUMBER;
+   l_dt_nr_emp_count            NUMBER;
+   l_dt_nr_coverage_amt         NUMBER;
+   l_ape_coverage_amt           NUMBER;
+   l_ph_emp_count               NUMBER;
+   l_ph_coverage_amt            NUMBER;
+   l_inj_emp_count              NUMBER;
+   l_inj_coverage_amt           NUMBER;
+   l_month_emp_count            NUMBER;
+   l_month_coverage_amt         NUMBER;
+   l_bal_from_budget            NUMBER;
+   l_savings                    NUMBER;
+   l_deficit                    NUMBER;
+
+   l_tot_h_emp_count            NUMBER;
+   l_tot_h_coverage_amt         NUMBER;
+   l_tot_c_emp_count            NUMBER;
+   l_tot_c_coverage_amt         NUMBER;
+   l_tot_l_emp_count            NUMBER;
+   l_tot_l_coverage_amt         NUMBER;
+   l_tot_m_emp_count            NUMBER;
+   l_tot_m_coverage_amt         NUMBER;
+   l_tot_cr_emp_count           NUMBER;
+   l_tot_cr_coverage_amt        NUMBER;
+   l_tot_dntl_emp_count         NUMBER;
+   l_tot_dntl_coverage_amt      NUMBER;
+   l_tot_pe_reg_emp_count       NUMBER;
+   l_tot_pe_reg_coverage_amt    NUMBER;
+   l_tot_pe_nr_emp_count        NUMBER;
+   l_tot_pe_nr_coverage_amt     NUMBER;
+   l_tot_dt_reg_emp_count       NUMBER;
+   l_tot_dt_reg_coverage_amt    NUMBER;
+   l_tot_dt_nr_emp_count        NUMBER;
+   l_tot_dt_nr_coverage_amt     NUMBER;
+   l_tot_ape_coverage_amt       NUMBER;
+   l_tot_ph_emp_count           NUMBER;
+   l_tot_ph_coverage_amt        NUMBER;
+   l_tot_inj_emp_count          NUMBER;
+   l_tot_inj_coverage_amt       NUMBER;
+   l_tot_month_emp_count        NUMBER;
+   l_tot_month_coverage_amt     NUMBER;
+   l_tot_bal_from_budget        NUMBER;
+   l_tot_savings                NUMBER;
+   l_tot_deficit                NUMBER;
+
+   l_gtot_h_emp_count            NUMBER;
+   l_gtot_h_coverage_amt         NUMBER;
+   l_gtot_c_emp_count            NUMBER;
+   l_gtot_c_coverage_amt         NUMBER;
+   l_gtot_l_emp_count            NUMBER;
+   l_gtot_l_coverage_amt         NUMBER;
+   l_gtot_m_emp_count            NUMBER;
+   l_gtot_m_coverage_amt         NUMBER;
+   l_gtot_cr_emp_count           NUMBER;
+   l_gtot_cr_coverage_amt        NUMBER;
+   l_gtot_dntl_emp_count         NUMBER;
+   l_gtot_dntl_coverage_amt      NUMBER;
+   l_gtot_pe_reg_emp_count       NUMBER;
+   l_gtot_pe_reg_coverage_amt    NUMBER;
+   l_gtot_pe_nr_emp_count        NUMBER;
+   l_gtot_pe_nr_coverage_amt     NUMBER;
+   l_gtot_dt_reg_emp_count       NUMBER;
+   l_gtot_dt_reg_coverage_amt    NUMBER;
+   l_gtot_dt_nr_emp_count        NUMBER;
+   l_gtot_dt_nr_coverage_amt     NUMBER;
+   l_gtot_ape_coverage_amt       NUMBER;
+   l_gtot_ph_emp_count           NUMBER;
+   l_gtot_ph_coverage_amt        NUMBER;
+   l_gtot_inj_emp_count          NUMBER;
+   l_gtot_inj_coverage_amt       NUMBER;
+   l_gtot_month_emp_count        NUMBER;
+   l_gtot_month_coverage_amt     NUMBER;
+   l_gtot_bal_from_budget        NUMBER;
+   l_gtot_savings                NUMBER;
+   l_gtot_deficit                NUMBER;
+
+   PROCEDURE GetHospitalization (p_cyear IN NUMBER,
+                                 p_cmonth IN NUMBER DEFAULT NULL,
+                                 p_emp_count OUT NUMBER,
+                                 p_coverage_amt OUT NUMBER) IS
+   BEGIN
+      SELECT SUM(NVL(amnt_billed,0)),
+             COUNT(DISTINCT t.id_no)
+        INTO p_coverage_amt,
+             p_emp_count
+        FROM s004_t08010_billing_v t,
+             employee_v e
+       WHERE t.id_no = e.empl_id_no
+         AND EXTRACT(MONTH FROM t.tran_date) = p_cmonth
+         AND t.tran_year = p_cyear
+         AND t.medplan_code = 3;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+         p_coverage_amt := NULL;
+         p_emp_count := NULL;
+   END;
+
+
+   PROCEDURE GetConsultation (p_cyear IN NUMBER,
+                              p_cmonth IN NUMBER DEFAULT NULL,
+                              p_emp_count OUT NUMBER,
+                              p_coverage_amt OUT NUMBER) IS
+   BEGIN
+      SELECT SUM(NVL(amnt_billed,0)),
+             COUNT(DISTINCT t.id_no)
+        INTO p_coverage_amt,
+             p_emp_count
+        FROM s004_t08010_billing_v t,
+             employee_v e
+       WHERE t.id_no = e.empl_id_no
+         AND EXTRACT(MONTH FROM t.tran_date) = p_cmonth
+         AND t.tran_year = p_cyear
+         AND t.medplan_code = 1;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+         p_coverage_amt := NULL;
+         p_emp_count := NULL;
+   END;
+
+   PROCEDURE GetLaboratory (p_cyear IN NUMBER,
+                            p_cmonth IN NUMBER DEFAULT NULL,
+                            p_emp_count OUT NUMBER,
+                            p_coverage_amt OUT NUMBER) IS
+   BEGIN
+      SELECT SUM(NVL(amnt_billed,0)),
+             COUNT(DISTINCT t.id_no)
+        INTO p_coverage_amt,
+             p_emp_count
+        FROM s004_t08010_billing_v t,
+             employee_v e
+       WHERE t.id_no = e.empl_id_no
+         AND NOT EXISTS (SELECT 1 FROM s004_t08010_results_v r
+                             WHERE t.ldgr_no = r.ldgr_no
+                               AND t.medplan_code = r.medplan_code
+                               AND r.result_type = 4)
+         AND EXTRACT(MONTH FROM t.tran_date) = p_cmonth
+         AND t.tran_year = p_cyear
+         AND t.medplan_code = 10;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+         p_coverage_amt := NULL;
+         p_emp_count := NULL;
+   END;
+
+   PROCEDURE GetOTCMedicines (p_cyear IN NUMBER,
+                              p_cmonth IN NUMBER DEFAULT NULL,
+                              p_emp_count OUT NUMBER,
+                              p_coverage_amt OUT NUMBER) IS
+   BEGIN
+      SELECT SUM(NVL(mcwd_lib.GetMedsUnitPrice(t.meds_code) * t.meds_qty,0)),
+             COUNT(DISTINCT t.id_no)
+        INTO p_coverage_amt,
+             p_emp_count
+        FROM medicine_acquired_v t,
+             employee_v e
+       WHERE t.id_no = e.empl_id_no
+         AND EXTRACT(MONTH FROM t.tran_date) = p_cmonth
+         AND t.tran_year = p_cyear;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+         p_coverage_amt := NULL;
+         p_emp_count := NULL;
+   END;
+
+   PROCEDURE GetOnCreditTrans (p_cyear IN NUMBER,
+                               p_cmonth IN NUMBER DEFAULT NULL,
+                               p_emp_count OUT NUMBER,
+                               p_coverage_amt OUT NUMBER) IS
+   BEGIN
+      SELECT SUM(NVL(t.amount,0)),
+             COUNT(DISTINCT t.id_no)
+        INTO p_coverage_amt,
+             p_emp_count
+        FROM oncredit_v t,
+             employee_v e
+       WHERE t.id_no = e.empl_id_no
+         AND EXTRACT(MONTH FROM t.invoice_date) = p_cmonth
+         AND EXTRACT(YEAR FROM t.invoice_date) = p_cyear;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+         p_coverage_amt := NULL;
+         p_emp_count := NULL;
+   END;
+
+   PROCEDURE GetDental (p_cyear IN NUMBER,
+                        p_cmonth IN NUMBER DEFAULT NULL,
+                        p_emp_count OUT NUMBER,
+                        p_coverage_amt OUT NUMBER) IS
+   BEGIN
+      SELECT SUM(NVL(amnt_billed,0)),
+             COUNT(DISTINCT t.id_no)
+        INTO p_coverage_amt,
+             p_emp_count
+        FROM s004_t08010_billing_v t,
+             employee_v e
+       WHERE t.id_no = e.empl_id_no
+         AND EXTRACT(MONTH FROM t.tran_date) = p_cmonth
+         AND t.tran_year = p_cyear
+         AND t.medplan_code = 5;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+         p_coverage_amt := NULL;
+         p_emp_count := NULL;
+   END;
+
+
+   PROCEDURE GetAPE (p_cyear IN NUMBER,
+                     p_cmonth IN NUMBER DEFAULT NULL,
+                     p_emp_grouping IN VARCHAR2,
+                     p_emp_count OUT NUMBER,
+                     p_coverage_amt OUT NUMBER) IS
+   BEGIN
+      SELECT SUM(NVL(amnt_billed,0)),
+             COUNT(DISTINCT t.id_no)
+        INTO p_coverage_amt,
+             p_emp_count
+        FROM s004_t08010_billing_v t,
+             employee_v e
+       WHERE t.id_no = e.empl_id_no
+         AND NOT EXISTS (SELECT 1
+                           FROM s004_t08010_results_v r
+                          WHERE t.ldgr_no = r.ldgr_no
+                            AND t.medplan_code = r.medplan_code
+                            AND r.medplan_code = 4)
+         AND EXTRACT(MONTH FROM t.tran_date) = p_cmonth
+         AND t.tran_year = p_cyear
+         AND t.medplan_code = 4
+         AND e.emp_grouping = p_emp_grouping;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+         p_coverage_amt := NULL;
+         p_emp_count := NULL;
+   END;
+
+
+   PROCEDURE GetDrugTest (p_cyear IN NUMBER,
+                          p_cmonth IN NUMBER DEFAULT NULL,
+                          p_emp_grouping IN VARCHAR2,
+                          p_emp_count OUT NUMBER,
+                          p_coverage_amt OUT NUMBER) IS
+   BEGIN
+      SELECT SUM(NVL(t.amnt_billed,0)),
+             COUNT(DISTINCT t.id_no) as regular_count
+        INTO p_coverage_amt,
+             p_emp_count
+        FROM s004_t08010_bill_drug_v t,
+             employee_v e
+       WHERE t.id_no = e.empl_id_no
+         AND EXTRACT(MONTH FROM t.tran_date) = p_cmonth
+         AND t.tran_year = p_cyear
+         AND e.emp_grouping = p_emp_grouping;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+         p_coverage_amt := NULL;
+         p_emp_count := NULL;
+   END;
+
+
+   PROCEDURE GetPhilHealth (p_cyear IN NUMBER,
+                            p_cmonth IN NUMBER DEFAULT NULL,
+                            p_emp_count OUT NUMBER,
+                            p_coverage_amt OUT NUMBER) IS
+   BEGIN
+      SELECT SUM(NVL(amnt_billed,0)),
+             COUNT(DISTINCT t.id_no)
+        INTO p_coverage_amt,
+             p_emp_count
+        FROM s004_t08010_billing_v t,
+             employee_v e
+       WHERE t.id_no = e.empl_id_no
+         AND EXTRACT(MONTH FROM t.tran_date) = p_cmonth
+         AND t.tran_year = p_cyear
+         AND t.medplan_code = 9;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+         p_coverage_amt := NULL;
+         p_emp_count := NULL;
+   END;
+
+
+   FUNCTION MonthName(p_cmonth IN NUMBER) RETURN VARCHAR2 IS
+      l_period    DATE;
+   BEGIN
+      l_period := TO_DATE(p_cmonth || '/01/' || p_cyear,'MM/DD/YYYY');
+      RETURN TO_CHAR(l_period,'MON');
+   END;
+
+   FUNCTION FormatNum (p_num IN NUMBER) RETURN NUMBER IS
+   BEGIN
+      IF p_num = 0 THEN
+         RETURN NULL;
+      END IF;
+      RETURN p_num;
+   END;
+
+%>
+<%
+   reportheader(p_output=>'H');
+%>
+<body onload="window.print();">
+
+<table width="100%">
+   <tr valign="top">
+      <td align="left" class="head1 reportTitle">Medical Plan Summary for Year <%= p_cyear %></td>
+      <td align="right" class="reportcriteria">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss')) %></td>
+   </tr>
+</table>
+<br />
+
+<table border="1">
+   <tr>
+      <th align="left" rowspan="3">Month</th>
+      <th align="center" colspan="2">Hospitalization</th>
+      <th align="center" colspan="2">Consultation</th>
+      <th align="center" colspan="2">Laboratory</th>
+      <th align="center" colspan="5">Medicine Dispensing</th>
+      <th align="center" colspan="2">Dental</th>
+      <th align="center" colspan="8">APE</th>
+      <th align="center" colspan="2">PhilHealth<br>Counterpart</th>
+      <th align="center" colspan="2">Injuries</th>
+      <th align="center" colspan="2" rowspan="3">Monthly Total</th>
+      <th align="center" rowspan="3">Balance From Budget</th>
+      <th align="center" rowspan="3">Savings</th>
+      <th align="center" rowspan="3">Deficit</th>
+   </tr>
+   <tr>
+      <th align="center" rowspan="2">Emp</th>
+      <th align="center" rowspan="2">Coverage</th>
+      <th align="center" rowspan="2">Emp</th>
+      <th align="center" rowspan="2">Coverage</th>
+      <th align="center" rowspan="2">Emp</th>
+      <th align="center" rowspan="2">Coverage</th>
+      <th align="center" colspan="2">Clinic</th>
+      <th align="center" colspan="2">Pharmacy</th>
+      <th align="center" rowspan="2">Total</th>
+      <th align="center" rowspan="2">Emp</th>
+      <th align="center" rowspan="2">Coverage</th>
+      <th align="center" colspan="2">Regular</th>
+      <th align="center" colspan="2">Casual</th>
+      <th align="center" colspan="3">Drug Test</th>
+      <th align="center" rowspan="2">Total</th>
+      <th align="center" rowspan="2">Emp</th>
+      <th align="center" rowspan="2">Coverage</th>
+      <th align="center" colspan="2">Work Related</th>
+   </tr>
+   <tr>
+      <th align="center">Emp</th>
+      <th align="center">Coverage</th>
+      <th align="center">Emp</th>
+      <th align="center">Coverage</th>
+      <th align="center">PE</th>
+      <th align="center">Coverage</th>
+      <th align="center">PE</th>
+      <th align="center">Coverage</th>
+      <th align="center">R</th>
+      <th align="center">C</th>
+      <th align="center">Coverage</th>
+      <th align="center">E</th>
+      <th align="center">Amount</th>
+   <tr>
+<%
+      FOR i IN 1..12 LOOP
+         GetHospitalization(p_cyear, i, l_h_emp_count, l_h_coverage_amt);
+         GetConsultation(p_cyear, i, l_c_emp_count, l_c_coverage_amt);
+         GetLaboratory(p_cyear, i, l_l_emp_count, l_l_coverage_amt);
+         GetOTCMedicines(p_cyear, i, l_m_emp_count, l_m_coverage_amt);
+         GetOnCreditTrans(p_cyear, i, l_cr_emp_count, l_cr_coverage_amt);
+         GetDental(p_cyear, i, l_dntl_emp_count, l_dntl_coverage_amt);
+
+         GetAPE(p_cyear, i, 'REGULAR',l_pe_reg_emp_count, l_pe_reg_coverage_amt);
+         GetAPE(p_cyear, i, 'NONREG',l_pe_nr_emp_count, l_pe_nr_coverage_amt);
+         GetDrugTest(p_cyear, i, 'REGULAR', l_dt_reg_emp_count, l_dt_reg_coverage_amt);
+         GetDrugTest(p_cyear, i, 'NONREG', l_dt_nr_emp_count, l_dt_nr_coverage_amt);
+         l_ape_coverage_amt := NVL(l_pe_reg_coverage_amt,0) + NVL(l_pe_nr_coverage_amt,0) + NVL(l_dt_reg_coverage_amt,0) + NVL(l_dt_nr_coverage_amt,0);
+
+         GetPhilHealth(p_cyear, i, l_ph_emp_count, l_ph_coverage_amt);
+
+         l_month_emp_count := NVL(l_h_emp_count,0)
+                            + NVL(l_c_emp_count,0)
+                            + NVL(l_l_emp_count,0)
+                            + NVL(l_m_emp_count,0)
+                            + NVL(l_cr_emp_count,0)
+                            + NVL(l_dntl_emp_count,0)
+                            + NVL(l_pe_reg_emp_count,0)
+                            + NVL(l_pe_nr_emp_count,0)
+                            + NVL(l_dt_reg_emp_count,0)
+                            + NVL(l_dt_nr_emp_count,0)
+                            + NVL(l_inj_emp_count,0)
+                            + NVL(l_ph_emp_count,0);
+         l_month_coverage_amt := NVL(l_h_coverage_amt,0)
+                               + NVL(l_c_coverage_amt,0)
+                               + NVL(l_l_coverage_amt,0)
+                               + NVL(l_m_coverage_amt,0)
+                               + NVL(l_cr_coverage_amt,0)
+                               + NVL(l_dntl_coverage_amt,0)
+                               + NVL(l_pe_reg_coverage_amt,0)
+                               + NVL(l_pe_nr_coverage_amt,0)
+                               + NVL(l_dt_reg_coverage_amt,0)
+                               + NVL(l_dt_nr_coverage_amt,0)
+                               + NVL(l_inj_coverage_amt,0)
+                               + NVL(l_ph_coverage_amt,0);
+
+         -- Sub Totals
+
+         l_tot_h_emp_count       := NVL(l_tot_h_emp_count,0)      + NVL(l_h_emp_count,0);
+         l_tot_c_emp_count       := NVL(l_tot_c_emp_count,0)      + NVL(l_c_emp_count,0);
+         l_tot_l_emp_count       := NVL(l_tot_l_emp_count,0)      + NVL(l_l_emp_count,0);
+         l_tot_m_emp_count       := NVL(l_tot_m_emp_count,0)      + NVL(l_m_emp_count,0);
+         l_tot_cr_emp_count      := NVL(l_tot_cr_emp_count,0)     + NVL(l_cr_emp_count,0);
+         l_tot_dntl_emp_count    := NVL(l_tot_dntl_emp_count,0)   + NVL(l_dntl_emp_count,0);
+         l_tot_pe_reg_emp_count  := NVL(l_tot_pe_reg_emp_count,0) + NVL(l_pe_reg_emp_count,0);
+         l_tot_pe_nr_emp_count   := NVL(l_tot_pe_nr_emp_count,0)  + NVL(l_pe_nr_emp_count,0);
+         l_tot_dt_reg_emp_count  := NVL(l_tot_dt_reg_emp_count,0) + NVL(l_dt_reg_emp_count,0);
+         l_tot_dt_nr_emp_count   := NVL(l_tot_dt_nr_emp_count,0)  + NVL(l_dt_nr_emp_count,0);
+         l_tot_inj_emp_count     := NVL(l_tot_inj_emp_count,0)    + NVL(l_inj_emp_count,0);
+         l_tot_ph_emp_count      := NVL(l_tot_ph_emp_count,0)     + NVL(l_ph_emp_count,0);
+         l_tot_month_emp_count   := NVL(l_tot_month_emp_count,0)  + NVL(l_month_emp_count,0);
+
+         l_tot_h_coverage_amt       := NVL(l_tot_h_coverage_amt,0)      + NVL(l_h_coverage_amt,0);
+         l_tot_c_coverage_amt       := NVL(l_tot_c_coverage_amt,0)      + NVL(l_c_coverage_amt,0);
+         l_tot_l_coverage_amt       := NVL(l_tot_l_coverage_amt,0)      + NVL(l_l_coverage_amt,0);
+         l_tot_m_coverage_amt       := NVL(l_tot_m_coverage_amt,0)      + NVL(l_m_coverage_amt,0);
+         l_tot_cr_coverage_amt      := NVL(l_tot_cr_coverage_amt,0)     + NVL(l_cr_coverage_amt,0);
+         l_tot_dntl_coverage_amt    := NVL(l_tot_dntl_coverage_amt,0)   + NVL(l_dntl_coverage_amt,0);
+         l_tot_pe_reg_coverage_amt  := NVL(l_tot_pe_reg_coverage_amt,0) + NVL(l_pe_reg_coverage_amt,0);
+         l_tot_pe_nr_coverage_amt   := NVL(l_tot_pe_nr_coverage_amt,0)  + NVL(l_pe_nr_coverage_amt,0);
+         l_tot_dt_reg_coverage_amt  := NVL(l_tot_dt_reg_coverage_amt,0) + NVL(l_dt_reg_coverage_amt,0);
+         l_tot_dt_nr_coverage_amt   := NVL(l_tot_dt_nr_coverage_amt,0)  + NVL(l_dt_nr_coverage_amt,0);
+         l_tot_inj_coverage_amt     := NVL(l_tot_inj_coverage_amt,0)    + NVL(l_inj_coverage_amt,0);
+         l_tot_ph_coverage_amt      := NVL(l_tot_ph_coverage_amt,0)     + NVL(l_ph_coverage_amt,0);
+         l_tot_month_coverage_amt   := NVL(l_tot_month_coverage_amt,0)  + NVL(l_month_coverage_amt,0);
+         l_tot_bal_from_budget      := NVL(l_tot_bal_from_budget,0)     + NVL(l_tot_bal_from_budget,0);
+         l_tot_savings              := NVL(l_tot_savings,0)             + NVL(l_tot_savings,0);
+         l_tot_deficit              := NVL(l_tot_deficit,0)             + NVL(l_tot_deficit,0);
+
+
+         -- Grand Totals
+
+         l_gtot_h_emp_count       := NVL(l_gtot_h_emp_count,0)      + NVL(l_h_emp_count,0);
+         l_gtot_c_emp_count       := NVL(l_gtot_c_emp_count,0)      + NVL(l_c_emp_count,0);
+         l_gtot_l_emp_count       := NVL(l_gtot_l_emp_count,0)      + NVL(l_l_emp_count,0);
+         l_gtot_m_emp_count       := NVL(l_gtot_m_emp_count,0)      + NVL(l_m_emp_count,0);
+         l_gtot_cr_emp_count      := NVL(l_gtot_cr_emp_count,0)     + NVL(l_cr_emp_count,0);
+         l_gtot_dntl_emp_count    := NVL(l_gtot_dntl_emp_count,0)   + NVL(l_dntl_emp_count,0);
+         l_gtot_pe_reg_emp_count  := NVL(l_gtot_pe_reg_emp_count,0) + NVL(l_pe_reg_emp_count,0);
+         l_gtot_pe_nr_emp_count   := NVL(l_gtot_pe_nr_emp_count,0)  + NVL(l_pe_nr_emp_count,0);
+         l_gtot_dt_reg_emp_count  := NVL(l_gtot_dt_reg_emp_count,0) + NVL(l_dt_reg_emp_count,0);
+         l_gtot_dt_nr_emp_count   := NVL(l_gtot_dt_nr_emp_count,0)  + NVL(l_dt_nr_emp_count,0);
+         l_gtot_inj_emp_count     := NVL(l_gtot_inj_emp_count,0)    + NVL(l_inj_emp_count,0);
+         l_gtot_ph_emp_count      := NVL(l_gtot_ph_emp_count,0)     + NVL(l_ph_emp_count,0);
+         l_gtot_month_emp_count   := NVL(l_gtot_month_emp_count,0)  + NVL(l_month_emp_count,0);
+
+         l_gtot_h_coverage_amt       := NVL(l_gtot_h_coverage_amt,0)      + NVL(l_h_coverage_amt,0);
+         l_gtot_c_coverage_amt       := NVL(l_gtot_c_coverage_amt,0)      + NVL(l_c_coverage_amt,0);
+         l_gtot_l_coverage_amt       := NVL(l_gtot_l_coverage_amt,0)      + NVL(l_l_coverage_amt,0);
+         l_gtot_m_coverage_amt       := NVL(l_gtot_m_coverage_amt,0)      + NVL(l_m_coverage_amt,0);
+         l_gtot_cr_coverage_amt      := NVL(l_gtot_cr_coverage_amt,0)     + NVL(l_cr_coverage_amt,0);
+         l_gtot_dntl_coverage_amt    := NVL(l_gtot_dntl_coverage_amt,0)   + NVL(l_dntl_coverage_amt,0);
+         l_gtot_pe_reg_coverage_amt  := NVL(l_gtot_pe_reg_coverage_amt,0) + NVL(l_pe_reg_coverage_amt,0);
+         l_gtot_pe_nr_coverage_amt   := NVL(l_gtot_pe_nr_coverage_amt,0)  + NVL(l_pe_nr_coverage_amt,0);
+         l_gtot_dt_reg_coverage_amt  := NVL(l_gtot_dt_reg_coverage_amt,0) + NVL(l_dt_reg_coverage_amt,0);
+         l_gtot_dt_nr_coverage_amt   := NVL(l_gtot_dt_nr_coverage_amt,0)  + NVL(l_dt_nr_coverage_amt,0);
+         l_gtot_inj_coverage_amt     := NVL(l_gtot_inj_coverage_amt,0)    + NVL(l_inj_coverage_amt,0);
+         l_gtot_ph_coverage_amt      := NVL(l_gtot_ph_coverage_amt,0)     + NVL(l_ph_coverage_amt,0);
+         l_gtot_month_coverage_amt   := NVL(l_gtot_month_coverage_amt,0)  + NVL(l_month_coverage_amt,0);
+         l_gtot_bal_from_budget      := NVL(l_gtot_bal_from_budget,0)     + NVL(l_tot_bal_from_budget,0);
+         l_gtot_savings              := NVL(l_gtot_savings,0)             + NVL(l_tot_savings,0);
+         l_gtot_deficit              := NVL(l_gtot_deficit,0)             + NVL(l_tot_deficit,0);
+%>
+   <tr>
+      <td><%= MonthName(i) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_h_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_h_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_c_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_c_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_l_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_l_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_m_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_m_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_cr_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_cr_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(NVL(l_m_coverage_amt,0) + NVL(l_cr_coverage_amt,0)),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_dntl_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_dntl_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_pe_reg_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_pe_reg_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_pe_nr_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_pe_nr_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_dt_reg_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_dt_nr_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(NVL(l_dt_reg_coverage_amt,0) + NVL(l_dt_nr_coverage_amt,0)),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_ape_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_ph_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_ph_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_inj_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_inj_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_month_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_month_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_bal_from_budget),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_savings),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_deficit),2) %></td>
+   </tr>
+<%
+         IF i IN (6,12) THEN
+%>
+   <tr style="font-weight:bold;">
+      <td align="right">SUB-TOTAL</td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_h_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_h_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_c_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_c_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_l_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_l_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_m_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_m_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_cr_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_cr_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(NVL(l_tot_m_coverage_amt,0) + NVL(l_tot_cr_coverage_amt,0)),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_dntl_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_dntl_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_pe_reg_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_pe_reg_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_pe_nr_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_pe_nr_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_dt_reg_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_dt_nr_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(NVL(l_tot_dt_reg_coverage_amt,0) + NVL(l_tot_dt_nr_coverage_amt,0)),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_ape_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_ph_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_ph_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_inj_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_inj_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_month_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_month_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_bal_from_budget),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_savings),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_tot_deficit),2) %></td>
+   </tr>
+<%
+            l_tot_h_emp_count       := 0;
+            l_tot_c_emp_count       := 0;
+            l_tot_l_emp_count       := 0;
+            l_tot_m_emp_count       := 0;
+            l_tot_cr_emp_count      := 0;
+            l_tot_dntl_emp_count    := 0;
+            l_tot_pe_reg_emp_count  := 0;
+            l_tot_pe_nr_emp_count   := 0;
+            l_tot_dt_reg_emp_count  := 0;
+            l_tot_dt_nr_emp_count   := 0;
+            l_tot_inj_emp_count     := 0;
+            l_tot_ph_emp_count      := 0;
+            l_tot_month_emp_count   := 0;
+
+            l_tot_h_coverage_amt       := 0;
+            l_tot_c_coverage_amt       := 0;
+            l_tot_l_coverage_amt       := 0;
+            l_tot_m_coverage_amt       := 0;
+            l_tot_cr_coverage_amt      := 0;
+            l_tot_dntl_coverage_amt    := 0;
+            l_tot_pe_reg_coverage_amt  := 0;
+            l_tot_pe_nr_coverage_amt   := 0;
+            l_tot_dt_reg_coverage_amt  := 0;
+            l_tot_dt_nr_coverage_amt   := 0;
+            l_tot_inj_coverage_amt     := 0;
+            l_tot_ph_coverage_amt      := 0;
+            l_tot_month_coverage_amt   := 0;
+            l_tot_bal_from_budget      := 0;
+            l_tot_savings              := 0;
+            l_tot_deficit              := 0;
+
+         END IF;
+
+      END LOOP;
+%>
+   <tr style="font-weight:bold; background:lightgray">
+      <td align="right">TOTAL</td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_h_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_h_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_c_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_c_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_l_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_l_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_m_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_m_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_cr_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_cr_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(NVL(l_gtot_m_coverage_amt,0) + NVL(l_gtot_cr_coverage_amt,0)),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_dntl_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_dntl_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_pe_reg_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_pe_reg_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_pe_nr_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_pe_nr_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_dt_reg_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_dt_nr_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(NVL(l_gtot_dt_reg_coverage_amt,0) + NVL(l_gtot_dt_nr_coverage_amt,0)),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_ape_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_ph_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_ph_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_inj_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_inj_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_month_emp_count),0) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_month_coverage_amt),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_bal_from_budget),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_savings),2) %></td>
+      <td align="right"><%= zsi_lib.FormatAmount(FormatNum(l_gtot_deficit),2) %></td>
+   </tr></table>
+</body>
+</html>
+

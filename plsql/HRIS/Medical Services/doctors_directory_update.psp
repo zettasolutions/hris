@@ -1,0 +1,102 @@
+<%@ plsql procedure="doctors_directory_update" %>
+<%@ plsql parameter="p_dd_code"        type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_dd_name"        type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_dd_specialty"   type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_dd_contact_no"  type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_dd_remarks"        type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   05-AUG-14  GT    Used S004_T08006_SQ001.NEXTVAL
+   30-JUN-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_sql                        VARCHAR2(1000);
+   l_changed                    VARCHAR2(1) := 'N';
+   l_rec                        S004_T08006%ROWTYPE;
+
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Dental Services </title>
+</head>
+<body>
+<%
+
+FOR i IN 2..p_dd_code.COUNT LOOP
+   IF p_dd_code(i) IS NULL  AND p_dd_name(i) IS NOT NULL THEN      
+      INSERT INTO S004_T08006 
+      (   doctor_code
+         ,doctor_name
+         ,specialty
+         ,contact_no
+         ,remarks
+         ,created_by
+         ,date_created
+      )
+      VALUES
+      (   S004_T08006_SQ001.NEXTVAL
+         ,p_dd_name(i)
+         ,p_dd_specialty(i)
+         ,p_dd_contact_no(i)
+         ,p_dd_remarks(i)
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+      );
+      
+      ELSIF p_dd_code(i) IS NOT NULL AND p_dd_name(i) IS NOT NULL  THEN
+      
+      SELECT * INTO l_rec FROM S004_T08006 WHERE doctor_code=p_dd_code(i);
+
+      IF zsi_lib.IsChanged(l_rec.doctor_name, p_dd_name(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.doctor_name := p_dd_name(i);
+      END IF;
+      
+      IF zsi_lib.IsChanged(l_rec.specialty, p_dd_specialty(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.specialty := p_dd_specialty(i);
+      END IF;
+      IF zsi_lib.IsChanged(l_rec.contact_no, p_dd_contact_no(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.contact_no := p_dd_contact_no(i);
+      END IF;
+     IF zsi_lib.IsChanged(l_rec.remarks, p_dd_remarks(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.remarks := p_dd_remarks(i);
+      END IF;
+
+      IF l_changed='Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08006 SET row = l_rec WHERE doctor_code = p_dd_code(i);
+      END IF;
+
+      END IF;
+   END LOOP;
+END;
+%>
+
+<script type="text/javascript">
+   parent.dhxLayout.cells("b").attachURL("doctors_directory_list");
+   parent.w1.close();
+</script>

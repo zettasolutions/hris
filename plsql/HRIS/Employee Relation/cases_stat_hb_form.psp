@@ -1,0 +1,147 @@
+<%@ plsql procedure="cases_stat_hb_form" %>
+<%@ plsql parameter="p_status_seq_no"    type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"       type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_user_iswrite"  type="NUMBER"   default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-FEB-15  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+
+   l_user_iswrite       NUMBER(1):=0;
+   
+   CURSOR hb_cur IS
+   SELECT * FROM HANDLEDBY_V WHERE status_seq_no = p_status_seq_no;
+   
+%>
+<%
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<form name="frmList" action="cases_stat_hb_update" method="POST" >
+<%
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_status_seq_no', p_inputValue=>p_status_seq_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no', p_inputValue=>p_tran_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_handled_by');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_handled_by_name');
+%>   
+<div style="overflow-y:auto; height:250px">
+<%
+   zsi_bs_lib.OpenEntryForm;
+%>
+   <div class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-1" nowrap align="left">Id No.</th>
+            <th class="col-xs-4" nowrap align="left">Handled By</th>
+            <th class="col-xs-1" nowrap style="text-align:center">Delete</th>
+         </tr>
+      <%
+        FOR i in hb_cur LOOP
+      %>
+         <tr>   
+             <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no',p_inputValue=>i.seq_no); %>  
+                <input type="text"  autocomplete="off" value="<%=i.handled_by%>" name="p_handled_by" id="p_handled_by" class="form-control input-sm"> 
+             </td>
+             <td><input type="text"  autocomplete="off" value="<%=i.empl_name%>" name="p_handled_by_name" id="p_handled_by_name" class="form-control input-sm"> </td>                
+             <td class="col-xs-1" nowrap align="center">
+<% 
+            IF p_user_iswrite = 1 THEN 
+               zsi_bs_lib.ButtonDelete(p_table=>'S004_T08800_HANDLEDBY',p_Value=>i.seq_no);
+            END IF; 
+%>
+             </td>
+         </tr>
+      <%
+        END LOOP;
+        FOR i IN 1..5 LOOP
+      %>
+         <tr>                                    
+             <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no'); %>
+                 <input type="text" autocomplete="off" name="p_handled_by" id="p_handled_by" class="form-control input-sm">                   
+             </td> 
+             <td><input type="text" autocomplete="off" name="p_handled_by_name" id="p_handled_by_name" class="form-control input-sm"></td>                                    
+             <td></td>             
+         </tr>
+      <%
+         END LOOP;
+      %>
+      </table>
+   </div>
+<%   
+   zsi_bs_lib.CloseEntryForm;
+%>
+</div>
+<div class="col-xs-12 buttonGroup">
+<%
+   IF p_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+</form>
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript">
+
+          new zsi.search({
+          column_names : ["Id","Employee Name"] 
+         ,column_indexes : [0,43] 
+         ,input:"input[name=p_handled_by]"
+         ,url :"employee_search_json"
+         ,parameter: "p_empl_id_no"
+         ,onSelectedItem: 
+            function(currentObject,data,i){            
+               currentObject.value=data[0];
+               
+               var td = currentObject.parentNode;
+                $(td).next().children("#p_handled_by_name").val(unescape(data[43]));
+               
+            
+            }
+         });    
+      
+         new zsi.search({
+          column_names : ["Id","Employee Name"] 
+         ,column_indexes : [0,43] 
+         ,input:"input[name=p_handled_by_name]"
+         ,url :"employee_search_json"
+         ,parameter: "p_empl_name"
+         ,onSelectedItem: 
+            function(currentObject,data,i){            
+               currentObject.value=data[43];
+               
+               var td = currentObject.parentNode;
+                $(td).prev().children("#p_handled_by").val(unescape(data[0]));
+               
+            
+            }
+         });      
+         
+zsi.table.onDeleteRow=function(){ 
+ window.parent.countStatusHB(<%=p_status_seq_no%>);   
+}         
+</script>
+</body>
+</html>

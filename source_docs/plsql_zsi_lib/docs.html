@@ -1,0 +1,399 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+		<meta http-equiv="content-type" content="text/html;charset=utf-8"></meta>  
+		<link href="../docstyle.css" rel="stylesheet" type="text/css"></link> 
+		<title>Documentation Overview</title>
+	<script type="text/javascript" src="../plugins/syntaxhighlighter_3.0.83/scripts/shCore.js"></script>
+	<script type="text/javascript" src="../plugins/syntaxhighlighter_3.0.83/scripts/shBrushJScript.js"></script>
+	<link type="text/css" rel="stylesheet" href="../plugins/syntaxhighlighter_3.0.83/styles/shCoreFadeToGrey.css"/>
+	<script type="text/javascript">SyntaxHighlighter.all();</script>
+	
+</head>
+<body>
+<div class="main">
+<a name="top"></a>
+<h2 id="amchartp">AMCHARTSPATH : <span class="func"> FUNCTION () RETURN VARCHAR2 </span> </h2>
+<p >Returns the directory where "amcharts" is located.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.AMCHARTSPATH);
+	
+</pre>
+<h2 id="clogo">CLIENTLOGO : <span class="func"> FUNCTION () RETURN VARCHAR2</span> </h2>
+<p >Returns the client logo filename.</p>
+<pre class="brush: js;"> 
+/* sample: */
+	htp.p(zsi_lib.ClientLogo);
+
+	
+</pre>
+<h2 id="cname">CLIENTNAME : <span class="func"> FUNCTION () RETURN VARCHAR2</span> </h2>
+<p >Returns the client's name.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.ClientName);
+	
+	
+</pre>
+<h2 id="defaultdatef">DEFAULTDATEFORMAT : <span class="func"> FUNCTION () RETURN VARCHAR2</span> </h2>
+<p >Returns the default date format.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.DefaultDateFormat);
+	
+
+</pre>
+<h2 id="dhtmlxp">DHTMLXPATH : <span class="func"> FUNCTION () RETURN VARCHAR2</span> </h2>
+<p >Returns the directory where "DHTMLX" is located.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.DHTMLXPath);
+	
+
+</pre>
+<h2 id="formatamt">FORMATAMOUNT : <span class="func"> FUNCTION ( p_amount  IN  NUMBER, p_decimal IN  NUMBER DEFAULT 2) RETURN VARCHAR2</span> </h2>
+<p >Returns numeric format.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.FormatAmount(100,2));
+	?result = 100.13  
+
+	
+</pre>
+<h2 id="imagep">IMAGEPATH : <span class="func"> FUNCTION () RETURN VARCHAR2</span> </h2>
+<p >Returns the directory where Images is located.</p>
+<pre class="brush: js;">
+/* sample: */
+
+	htp.p(zsi_lib.ImagePath);
+	
+
+</pre>
+<h2 id="jsp">JSPATH : <span class="func"> FUNCTION () RETURN VARCHAR2</span> </h2>
+<p >Returns the directory where "Javascripts" is located.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.JSPath);
+	
+
+</pre>
+<h2 id="maincss">MAINCSS : <span class="func"> FUNCTION () RETURN VARCHAR2</span> </h2>
+<p >Returns the primary css file is located.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	<link type="text/css" rel="stylesheet" href="<%= zsi_lib.MainCSS %>"/>
+	
+</pre>
+<h2 id="serverp">SERVERPATH : <span class="func"> FUNCTION () RETURN VARCHAR2</span> </h2>
+<p >Returns the directory where the "configured path of the server" is located.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.ServerPath);
+	
+	
+</pre>
+<h2 id="stylep">STYLEPATH : <span class="func"> FUNCTION () RETURN VARCHAR2</span> </h2>
+<p >Returns the directory where "CSS files" is located.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.StylePath);
+
+	
+</pre>
+<h2 id="countrec">COUNT_RECORDS : <span class="func"> PROCEDURE (p_table IN VARCHAR2, p_condition IN VARCHAR2 DEFAULT NULL, p_t IN VARCHAR2 DEFAULT NULL) </span> </h2>
+<p >Returns the number of records.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.Count_Records ("employees","where deptid=11"));
+	
+</pre>
+<h2 id="decodes">DECODESTR : <span class="func"> FUNCTION (p_code IN VARCHAR2) RETURN VARCHAR2</span> </h2>
+<p >decode/decrypt the binary code into string.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.DecodeStr("82342342"));
+	
+</pre>
+<h2 id="encodes">ENCODESTR : <span class="func"> FUNCTION (p_user IN VARCHAR2) RETURN VARCHAR2</span> </h2>
+<p >encrypt the strings into binary code.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.DecodeStr("fuentes"));
+	
+</pre>
+<h2 id="genpagewhere">GENERATEPAGINGWHERE : <span class="func"> FUNCTION (p_page_no IN NUMBER) RETURN VARCHAR2</span> </h2>
+<p >Create where statement SQL script for paging.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+   IF p_print ='P' THEN 
+   l_sql := l_select ||', row_number() OVER (ORDER BY tran_no DESC) rn ' || l_from || l_where || l_order;
+   l_sql := 'SELECT * FROM ( ' || l_sql || ') ' || zsi_lib.GeneratePagingWhere(p_page_no);
+   ELSE
+      l_sql := l_select  || ',0 row_number ' || l_from || l_where || l_order;
+   END IF;
+   
+</pre>
+<h2 id="getbasename">GETBASENAME : <span class="func"> FUNCTION (p_file_name IN VARCHAR2) RETURN VARCHAR2</span> </h2>
+<p >Returns only a filename from a specified directory.</p>
+<pre class="brush: js;"> 	
+/* sample: */
+
+	htp.p(zsi_lib.GetBaseName('c:/docs/reports/employees.docx'));
+	
+</pre>
+<h2 id="getcmonth">GETCMONTH : <span class="func"> FUNCTION (p_month IN NUMBER) RETURN VARCHAR2</span> </h2>
+<p >Return the current month name.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.GetCMonth(10));	
+	
+</pre>
+<h2 id="getcount">GETCOUNT : <span class="func"> FUNCTION (p_cfield IN VARCHAR2 DEFAULT NULL, p_table  IN VARCHAR2, p_where  IN VARCHAR2 DEFAULT NULL, p_gfield IN VARCHAR2 DEFAULT NULL) RETURN NUMBER</span> </h2>
+<p >Returns the count.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.GetCount("emp_id","departments","dept_id=1"));	
+	
+</pre>
+<h2 id="getdesc">GETDESCRIPTION : 
+				<span class="func"> 
+					FUNCTION (
+							p_table IN VARCHAR2,
+                            p_field IN VARCHAR2,
+                            p_param_field IN VARCHAR2,
+                            p_param_value IN VARCHAR2,
+                            p_param_field2 IN VARCHAR2 DEFAULT NULL,
+                            p_param_value2 IN VARCHAR2 DEFAULT NULL,
+                            p_param_field3 IN VARCHAR2 DEFAULT NULL,
+                            p_param_value3 IN VARCHAR2 DEFAULT NULL) 
+				RETURN VARCHAR2
+				</span> 
+</h2>
+<p >Return the value of a field.</p>
+<pre class="brush: js;"> 
+/* samples: */
+
+--sample 1: single condition
+	htp.p(zsi_lib.GetDescription('employees','emp_name','emp_id','1'));	
+
+--sample 2: more than one(1) condition.
+    htp.p(zsi_lib.GetDescription('med_inv_ledger_v','begbal_qty','tran_month', '1', 'meds_code', '11'));	
+	
+</pre>
+<h2 id="getmoduleid">GETMODULEID : <span class="func"> FUNCTION (p_module_url IN VARCHAR2) RETURN NUMBER</span> </h2>
+<p >Return the id of specific module/procedure.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.GetModuleID("employees_list"));	
+
+</pre>
+<h2 id="getstatus">GETSTATUS : <span class="func"> FUNCTION (p_status IN VARCHAR2) RETURN VARCHAR2</span> </h2>
+<p >Return the status description.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.GetStatus(1));	
+
+</pre>
+<h2 id="getsum">GETSUM : <span class="func"> FUNCTION (p_sfield IN VARCHAR2,
+                    p_table  IN VARCHAR2,
+                    p_where  IN VARCHAR2 DEFAULT NULL,
+                    p_gfield IN VARCHAR2 DEFAULT NULL) RETURN NUMBER</span> </h2>
+<p >Returns the sum of specified numeric field.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.GetSum('sales','invoice_no=100','amount'));	
+	
+</pre>
+<h2 id="ischanged">ISCHANGED :</h2> 
+<h3 class="func"> (1): FUNCTION (p_old_value IN NUMBER, p_new_value IN NUMBER) RETURN VARCHAR2</h3> 
+<h3 class="func"> (2): FUNCTION (p_old_value IN VARCHAR2, p_new_value IN VARCHAR2) RETURN VARCHAR2</h3> 
+<h3 class="func"> (3): FUNCTION (p_old_value IN DATE, p_new_value IN DATE) RETURN VARCHAR2</h3> 
+					   
+<p >Returns true when the database value is not equal with the parameter value </p>
+<pre class="brush: js;"> 
+/* sample: */
+
+  /* declaration 
+	l_rec             tbl_employee%ROWTYPE;
+  */
+
+  IF zsi_lib.IsChanged(l_rec.empl_type, p_empl_type) = 'Y' THEN
+	 l_changed :='Y';
+	 l_rec.empl_type := p_empl_type;
+  END IF;
+
+ </pre>
+<h2 id="isdatevalid">ISDATEVALID : <span class="func"> FUNCTION (p_date_entered  IN  VARCHAR2,
+                         p_date_format   IN  VARCHAR2) RETURN VARCHAR2</span> </h2>
+<p >Returns true if date value is valid</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.IsDateValid('10/11/1981'));	
+
+	</pre>
+<h2 id="ispaging">ISPAGING : <span class="func"> FUNCTION (p_rows IN NUMBER) RETURN VARCHAR2</span> </h2>
+<p >Returns value "Y" if the parameter p_rows is greater than the maximum rows default value.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.IsPaging(98));	
+	
+</pre>
+<h2 id="isstringvalid">ISSTRINGVALID : <span class="func"> FUNCTION (p_string IN VARCHAR2) RETURN VARCHAR2</span> </h2>
+<p >Returns value 'Y' if string is valid</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.IsStringValid(98));	
+	
+</pre>
+<h2 id="iswrite">ISWRITE : <span class="func"> FUNCTION (p_user IN VARCHAR2, p_module_id IN NUMBER) RETURN NUMBER</span> </h2>
+<p >Returns value 'Y' if the parameter p_user and parameter p_module_id has write permission.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.IsWrite(p_user,p_module_id));	
+	
+</pre>
+<h2 id="list">LIST : <span class="func"> FUNCTION (p_table          IN  VARCHAR2,
+                  p_display_field  IN  VARCHAR2,
+                  p_value_field    IN  VARCHAR2,
+                  p_condition      IN  VARCHAR2 DEFAULT NULL,
+                  p_param          IN  VARCHAR2 DEFAULT NULL,
+                  p_percent        IN  VARCHAR2 DEFAULT NULL,
+                  p_value          IN  VARCHAR2 DEFAULT NULL,
+                  p_distinct       IN  VARCHAR2 DEFAULT NULL,
+                  p_multiple       IN  VARCHAR2 DEFAULT NULL,
+                  p_size           IN  VARCHAR2 DEFAULT NULL,
+                  p_attributes     IN  VARCHAR2 DEFAULT NULL,
+                  p_name           IN  VARCHAR2 DEFAULT NULL) RETURN VARCHAR2</span> </h2>
+<p >Returns the html Select with option values.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+		htp.p(
+			zsi_lib.List(
+				 p_display_field 	=>'emp_name'
+				 p_value_field		=>'emp_id'   
+				 p_condition		=>' where dept_id=123'     
+				 p_param 			=>'p_emp_id'       
+				 p_percent			=>'*'       
+				 p_value			=>'emp_id'         
+				 p_distinct			=>'distinct'      
+				 p_multiple			=>'Y'     
+				 p_size				=>'8'         
+				 p_attributes		=>'width=50px;'    
+				 p_name				=>'employee_select'          				
+			);	
+		);
+		
+</pre> 
+<h2 id="maxrowsinlist">MAXROWSINLIST : <span class="func"> FUNCTION() RETURN NUMBER</span> </h2>
+<p >Returns the default maximum number of rows.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(zsi_lib.MaxRowsInList);
+	--?default = 25;
+	
+</pre>
+<h2 id="selectjson">SELECT_JSON : <span class="func"> PROCEDURE (p_table IN VARCHAR2,
+                          p_display_field IN VARCHAR2,
+                          p_value_field IN VARCHAR2,
+                          p_condition IN VARCHAR2,
+                          p_distinct IN VARCHAR2 DEFAULT NULL)</span> </h2>
+<p >Display JSON data for html select object.</p>
+<pre class="brush: js;"> 
+/* samples: */
+	
+	--sample1:
+	htp.p(zsi_lib.select_json=>p_table='employees',p_display_field=>'emp_name',p_value_field=>'emp_id',p_condition=>'where dept_id=1');
+
+	--sample2: distinct values
+	htp.p(zsi_lib.select_json=>p_table='employees',p_display_field=>'emp_name',p_value_field=>'emp_id',p_condition=>'where dept_id=1', p_distinct=>'distinct');
+
+	
+	/*
+	Sample data:
+	[
+	  {"value":"124","text":"Fuentes, German"}
+	  ,{"value":"456","text":"Tabinas Jr., Gaudencio"}
+	  ,{"value":"789","text":"Durango, Bernard"}
+	]	 
+	*/
+	
+</pre>
+<h2 id="showpaging">SHOWPAGING : <span class="func"> PROCEDURE (p_page_no IN NUMBER,
+                         p_rows    IN NUMBER,
+                         p_numrec  IN NUMBER)</span> </h2>
+<p >display html controls for paging.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	--htp.p(zsi_lib.ShowPaging(p_page_no,l_rows,l_row_count)); 
+	
+	htp.p(zsi_lib.ShowPaging(1,120,25)); 
+	
+</pre>
+<h2 id="tojsdatef">TOJSDATEFORMAT : <span class="func"> FUNCTION (p_date_format IN VARCHAR2) RETURN VARCHAR2</span> </h2>
+<p >Convert string into JavaScript Date Format.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	htp.p(ToJSDateFormat('mm/dd/yyyy'));
+	
+</pre>
+<h2 id="valueexist">VALUE_EXIST : <span class="func"> PROCEDURE (p_table IN VARCHAR2 ,p_condition IN VARCHAR2 DEFAULT NULL)</span> </h2>
+<p >Returns JSON Data.</p>
+<pre class="brush: js;"> 
+/* sample: */
+
+	 zsi_lib.value_exist(p_table=>'employees',p_condition=>'UPPER(first_name)=''FUENTES''');
+
+	--possible http response results : {"exist":true} or {"exist":false}	 
+	
+</pre>
+<h2 id="yesno">YESNO : <span class="func"> FUNCTION (p_field      IN  VARCHAR2,
+                   p_value      IN  VARCHAR2 DEFAULT NULL,
+                   p_attributes IN  VARCHAR2 DEFAULT NULL,
+                   p_mandatory  IN  VARCHAR2 DEFAULT 'N') RETURN VARCHAR2</span> </h2>
+<p >Desplay html select object.</p>
+<pre class="brush: js;"> 
+/* samples: */
+
+  --yes=1, no=0
+  
+  --sample 1: added single blank html option / not mandatory. 
+	htp.p(zsi_lib.YesNo('status','1')); 	
+	
+  --sample 2: no single blank html option / mandatory. 	
+	htp.p(zsi_lib.YesNo('status','1','','Y')); 	
+	
+ --sample 3: no single blank html option / mandatory with attribute. 	
+	htp.p(zsi_lib.YesNo('status','1','style='''border:1pt solid;''','Y')); 	
+	
+</pre>
+
+</body>
+</html>

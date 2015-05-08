@@ -1,0 +1,128 @@
+<%@ plsql procedure="medicine_reference_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_meds_code"  type="VARCHAR2" default="NULL"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-SEP-14  BD    Added security logic.
+   1-JUL-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_style_path     VARCHAR2(128) := zsi_lib.StylePath;
+   l_js_path        VARCHAR2(128) := zsi_lib.JSPath;
+   l_title          VARCHAR2(50);
+   l_frmOffset      VARCHAR2(50):='';
+
+   l_rec  S004_T08003%ROWTYPE;
+   l_user_iswrite       NUMBER(1):=0;
+%>
+<%
+   pageheader();
+
+%>
+<body>
+<form name="frmMedsList" action="medicine_reference_update" method="POST" >
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_name');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_class');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_type');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_remarks');
+
+      IF p_meds_code IS NOT NULL THEN
+         SELECT * INTO l_rec FROM S004_T08003 WHERE meds_code = p_meds_code;
+      zsi_bs_lib.OpenEntryForm;
+         zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_code',p_inputValue=>l_rec.meds_code );
+
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.InputTextBox(p_labelName =>'Description',p_inputName=>'p_meds_name', p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.meds_name);
+         zsi_bs_lib.CloseFormGroup();
+
+
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.SelectBox(p_labelName=>'Class', p_Name=>'p_meds_class', p_labelSize=>3, p_selectSize=>9);
+         zsi_bs_lib.CloseFormGroup();
+
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.SelectBox(p_labelName=>'Type', p_Name=>'p_meds_type', p_labelSize=>3, p_selectSize=>9);
+         zsi_bs_lib.CloseFormGroup();
+
+
+         zsi_bs_lib.OpenFormGroup();
+            zsi_bs_lib.InputTextBox(p_labelName =>'Remarks',p_inputName=>'p_remarks', p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.remarks);
+         zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.CloseEntryForm;
+      l_frmOffset:='col-xs-offset-3';
+      ELSE
+%>
+<table class="table">
+   <tr valign="bottom">
+      <th nowrap align="left">Description</th>
+      <th nowrap align="left">Class</th>
+      <th nowrap align="left">Type</th>
+      <th>Remarks</th>
+   </tr>
+<%
+   FOR i IN 1..5 LOOP
+%>
+   <tr valign="bottom">
+
+      <td><input type="hidden" name="p_meds_code" value="">
+         <input type="text" name="p_meds_name" value="" class="form-control input-sm">
+      </td>
+      <td>
+         <select id="p_meds_class" name="p_meds_class"  class="form-control"> </select>
+      </td>
+      <td>
+         <select id="p_meds_type" name="p_meds_type"  class="form-control"> </select>
+      </td>
+      <td><input type="text" name="p_remarks" value="" class="form-control input-sm"></td>
+   </tr>
+<%
+   END LOOP;
+   END IF;
+%>
+</table>
+
+<div class="buttonGroup <%=l_frmOffset%>">
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+</form>
+
+<script type="text/javascript">
+
+/*variable declaration*/
+var ctrlSel = zsi.control.SelectList;
+
+   $(document).ready(function(){
+      ctrlSel("select[name=p_meds_class]","<%=l_rec.meds_class%>","N","meds_class_v","seq_no","displayed_text","");
+      ctrlSel("select[name=p_meds_type]","<%=l_rec.meds_type%>","N","meds_type_v","seq_no","displayed_text","");
+   });
+
+ zsi.json.checkValueExist("input[name=p_meds_name]","S004_T08003","meds_name"); 
+ 
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

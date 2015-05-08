@@ -1,0 +1,190 @@
+<%@ plsql procedure="manual_update" %>
+<%@ plsql parameter="p_manual_code"             type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_manual_title"            type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_manual_summary"          type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_remarks"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_old_file"                type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_file"                    type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   13-OCT-14  BD    New
+*/
+--DECLARATION SECTION
+   l_js_path         VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed         VARCHAR2(1) := 'N';
+   l_rec             S004_T08400%ROWTYPE;
+   l_create_error    BOOLEAN;
+   l_err_msg         VARCHAR2(32000);
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Pragma"  content="no-cache">
+<meta http-equiv="Expires" content="-1">
+<title>Insert/Update Manuals </title>
+</head>
+<body>
+<body>
+<h4 align="center">Manual - Upload/Update</h4>
+<br>
+<b class="required">Uploading/Updating Manual. Please wait... </b>
+<br>
+<br>
+<%
+   BEGIN
+
+
+      IF p_manual_title IS NULL THEN
+%>
+         <hr size=-1>
+         <p>
+         <b class="error">Manual Title is Required</b>
+         <p>
+         </body>
+         </html>
+<%
+         l_create_error := TRUE;
+      ELSE
+         IF zsi_lib.IsStringValid(p_manual_title)='N' THEN
+            l_err_msg := 'Manual Title cannot contain any of the following characters ' || zsi_lib.void_str1;
+            l_create_error := TRUE;
+%>
+            <b class="error"><%= l_err_msg %></b>
+            <hr size="-1">
+<%
+         END IF;
+      END IF;
+
+      IF p_file IS NULL AND p_old_file IS NULL THEN
+%>
+         <hr size=-1>
+         <p>
+         <b class="error">File Name is Required</b>
+         <p>
+         </body>
+         </html>
+<%
+         l_create_error := TRUE;
+      ELSE
+         IF zsi_lib.IsStringValid(p_file)='N' THEN
+            l_err_msg := 'File cannot contain any of the following characters ' || zsi_lib.void_str2;
+            l_create_error := TRUE;
+%>
+            <b class="error"><%= l_err_msg %></b>
+            <hr size="-1">
+<%
+         END IF;
+      END IF;
+
+      IF l_create_error THEN
+%>
+         <p>
+         <b class="error">Error: Unable to upload the document</b>
+         <p>
+         <hr size=-1>
+         </body>
+         </html>
+<%
+         RETURN;
+      END IF;
+
+      IF p_manual_code IS NULL THEN
+
+         INSERT INTO s004_t08400 (manual_code,
+                                  manual_title,
+                                  manual_summary,
+                                  file_name,
+                                  remarks,
+                                  created_by,
+                                  date_created)
+                          VALUES (s004_t08400_sq001.NEXTVAL,
+                                  p_manual_title,
+                                  p_manual_summary,
+                                  p_file,
+                                  p_remarks,
+                                  zsi_sessions_lib.GetCookieUser,
+                                  SYSDATE);
+
+      ELSE
+
+         SELECT *
+           INTO l_rec
+           FROM s004_t08400
+          WHERE manual_code = p_manual_code;
+
+
+         IF zsi_lib.IsChanged(l_rec.manual_title,p_manual_title)='Y' THEN
+            l_changed := 'Y';
+         END IF;
+         IF zsi_lib.IsChanged(l_rec.manual_summary,p_manual_summary)='Y' THEN
+            l_changed := 'Y';
+         END IF;
+         IF zsi_lib.IsChanged(l_rec.file_name,NVL(p_file,p_old_file))='Y' THEN
+            l_changed := 'Y';
+         END IF;
+         IF zsi_lib.IsChanged(l_rec.remarks,p_remarks)='Y' THEN
+            l_changed := 'Y';
+         END IF;
+
+         IF l_changed = 'Y' THEN
+            IF p_file IS NOT NULL THEN
+
+               UPDATE s004_t08400
+                  SET manual_title     = p_manual_title,
+                      manual_summary   = p_manual_summary,
+                      file_name        = p_file,
+                      remarks          = p_remarks,
+                      modified_by      = zsi_sessions_lib.GetCookieUser,
+                      date_modified    = SYSDATE
+                WHERE manual_code = p_manual_code;
+
+               -- Remove existing document
+               DELETE FROM s004_docs WHERE name=l_rec.file_name;
+
+            ELSE
+
+               UPDATE s004_t08400
+                  SET manual_title     = p_manual_title,
+                      manual_summary   = p_manual_summary,
+                      remarks          = p_remarks,
+                      modified_by      = zsi_sessions_lib.GetCookieUser,
+                      date_modified    = SYSDATE
+                WHERE manual_code = p_manual_code;
+
+            END IF;
+         END IF;
+
+      END IF;
+
+   EXCEPTION
+      WHEN OTHERS THEN
+%>
+              <hr size=-1>
+              <b class="error">Unable to upload and update this Manual information</b>
+              <p>
+              <b class="error"><%= SQLERRM %></b>
+              <p>
+              </body>
+              </html>
+<%
+              ROLLBACK;
+              RETURN;
+
+   END;
+%>
+<script type="text/javascript">
+   parent.HomeWindow.LoadData("");
+   parent.w1.close();
+</script>

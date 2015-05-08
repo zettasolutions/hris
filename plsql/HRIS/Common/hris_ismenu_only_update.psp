@@ -1,0 +1,29 @@
+<%@ plsql procedure="hris_ismenu_only_update" %>
+<%@ plsql parameter="p_module_id" type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ismenu"    type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   08-JAN-15  GT    New
+*/
+%>
+<%
+BEGIN
+      FOR i IN 1..p_module_id.COUNT LOOP
+        UPDATE s004_modules
+           SET ismenu=p_ismenu(i)
+          WHERE module_id = p_module_id(i);        
+      END LOOP;
+END;
+%>

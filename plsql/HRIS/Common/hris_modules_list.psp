@@ -1,0 +1,279 @@
+<%@ plsql procedure="hris_modules_list" %>
+<%@ plsql parameter="p_module_name"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_module_group_id" type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_sysgroup"        type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_module_url"      type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_rows"            type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_page_no"         type="NUMBER"   default="1"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   03-MAR-15  GT    Fixed Delete. Added search for module_url.
+   08-SEP-14  BD    Passed p_module_id to form url.
+   25-AUG-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(3000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_sql                        VARCHAR2(8000);
+   TYPE ds_cur IS REF CURSOR;
+   dsref          ds_cur;
+   l_module_id                  hris_modules_v.module_id%TYPE;
+   l_module_name                hris_modules_v.module_name%TYPE;
+   l_module_group               hris_modules_v.module_group%TYPE;
+   l_sysgroup                   hris_modules_v.sysgroup%TYPE;
+   l_module_url                 hris_modules_v.module_url%TYPE;
+   l_seq_no                     hris_modules_v.seq_no%TYPE;
+   l_ismenu                     hris_modules_v.ismenu%TYPE;
+   l_user_count                 hris_modules_v.user_count%TYPE;
+   l_proc_count                 hris_modules_v.proc_count%TYPE;
+   l_row_no                     NUMBER(10);
+   l_rows                       NUMBER(10);
+   l_max_rows                   NUMBER(10) := zsi_lib.MaxRowsInList;
+   l_url                        VARCHAR2(32000) := 'hris_modules_list';
+   l_row_count                  NUMBER(10) := 0;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_checked                    VARCHAR2(7);
+%>
+<%
+   pageheader(p_dgrid=>'Y');
+%>
+<%
+
+   l_select := 'SELECT module_id,
+                       module_name,
+                       module_url,
+                       module_group,
+                       sysgroup,
+                       seq_no, 
+                       ismenu,
+                       user_count,
+                       proc_count ';
+   l_from   := '  FROM hris_modules_v ';
+   l_where  := ' WHERE 1=1';
+
+
+   IF p_module_name IS NOT NULL THEN
+      l_where := l_where ||' AND UPPER(module_name) LIKE '|| '''' || '%' ||  UPPER(p_module_name) || '%' || '''' || ' ';
+   END IF;
+   l_url := l_url ||'?p_module_name=' || p_module_name;
+
+   IF p_module_url IS NOT NULL THEN
+      l_where := l_where ||' AND UPPER(module_url) LIKE '|| '''' || '%' ||  UPPER(p_module_url) || '%' || '''' || ' ';
+   END IF;
+   l_url := l_url ||'&p_module_url=' || p_module_url;
+
+   IF p_module_group_id IS NOT NULL THEN
+      l_where := l_where ||' AND module_group_id = ' || p_module_group_id;
+      l_url := l_url ||'&p_module_group_id=' || p_module_group_id;
+   END IF;
+
+   IF p_sysgroup IS NOT NULL THEN
+      l_where := l_where ||' AND sys_group_id = ' || p_sysgroup;
+      l_url := l_url ||'&p_sys_group_id=' || p_sysgroup;
+   END IF;
+
+
+   IF p_page_no = 1 AND p_rows IS NULL THEN
+      l_sql := 'SELECT COUNT(*) ' || l_from || l_where;
+      OPEN dsref FOR l_sql;
+      LOOP
+         FETCH dsref INTO l_rows;
+         EXIT WHEN dsref%NOTFOUND;
+      END LOOP;
+      CLOSE dsref;
+   ELSE
+      l_rows := p_rows;
+   END IF;
+   l_url := l_url ||'&p_rows=' || l_rows;
+
+   l_sql := l_select ||', row_number() OVER (ORDER BY module_name) rn ' || l_from || l_where;
+
+   l_sql := 'SELECT * FROM ( ' || l_sql || ') ' || zsi_lib.GeneratePagingWhere(p_page_no);
+%>
+<body>
+ <%
+   zsi_bs_lib.openModalWindow('modalWindow','HRIS MODULES','ds_search_frm','hris_modules_list');
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Name',p_inputName=>'p_module_name', p_labelSize =>3, p_inputSize =>5);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Module Group', p_Name=>'p_module_group_id', p_labelSize=>3, p_selectSize=>5);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'URL',p_inputName=>'p_module_url', p_labelSize =>3, p_inputSize =>5);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SysGroup(p_labelSize=>3, p_SelectSize=>5);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.closeModalWindow('submit','Search');
+%>
+
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+   <tr valign="bottom">
+      <th nowrap align="center" width="50px">Menu Item?</th>
+      <th nowrap align="center" width="50px">ID</th>
+      <th nowrap align="left" width="275px">Name</th>
+      <th nowrap align="left" width="200px">Group</th>
+      <th nowrap align="left" width="200px">System</th>
+      <th nowrap align="left" width="200px">Proc/URL</th>
+      <th nowrap align="center" width="75px">Related Proc.</th>
+      <th nowrap align="center" width="50px">Seq#</th>
+      <th nowrap align="center" width="50px">Users</th>
+      <th align="center" width="60px">Delete</th>
+   </tr>
+<%
+   l_dhtmlx_sort := 'int,str,str,str,int, na';
+
+   OPEN dsref FOR l_sql;
+   LOOP
+      FETCH dsref INTO l_module_id,
+                       l_module_name,
+                       l_module_url,
+                       l_module_group,
+                       l_sysgroup,
+                       l_seq_no,
+                       l_ismenu,
+                       l_user_count,
+                       l_proc_count,
+                       l_row_no;
+      EXIT WHEN dsref%NOTFOUND;
+      l_row_count := l_row_count + 1;
+%>
+   <tr valign="bottom">
+      <% IF NVL(l_ismenu,0) = 0 THEN 
+            l_checked := '';
+         ELSE
+            l_checked := 'CHECKED';
+         END IF;
+      %>
+      <td nowrap align="center"><input type="hidden" id="p_ismenu" name="p_ismenu" value="<%= l_ismenu %>">
+          <input type="checkbox" <%=l_checked%> name="p_mcb" value="<%=l_ismenu %>" >
+      </td>
+      <td nowrap align="center">
+         <input type="hidden" id="p_module_id" name="p_module_id" value="<%= l_module_id %>">
+         <a href="javascript:void(0)" TITLE="Click here to Edit HRIS MODULES" onClick="parent.attachURL('hris_modules_form?p_module_id=<%= l_module_id %>','Edit Module Code &raquo <%=l_module_id %>', 750, 450)"><%=l_module_id %></a>
+      </td>
+      <td nowrap align="left"><%=l_module_name %></td>
+      <td nowrap align="left"><%=l_module_group %></td>
+      <td nowrap align="left"><%=l_sysgroup %></td>
+      <td nowrap align="left"><%=l_module_url %></td>
+      <td nowrap align="center">
+         <a href="javascript:void(0)" TITLE="Click here to Edit HRIS Module Procedures" onClick="parent.attachURL('module_procs_form?p_module_id=<%= l_module_id %>','Add/Edit procedures for module &raquo <%=NVL(l_module_name,l_module_url) %>', 850, 500)"><%=l_proc_count %></a>
+      </td>
+      <td nowrap align="center"><%=l_seq_no %></td>
+      <td nowrap align="center">
+         <a href="javascript:void(0)" TITLE="Click here to Edit HRIS USER" onClick="parent.attachURL('hris_module_users_form?p_module_id=<%= l_module_id %>','Add/Edit User(s) for module &raquo <%=l_module_name %>', 650, 500)"><%=l_user_count %></a>
+      </td>
+      <td><input type="checkbox" name="p_cb" onclick="zsi.table.setCheckBox(this,<%= l_module_id %>);">
+                         <input type="hidden" name="p_value" value=""></td>
+   </tr>
+<%
+   END LOOP;
+%>
+</table>
+
+<div class="bottomNav">
+   <div class="buttonGroup">
+   <%
+            zsi_bs_lib.Button('btnSearch','Search',p_data_toggle =>'modal',p_data_target =>'#modalWindow');
+            zsi_bs_lib.Button('btnAdd','Add',p_onclick =>'parent.attachURL(''hris_modules_form?p_module_id='',''Add HRIS MODULES'', 1350, 400)');
+            zsi_bs_lib.Button('btnSave','Save',p_onclick =>'saveData();');
+            zsi_bs_lib.Button('btnDelete','Delete',p_onclick =>'return checkDelete(''S004_DELETE?p_value=0'');');
+   %>
+   </div>
+<% zsi_lib.ShowPaging(p_page_no,l_rows,l_row_count); %>
+</div>
+
+<script type="text/javascript">
+/*variable declaration*/
+var ctrlSel = zsi.control.SelectList;
+
+
+/*end of declaration*/
+
+$(document).ready(function(){
+   $('.modal-dialog').css('width', '450px');
+
+   ctrlSel("#p_module_group_id","","N","hris_modules_v","module_id","module_name","WHERE module_group_id IS NULL AND ismenu=1 ");
+
+   $("input[name=p_mcb]").click(function(){  
+      var hd = $(this.parentNode).children("#p_ismenu");
+      if (this.checked==true) hd.val(1); else hd.val(0);
+   });
+
+});
+
+function saveData(){
+   var param = $("input[name=p_module_id]").serialize();
+   var param2 = $("input[name=p_ismenu]").serialize();
+
+   $.post( "hris_ismenu_only_update?" + param + "&" + param2, function(d){
+      window.location.reload();
+   }).fail(function(d) {
+      alert("Sorry, the curent transaction is not successfull.");
+   });
+
+}
+
+   $(document).ready(function(){
+      $('.modal-dialog').css('width', '450px');
+   });
+
+   //on window resize
+   $(window).resize(function(){
+       zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+
+  function checkDelete(l_cmd) {
+    var l_stmt, l_count
+      l_stmt = zsi.table.getCheckBoxesValues("input[name=p_cb]:checked","p_value=","&");
+
+    if (l_stmt!="") {
+        if(confirm("Are you sure you want to delete ALL SELECTED HRIS MODULES?")) {
+          $.post( l_cmd + "&" + l_stmt + "&p_table=S004_MODULES&p_field=module_id"  , function(d){
+               parent.ShowHideProgressWindow(false);
+               window.location.reload();
+          });
+
+        }
+     }
+   }
+
+   function gotoPage(p_this){
+       var url = "<%= l_url %>&p_page_no=" + p_this.value;
+       window.location.href = url;
+    };
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+
+</script>
+
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

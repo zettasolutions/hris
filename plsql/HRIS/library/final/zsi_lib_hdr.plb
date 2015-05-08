@@ -1,0 +1,42 @@
+SET SCAN OFF
+CREATE OR REPLACE
+PACKAGE zsi_lib wrapped 
+a000000
+b2
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+9
+1268 4b0
+Sisxb6RPNyPhmeQArLp1rOaCmN0wgw3qDNDrfC+LNJ3gpjW6N9thEZZWKL76oIEGtPfNoLov
+ngZA2/D9VuSfGzNI7KDezZEfDyd4TtcFgoZubCwx0+6xcrtD0LuaqRMDgqZXBTtV9J+fE+/Y
+t5OtYlg80lv73cK+Z2mZVIKQ2HVB8LC2kspeNEA6b4txZe1ivqBTohAx4IKYU6VfezFQsQRg
+woXowUySUAet/AjSevHZpNDR0bCt2JSuDAuBjrk8/x/BFPnX2gSvMDZ4eHxRQz/uvc8CnaVv
+GWoXzuGd7ig0rB+ldhmvgjCe0K+3VWgJqnXdTWz2M50BvuOWnlhU4hTnSFZfTiX4Y4dxuV2d
+etbWjZw+eL5wBcCvzBp/qSq2RBn3xqbTbF65iXppvQlxS+ZUGFEvVX1u3qcy/Y7WYJAOoB2z
+/3evwvoDp14wQGuCkkdOe6cAs0CqJxYZH9fYPc+HVCGEUPEBzMJJDrNvozwPlgU+7envXI3r
+MuICAzukoIcYxM25mdd1WVhcIxKi/FpK5jPRs+gR09fHv9iWgpywLkgR7gA9HY9IsWl1/tJ8
+3gMb0YqPSDH+AQYhQnMv7HYX0/OBopQllLtdyi/MkndcJGaOQr6Ta0jrYJ6TQTzi33e/XYSC
+LvdcYOyFfm3EJw4uKHD3AWF8/xad9rielVUOh4z/WEwC580rcDakchEJXw6YZfOiKZfJBnus
+fAt3Bl+9LU6HY570mWOCyR3S9I93DQKjxeNR0mJJjyxe9LAFl+vF4D1rFBZs3Nu0A/b8lIo8
+QN9+04mutZdseynyGpibKeseTVT8TVMxsBzRYhGLQTT4Beo6Viuj6f3xkT2N3holU6SNHMUS
+Ntm5/LvN/wIqL45PdHVQO7aykkU/NgEXiqMK8O4lLrmwnrKyfX76Q8IlS6w2t8qxxa+gDhgR
+KycDHevLDKsmFT7qiMGiOnbQDhvT8KHWI8Bp0Wwnnrfqxh+K0ZBFfoOCnkQbYTRlHUAac/7c
+Idg6/PQ5zYciEHdO0ECMLt4k1EgjFvo68rDJUHe0JslkoX2gRfh5gl7eqFCcOJ2WmWJ7lrn3
+mS2zaEXSPk3wYVkC7Gyu2vHltyyXorNdeTIfxqFLDSrdPWEP1xTKTAdF1ToLLG9dcq2CfXsO
+EtX3KbkvjzdlAq5AnKxylixzHUhaYmU=
+
+/
+SHOW ERRORS

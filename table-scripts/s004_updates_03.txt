@@ -1,0 +1,10 @@
+set scan off
+spool s004_upd_res.txt
+@@s004_t08019_group.sql
+@@s004_t08019_exam.sql
+@@s004_t09000.sql
+@@s004_t09000_data.sql
+@@s004_t01043.sql
+@@s004_t01043_data.sql
+spool off
+set scan on

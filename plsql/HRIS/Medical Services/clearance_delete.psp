@@ -1,0 +1,28 @@
+<%@ plsql procedure="clearance_delete" %>
+<%@ plsql parameter="p_del_c" type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   03-AUG-14  GT    New
+*/
+%>
+<%
+BEGIN
+   IF p_del_c.COUNT > 0 THEN
+      FOR i IN 1..p_del_c.COUNT LOOP
+         DELETE FROM S004_T08012 WHERE tran_no = p_del_c(i);
+      END LOOP;
+   END IF;
+END;
+%>

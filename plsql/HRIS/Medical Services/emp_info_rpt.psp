@@ -1,0 +1,135 @@
+<%@ plsql procedure="emp_info_rpt" %>
+<%@ plsql parameter="p_ws_name"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_by_age"      type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_by_ab"       type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_by_ws"       type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_by_cs"       type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_by_rank"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_by_et"       type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_by_bt"       type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_by_gender"   type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_by_cc"       type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_by_dept"     type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_by_group"    type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_page_no"     type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_Criteria"    type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_print"       type="VARCHAR2" default="'P'"%>
+
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   30-NOV-14  GF    New
+*/
+--DECLARATION SECTION
+l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+%>
+<%
+   reportheader(p_output=>'H');
+%>
+<body>
+
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+
+<table>
+   <tr valign="top">
+      <td width="400px" align="left" class="head1 reportTitle">Employee List</td>
+   </tr>
+    <tr valign="top">
+      <td  class="head5 reportcriteria">Criteria: <%=p_Criteria %></td>
+   </tr>     
+</table>
+
+<table class="gridReport fullWidth" >
+<thead>
+   <tr valign="bottom">
+      <th >Type Group</th>   
+      <th >Emp Type</th>   
+      <th >Employee</th>
+      <th >Cost Center </th>
+      <th >Age Bracket</th>
+      <th >Age</th>   
+      <th >Blood Type</th>   
+      <th >Work Station</th>   
+      <th >Civil Status</th>   
+      <th >Gender</th>   
+      <th >Rank</th>   
+   </tr>
+</thead>
+</table>
+ 
+
+
+<script type="text/javascript">
+
+
+function LoadData(){   
+   var l_url = window.location.href;
+   var l_index = l_url.indexOf("?");   
+   var l_params= l_url.substr(l_index + 1);
+   
+   l_params=zsi.url.removeQueryItem(l_params,"p_criteria");
+   
+   
+   $.getJSON(
+      "emp_info_json?" + l_params.toUpperCase(),onLoadComplete
+   ).fail(function() {
+      $(".loadingStatus").css("display","none");
+      alert("Sorry, the current report cannot display at this moment.");
+   });
+}
+
+function onLoadComplete(data){    
+   var jsonGrid = $(".gridReport");
+   jsonGrid.clearGrid();
+   $.each(data.rows, function () {
+      var r = ""
+      r += "<tr>";
+      r += "<td>" + this.data[0]    + "</td>";
+      r += "<td>" + this.data[1]   + "</td>";
+      r += "<td>" + unescape(this.data[2])  + "</td>";
+      r += "<td>" + this.data[3]   + "</td>";
+      r += "<td>" + this.data[4]   + "</td>";
+      r += "<td>" + this.data[5]   + "</td>";
+      r += "<td>" + this.data[6]    + "</td>";
+      r += "<td>" + this.data[7]  + "</td>";
+      r += "<td>" + this.data[8]  + "</td>";
+      r += "<td>" + this.data[9]   + "</td>";
+      r += "<td>" + this.data[10]   + "</td>";
+      r += "</tr>";   
+      jsonGrid.append(r);
+   });    
+   
+   $(".loadingStatus").css("display","none");
+   window.print();
+}
+
+ 
+//on page loaded
+$(document).ready(function(){    
+   var _criteria = zsi.url.getQueryValue(window.location.href,"p_criteria");
+   
+   $(".reportcriteria").html( "Criteria: " + unescape(_criteria) );
+   LoadData();
+}); 
+   
+   
+</script>
+</body>
+
+</html>

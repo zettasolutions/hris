@@ -1,0 +1,112 @@
+<%@ plsql procedure="train_mrtc_participants_update" %>
+<%@ plsql parameter="p_tran_no"          type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_trainee"          type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_job_position"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_address"          type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_contact_no"       type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_agency_code"      type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_remarks"          type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   01-AUG-14  GT    New
+*/
+--DECLARATION SECTION
+   l_js_path         VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed         VARCHAR2(1) := 'N';
+   l_rec             S004_T07016%ROWTYPE;
+   l_date_format     VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Medicine Acquired From Clinic </title>
+</head>
+<body>
+<%
+
+   IF p_tran_no IS NULL  AND p_trainee IS NOT NULL THEN
+      INSERT INTO S004_T07016 (
+          tran_no
+         ,trainee
+         ,job_position
+         ,address
+         ,contact_no
+         ,agency_code
+         ,remarks
+         ,created_by
+         ,date_created
+      )
+      VALUES
+      (  S004_T07016_SQ001.NEXTVAL 
+         ,p_trainee
+         ,p_job_position
+         ,p_address
+         ,p_contact_no
+         ,p_agency_code
+         ,p_remarks
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+   );
+   ELSIF p_tran_no IS NOT NULL AND p_trainee IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T07016 WHERE tran_no=p_tran_no;
+
+      IF zsi_lib.IsChanged(l_rec.trainee, p_trainee) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.trainee := p_trainee;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.job_position, p_job_position) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.job_position := p_job_position;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.address, p_address) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.address := p_address;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.contact_no, p_contact_no) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.contact_no := p_contact_no;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.agency_code, TO_NUMBER(p_agency_code)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.agency_code := p_agency_code;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.remarks, p_remarks) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.remarks := p_remarks;
+      END IF;
+
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T07016 SET row = l_rec WHERE tran_no=p_tran_no;
+      END IF;
+
+   END IF;
+END;
+%>
+<script type="text/javascript">
+   var ifr = parent.dhxLayout.cells("b").getFrame();
+   ifr.contentWindow.location.reload();
+   parent.w1.close();
+</script>

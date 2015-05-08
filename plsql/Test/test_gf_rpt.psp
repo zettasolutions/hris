@@ -1,0 +1,263 @@
+<%@ plsql procedure="test_gf_rpt" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   28-JAN-15  GF    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(3000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_order                      VARCHAR2(4000);
+   l_sql                        VARCHAR2(8000);
+   TYPE ts_cur IS REF CURSOR;
+   tsref              ts_cur;
+   l_spsr_code                  S004_T07008.spsr_code%TYPE;
+   l_spsr_name                  S004_T07008.spsr_name%TYPE;
+   l_spsr_address               S004_T07008.spsr_address%TYPE;
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+
+<%
+   l_select := 'SELECT spsr_code,spsr_name,spsr_address';
+   l_from   := '  FROM S004_T07008 ';
+   l_where  := ' WHERE 1=1';
+   
+
+   l_sql := l_select || l_from || l_where;
+
+   reportheader(p_output=>'H');   
+%>
+<body >
+<script type="text/javascript" src="/apps/s004/js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="/apps/s004/js/jspdf.min.js"></script>
+
+<script type="text/javascript" >
+   
+function DownloadPDF(){
+    HtmlTableToPDF({
+       cols_loc_x       : [10,25,120]
+      ,line_start       : 10 
+      ,line_stop        : 67
+      ,limit_char_width : 205
+      ,line_height      : 4
+      ,char_width       : 1.7721   
+   });    
+     
+}
+   
+function HtmlTableToPDF(info){   
+   var _title=$('.rpt-title').html();
+   var _runDate=$('.rpt-rundate').html();
+   var _columnsName = GetColumnHeaders();
+   var _currentLine=info.line_start;
+   
+   function GetColumnHeaders(){
+      var _col_names=[];
+      $("table.rpt-content thead tr th").each(function(){
+         _col_names.push(this.textContent);
+      });
+   return _col_names;
+   }
+   
+   function printColumnHeaders(){
+      for(var i=0; i<_columnsName.length;i++){
+         doc.setFontSize(10);
+         doc.setFontType("bold");
+         doc.text(info.cols_loc_x[i], _currentLine,_columnsName[i] );
+         doc.line(10, _currentLine + 1, 200, _currentLine + 1); 
+
+      }
+   }   
+
+   var doc = new jsPDF();
+
+   doc.setFontSize(12);
+   doc.setFontType("bold");
+   doc.text(10, _currentLine,_title );
+
+   doc.setFontSize(8);
+   doc.setFontType("normal");
+   doc.text(160, _currentLine, _runDate);
+   
+   _currentLine+=5;
+   printColumnHeaders();
+
+   var trContent=$("table.rpt-content tbody tr");
+   var _lineCounter=0;
+   
+
+   trContent.each(function(){
+      
+      var _trExtraline=0;
+      _currentLine+=info.line_height;
+
+         $(this).children("td").each(function(){
+            var _col_index  = $(this).index();
+            var _text = this.textContent;
+            var _limitWidth=0;
+            
+            if(info.cols_loc_x[_col_index + 1]) 
+               _limitWidth = info.cols_loc_x[_col_index + 1] - info.cols_loc_x[_col_index];
+            else 
+               _limitWidth = info.limit_char_width - info.cols_loc_x[_col_index];
+
+            var _lineWords = SeparateLineText(_text, _limitWidth / info.char_width);
+            
+            doc.setFontType("normal");
+            doc.setFont("helvetica");
+            doc.setFontSize(8);
+            
+            var _tdExtraLine=0;
+            
+            for(var i=0;i<_lineWords.length;i++){
+               if(i>0) _tdExtraLine = _tdExtraLine +info.line_height;
+               doc.text(info.cols_loc_x[_col_index], (_currentLine + _tdExtraLine),_lineWords[i]  );               
+            }
+            
+            if(_tdExtraLine > _trExtraline) {
+               _trExtraline = _tdExtraLine;
+               _lineCounter = _lineCounter + (_trExtraline / info.line_height);
+            }
+            
+         }); //end-of-td
+         
+         _currentLine = (_currentLine + _trExtraline);
+         _trExtraline=0;
+
+       if(  _lineCounter >= info.line_stop  ) {
+          _currentLine=info.line_start
+          doc.addPage();
+          printColumnHeaders();
+          _lineCounter=0;
+          
+       }
+       _lineCounter++;
+   });//end-of-tr
+   
+   doc.save('training-sponsors-report.pdf');
+}
+
+
+function testCharsAlignment(){
+
+var doc = new jsPDF();
+var ctr =0;
+   for(var i=0;i<95;i++){
+      ctr++;
+      
+      doc.setFontSize(8);
+      doc.setFontType("normal");
+      doc.setFont("helvetica");
+      doc.text(10 + (i*1.57), 10,ctr + "" );      
+      if(ctr==9) ctr=0;
+   }
+
+   doc.setFont("helvetica");
+   doc.text(10, 15,"12345678912345678912345678912345678912345678912345678912345678912345678912345678912345678912345" );
+   
+   doc.setFontType("normal");
+   doc.setFont("helvetica");
+   doc.setFontSize(8);
+   doc.text(10, 25,"ASSOCIATION OF ACCREDITED VOLUNTARY ARBITRATORS OF CENTRAL VISAYAS (AVAC), INC." );
+   doc.line(10, 27, 140, 27); 
+   
+      
+   doc.save('test-report.pdf');
+   
+}
+
+function SeparateLineText(text,limit){   
+   var _arrWords= text.split(' ');
+   var _arrResult=[];
+   
+   var _countChar=0;     
+   var _tmpText="";
+   for(var i=0;i<_arrWords.length;i++){
+      
+      if ( _countChar  + _arrWords[i].length  > limit){            
+          _countChar=0; 
+          _arrResult.push(_tmpText.slice(0,-1));
+          _tmpText="";         
+      }
+      _countChar +=_arrWords[i].length + 1;          
+      _tmpText += _arrWords[i] + " ";
+   }
+   
+   if(_tmpText!="") _arrResult.push(_tmpText.slice(0,-1)); 
+   
+   return _arrResult;
+}
+
+function TestSeparateLine(){
+   
+   var _text = "ASSOCIATION OF ACCREDITED VOLUNTARY ARBITRATORS OF CENTRAL VISAYAS (AVAC), INC. MAINTENANCE SUPPORT SERVICES DEPARTMENT (MSSD) SP201 ARMED FORCES OF THE PHILIPPINES (AFP)";
+
+  console.log(  SeparateLineText(_text,53) );
+}
+
+   
+</script>
+
+<a href="javascript:TestSeparateLine();" class="button">test SeparateLineText</a>
+<br />
+
+<a href="javascript:testCharsAlignment();" class="button">pdf test character alignment</a>
+<br />
+
+
+<a href="javascript:DownloadPDF();" class="button">Download PDF Report</a>
+
+<div id="rpt-page">
+   <table class="rpt-header">
+      <tr valign="top">
+         <td width="400px" align="left" class="head1 rpt-title">List of Training Sponsors</td>
+         <td width="200px" align="right" class="head6 rpt-rundate">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss')) %></td>
+      </tr>
+   </table>
+
+   <table class="rpt-content">
+      <thead>
+         <tr valign="bottom">
+            <th align="left">Code</th>
+            <th >Name</th>
+            <th >Address</th>
+         </tr>
+      </thead>
+      <tbody>
+<%
+   OPEN tsref FOR l_sql;
+   LOOP
+       FETCH tsref INTO l_spsr_code,l_spsr_name,l_spsr_address;
+   EXIT WHEN tsref%NOTFOUND;
+%>
+         <tr valign="bottom">
+            <td align="left"><%=l_spsr_code %></td>
+            <td ><%=l_spsr_name %></td>
+            <td ><%=l_spsr_address %></td>
+         </tr>
+<%
+   END LOOP;
+%>
+   </tbody>
+   </table>
+
+ 
+ </div>
+
+</body>
+</html>

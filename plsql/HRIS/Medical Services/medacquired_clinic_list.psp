@@ -1,0 +1,210 @@
+<%@ plsql procedure="medacquired_clinic_list" %>
+<%@ plsql parameter="p_id_no"           type="NUMBER" default="NULL"   %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   24-JAN-15  GT    Modified
+   08-SEP-14  BD    Passed p_module_id to form url.
+   30-JUL-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+   l_emp_rec                    employee_v%ROWTYPE;
+%>
+<%
+   SELECT * INTO l_emp_rec FROM employee_v WHERE empl_id_no = p_id_no;
+   pageheader(p_dwin=>'Y', p_dgrid=>'Y');
+%>
+<body>
+<div class="col-xs-12 form-header">
+<div class="container-fluid">
+<div class="form-horizontal">
+   <div class="form-group">
+      <label class="col-xs-1 control-label">Name:</label>
+      <div class="col-xs-6">
+         <label class="control-label"><%= l_emp_rec.empl_name %></label>
+      </div>
+   </div>
+   <div class="form-group">
+      <label class="col-xs-1 control-label">Department:</label>
+      <div class="col-xs-6">
+         <label class="control-label"><%= l_emp_rec.dept_desc %>{<%= l_emp_rec.department %>}</label>
+      </div>
+   </div>
+   <div class="form-group">
+      <label class="col-xs-1 control-label">Cost Center:</label>
+      <div class="col-xs-6">
+         <label class="control-label"><%= l_emp_rec.cc_desc %>{<%= l_emp_rec.empl_group_code %>}</label>
+      </div>
+   </div>
+   <div class="form-group">
+      <label class="col-xs-1 control-label">Group:</label>
+      <div class="col-xs-6">
+         <label class="control-label"><%= l_emp_rec.group_desc %>{<%= l_emp_rec.group_code %>}</label>
+      </div>
+   </div>   
+   <div class="form-group">
+      <label class="col-xs-1 control-label">Job Desc.:</label>
+      <div class="col-xs-6">
+         <label class="control-label"><%= l_emp_rec.job_desc %>{<%= l_emp_rec.empl_jobp_code %>}</label>
+      </div>
+   </div>
+</div>
+</div>
+</div>
+<br /> 
+<%
+   zsi_bs_lib.openModalWindow('modalWindow','Medicine Acquired From Clinic','mc_search_frm','medacquired_clinic_list');
+   zsi_bs_lib.OpenEntryForm();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Tran No',p_inputName=>'p_tran_no', p_labelSize =>3, p_inputSize =>2);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Tran Date',p_inputName=>'p_tran_date', p_labelSize =>3, p_inputSize =>2);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.SelectBox(p_labelName=>'Medicine Type', p_Name=>'p_meds_type', p_labelSize=>3, p_selectSize=>4);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.SelectBox(p_labelName=>'Medicine Code', p_Name=>'p_meds_code', p_labelSize=>3, p_selectSize=>4);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.YesNo(p_label_name=>'Is Posted',p_field=>'post_status',p_label_size =>3,p_select_size =>2);
+      zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.CloseEntryForm();
+   zsi_bs_lib.closeModalWindow('button','Search',p_btn_attributes=>'onclick="LoadData(GetParams());"' );
+
+   l_dhtmlx_sort := 'int,str,int,str,str,str,str,na';
+%>
+
+   <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+      <tr valign="bottom">
+         <th nowrap align="center" width="75px">Tran No</th>
+         <th nowrap align="center" width="75px">Tran Date</th>
+         <th nowrap align="left" width="150px">Med. Type</th>
+         <th nowrap align="left" width="150px">Medicine</th>
+         <th nowrap align="left" width="100px">Class</th>
+         <th nowrap align="center" width="80px">Quantity</th>         
+         <th nowrap align="center" width="100px">Posted?</th>
+         <th align="center" width="60px">Delete</th>
+      </tr>
+   </table>
+
+   <div class="bottomNav">
+   <div class="buttonGroup">
+
+<%
+      zsi_bs_lib.Button('btnSearch','Search',p_data_toggle =>'modal',p_data_target =>'#modalWindow');
+      zsi_bs_lib.Button('btnAdd','Add',p_onclick =>'attachURL(''medacquired_clinic_form?p_id_no=' || p_id_no || '&p_module_id=' || l_module_id || '&p_tran_no='',''Add OTC Medicine Transaction'',1350, 600);w1.maximize();');
+      zsi_bs_lib.Button('btnDelete','Delete',p_onclick =>'return checkDelete(''medacquired_clinic_delete?p_del_mc='');');
+%>
+</div>
+   <% zsi_bs_lib.ShowPagingCtrl; %>
+</div>
+
+<script type="text/javascript">
+   /*variable declaration*/
+   var ctrlSel = zsi.control.SelectList;
+   var l_page_rows=0;
+
+   $(document).ready(function(){
+
+//       parent.HomeWindow=window;
+       ctrlSel("#p_meds_type","","N","meds_type_v","sele_value","description","");
+       ctrlSel("#p_meds_code","","N","S004_T08003","meds_code","meds_name","");
+     
+     setTimeout(function(){  
+            LoadData(GetParams());
+      }, 1000);
+   });
+
+   function GetParams(){
+      var l_params="";
+      l_params += '?p_tran_no=' + $("#p_tran_no").val();
+      l_params += '&p_tran_date=' + $("#p_tran_date").val();
+      l_params += '&p_meds_type=' + $("#p_meds_type").val();
+      l_params += '&p_meds_code=' + $("#p_meds_code").val();
+      l_params += '&p_post_status=' + $("#p_post_status").val();
+      l_params += '&p_id_no=<%=p_id_no%>';
+      return l_params;
+   }
+   function checkDelete(l_cmd) {
+      var l_stmt, l_count
+      l_stmt = zsi.table.getCheckBoxesValues("input[name=p_cb]:checked","p_del_mc=","&");
+
+      if (l_stmt!="") {
+         if(confirm("Are you sure you want to delete ALL SELECTED OTC Medicine(s)?")) {
+            $.post( l_cmd + "&" + l_stmt, function(d){
+               parent.ShowHideProgressWindow(false);
+               window.location.reload();
+            });
+         }
+      }
+   }
+
+
+   function gotoPage(p_this){
+      var l_params = GetParams() + "&p_rows="+ l_page_rows + "&p_page_no=" + p_this.value;
+      LoadData(l_params );
+   };
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid);
+
+   function LoadData(p_params){
+      $.getJSON("medacquired_clinic_json" + p_params,onLoadComplete);
+   }
+
+   function onLoadComplete(data){
+      mygrid.clearAll();
+      zsi.table.dhtmlx.Unescape(data,3);
+      mygrid.parse(data, "json");
+      l_page_rows=data.page_rows;
+      zsi.page.DisplayRecordPage(data.page_no,data.page_rows,data.row_count);
+      $("#modalWindow").modal('hide');
+   }
+dhtmlxWin = new dhtmlXWindows();
+dhtmlxWin.setImagePath("<%= l_dhtmlx_path %>dhtmlxWindows/codebase/imgs/");
+function attachURL(winURL,winTitle,winWidth,winHeight) {
+//var w1;
+   if (dhtmlxWin.isWindow("w1")) w1.close();
+   //w1 = dhtmlxWin.createWindow("w1", 20, 50, winWidth, winHeight); // x,y,width,height
+   var w = $(document).width();
+   var x = (w - winWidth) / 2;
+   var h = $(document).height();
+   var y = (h - winHeight) / 2;
+   w1 = dhtmlxWin.createWindow("w1", x, y, winWidth, winHeight); // x,y,width,height
+   w1.setModal(true);
+   w1.button("close").enable();
+   w1.button("minmax1").enable();
+   w1.button("minmax2").enable();
+   w1.button("park").hide();
+   w1.setText(winTitle);
+   w1.attachURL(winURL);
+}
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,588 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+		<meta http-equiv="content-type" content="text/html;charset=utf-8"></meta>  
+		<link href="../docstyle.css" rel="stylesheet" type="text/css"></link> 
+		<title>Documentation Overview</title>
+	<script type="text/javascript" src="../plugins/syntaxhighlighter_3.0.83/scripts/shCore.js"></script>
+	<script type="text/javascript" src="../plugins/syntaxhighlighter_3.0.83/scripts/shBrushJScript.js"></script>
+	<link type="text/css" rel="stylesheet" href="../plugins/syntaxhighlighter_3.0.83/styles/shCoreFadeToGrey.css"/>
+	<script type="text/javascript">SyntaxHighlighter.all();</script>
+	
+</head>
+<body>
+<div class="main">
+<a name="top"></a>
+
+  
+<h2 id="addemptycol">AddEmptyColumn : <span class="func"> PROCEDURE (p_size NUMBER) </span> </h2>
+<p >create bootstrap div and set column size.</p>
+<pre class="brush: js;"> 
+
+	zsi_bs_lib.AddEmptyColumn(p_size=>12); 
+
+	result:
+	<div class="col-xs-12"></div>
+	
+</pre>
+
+<h2 id="button">Button : <span class="func"> PROCEDURE (p_Id  IN VARCHAR2, p_Name IN VARCHAR2, p_type IN VARCHAR2 DEFAULT NULL, p_onclick IN VARCHAR2 DEFAULT NULL, p_data_toggle IN VARCHAR2 DEFAULT NULL, p_data_target IN VARCHAR2 DEFAULT NULL ) </span> </h2>
+<p >create bootstrap composite-control button.</p>
+<pre class="brush: js;"> 
+
+sample1:
+
+	zsi_bs_lib.Button(p_Id=>'buttonid', p_Name=>'Click me here'); 
+	
+resust:
+	<button id="buttonid" class="btn btn-primary btn-sm"   >
+	Click me here
+	</button>
+
+
+sample2:
+
+	zsi_bs_lib.Button(p_Id=>'buttonid', p_Name=>'Click me here',p_type=>'submit'); 
+	
+resust:
+<button id="buttonid" class="btn btn-primary btn-sm" type="submit"   >
+Click me here
+</button>
+
+
+sample3:
+
+	zsi_bs_lib.Button(p_Id=>'buttonid', p_Name=>'Click me here',p_type=>'button',p_onclick=>'alert("hello")', p_data_toggle=>'toggle', p_data_target=>'target' ); 
+	
+resust:
+<button id="buttonid" class="btn btn-primary btn-sm" type="button" onclick="alert('hello')" data-toggle="toggle" data-target="target"   >
+	Click me here
+</button>
+	
+	
+</pre>
+
+<h2 id="buttondel">ButtonDelete : <span class="func"> PROCEDURE (p_Table IN VARCHAR2 DEFAULT NULL, p_Value  IN VARCHAR2 DEFAULT NULL) </span> </h2>
+<p >create bootstrap composite-control delete button.</p>
+<pre class="brush: js;"> 
+Sample:
+
+ zsi_bs_lib.ButtonDelete(p_table=>'employees',p_Value=>'123');
+ 
+ result:
+ <a id="delete-row" href="javascript:void(0);" table="employees" value="123"><span class="glyphicon glyphicon-trash"></span> </a>
+ 
+</pre>
+
+<h2 id="chargetype">ChargeType : <span class="func"> PROCEDURE (p_value IN  VARCHAR2 DEFAULT NULL, p_labelSize IN NUMBER DEFAULT NULL, p_SelectSize IN NUMBER DEFAULT NULL) </span> </h2>
+<p >create bootstrap composite-control select for charge type.</p>
+<pre class="brush: js;"> 
+sample:
+
+	zsi_bs_lib.ChargeType(p_value=>1 ,p_labelSize=> 3, p_SelectSize =>3);
+
+result:
+  <label class=" col-xs-3 control-label">Charge Type </label>
+  <div class=" col-xs-3">
+    <select name="p_ds_type" class="form-control input-sm">
+      <option></option>
+      <option value="0">FREE</option>
+      <option value="1" selected="">CHARGE</option>
+    </select>
+  </div>
+
+</pre>
+
+<h2 id="cmonths">CMonths : <span class="func"> PROCEDURE (p_field       IN  VARCHAR2,
+                      p_value       IN  VARCHAR2 DEFAULT NULL,
+                      p_attributes  IN  VARCHAR2 DEFAULT NULL,
+                      p_mandatory   IN  VARCHAR2 DEFAULT 'N',
+                      p_label_name  IN  VARCHAR2 DEFAULT NULL,
+                      p_label_size  IN  NUMBER   DEFAULT NULL,
+                      p_select_size IN  NUMBER DEFAULT NULL,
+                      p_Wrapper     IN VARCHAR2 DEFAULT 'Y'
+                      ) </span> </h2>
+<p >create bootstrap composite-control select for callendar control.</p>
+<pre class="brush: js;">
+sample:
+
+	zsi_bs_lib.cmonths(p_field=>'p_months');
+ 
+result:
+	<div class="col-xs-10">
+		<select class="form-control input-sm" id="p_months" name="p_months" >
+			<option value=""></option>
+			<option value="1" >January  </option>
+			<option value="2" >February </option>
+			<option value="3" >March    </option>
+			<option value="4" >April    </option>
+			<option value="5" >May      </option>
+			<option value="6" >June     </option>
+			<option value="7" >July     </option>
+			<option value="8" >August   </option>
+			<option value="9" >September</option>
+			<option value="10" >October  </option>
+			<option value="11" >November </option>
+			<option value="12" >December </option>
+		</SELECT>
+	</div>
+
+ 
+ </pre>
+
+<h2 id="geticon">GetIcon : <span class="func"> FUNCTION (p_Name IN  VARCHAR2) RETURN VARCHAR2 </span> </h2>
+<p >Returns bootstrap icon with name.</p>
+<pre class="brush: js;"> 
+sample:
+
+   htp.p('<button class="btn btn-primary">');
+   htp.p( zsi_bs_lib.GetIcon('save') || 'Save' );
+   htp.p('</button>');	
+
+result:
+
+	<button class="btn btn-primary">
+	<span class="glyphicon glyphicon-floppy-disk"></span> Save
+	</button>
+
+   
+</pre>
+
+<h2 id="inputhidb">InputHiddenBox : <span class="func"> PROCEDURE (p_inputName IN VARCHAR2, p_inputValue IN VARCHAR2 DEFAULT NULL) </span> </h2>
+<p >create bootstrap input hidden box</p>
+<pre class="brush: js;"> 
+sample:
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_emp_id');
+
+result:
+	<input type="hidden" id="p_emp_id" name="p_emp_id" value="">
+
+	
+</pre>
+
+<h2 id="inputtextb">InputTextBox : <span class="func"> PROCEDURE (p_labelName  IN VARCHAR2 DEFAULT NULL, p_inputName IN VARCHAR2, p_inputValue IN VARCHAR2 DEFAULT NULL,p_labelSize IN NUMBER DEFAULT NULL, p_inputSize IN NUMBER DEFAULT NULL,p_type IN VARCHAR2 DEFAULT NULL, p_placeholder IN VARCHAR2 DEFAULT NULL,p_inputclass IN VARCHAR2 DEFAULT NULL, p_attributes IN VARCHAR2 DEFAULT NULL, p_Wrapper IN VARCHAR2 DEFAULT 'Y') </span> </h2>
+<p >create bootstrap input textbox</p>
+<pre class="brush: js;"> 
+
+sample:
+   zsi_bs_lib.InputTextBox(p_labelName=>'Last Name', p_inputName=>'p_LastName',p_labelSize=>5 , p_inputSize=>7);
+
+result:
+  <label class=" col-xs-5 control-label" >Last Name</label>
+  <div class=" col-xs-7">
+    <input  type="text" class="form-control input-sm " id="p_LastName" name="p_LastName"    >
+  </div>
+  
+ 
+ 
+</pre>
+
+<h2 id="inputtextba">InputTextBoxArea : <span class="func"> PROCEDURE (p_labelName  IN VARCHAR2, p_inputName IN VARCHAR2, p_inputValue IN VARCHAR2 DEFAULT NULL, p_labelSize IN NUMBER DEFAULT NULL, p_inputSize IN NUMBER DEFAULT NULL,p_RowSize IN NUMBER DEFAULT NULL, p_attributes IN VARCHAR2 DEFAULT NULL) </span> </h2>
+<p >create bootstrap textbox area</p>
+<pre class="brush: js;"> 
+
+sample:
+   zsi_bs_lib.InputTextBoxArea(p_labelName=>'Address', p_inputName=>'p_address',p_labelSize=>2 , p_inputSize=>10);
+
+result:
+  <label  class=" col-xs-2 control-label" >Address</label>
+  <div class="col-xs-10">
+    <textarea class="form-control input-sm" id="p_address" name="p_address"  ></textarea>
+  </div>
+</pre>
+    
+<h2 id="inputidname">InputIdName : <span class="func"> PROCEDURE (p_labelSize IN NUMBER DEFAULT NULL) </span> </h2>
+<p >create composite-control for Id and Name</p>
+<pre class="brush: js;"> 
+
+sample 1:
+   zsi_bs_lib.InputIdName;
+
+result:
+&lt;label class=&quot;col-xs-1 control-label&quot; for=&quot;p_empl_id_no&quot;&gt;Id No&lt;/label&gt;
+&lt;div class=&quot;col-xs-4&quot;&gt;
+   &lt;div class=&quot;col-xs-3&quot;&gt;
+      &lt;input type=&quot;text&quot; class=&quot;form-control input-xs col-xs-2 LeftAdjust-m5&quot; id=&quot;p_empl_id_no&quot; name=&quot;p_empl_id_no&quot; autocomplete=&quot;off&quot; placeholder=&quot;Id&quot; &gt;
+   &lt;/div&gt;
+   &lt;div class=&quot;col-xs-9&quot;&gt;
+      &lt;input type=&quot;text&quot; class=&quot;form-control input-xs col-xs-2 LeftAdjust-m9&quot; id=&quot;p_empl_name&quot; name=&quot;p_empl_name&quot; placeholder=&quot;Name&quot; autocomplete=&quot;off&quot;&gt;
+   &lt;/div&gt; 
+&lt;/div&gt;  
+
+
+sample 2:
+   zsi_bs_lib.InputIdName(p_labelSize=>2);
+
+result:
+&lt;label class=&quot;col-xs-2 control-label&quot; for=&quot;p_empl_id_no&quot;&gt;Id No&lt;/label&gt;
+&lt;div class=&quot;col-xs-4&quot;&gt;
+   &lt;div class=&quot;col-xs-3&quot;&gt;
+      &lt;input type=&quot;text&quot; class=&quot;form-control input-xs col-xs-2 LeftAdjust-m5&quot; id=&quot;p_empl_id_no&quot; name=&quot;p_empl_id_no&quot; autocomplete=&quot;off&quot; placeholder=&quot;Id&quot; &gt;
+   &lt;/div&gt;
+   &lt;div class=&quot;col-xs-9&quot;&gt;
+      &lt;input type=&quot;text&quot; class=&quot;form-control input-xs col-xs-2 LeftAdjust-m9&quot; id=&quot;p_empl_name&quot; name=&quot;p_empl_name&quot; placeholder=&quot;Name&quot; autocomplete=&quot;off&quot;&gt;
+   &lt;/div&gt; 
+&lt;/div&gt;  
+
+    
+</pre>
+    
+<h2 id="label">Label : <span class="func"> PROCEDURE (p_Value IN VARCHAR2,p_Size IN NUMBER DEFAULT NULL, p_attributes IN VARCHAR2 DEFAULT NULL) </span> </h2>
+<p >create bootstrap label</p>
+<pre class="brush: js;"> 
+sample:
+   zsi_bs_lib.Label(p_Value=>'First Name', p_Size=>10);
+
+result:
+	<label class=" col-xs-10 control-label" >First Name</label>  
+
+	
+</pre>
+
+<h2 id="offset">Offset : <span class="func"> PROCEDURE (p_Size  IN NUMBER) </span> </h2>
+<p >create bootstrap div offset</p>
+<pre class="brush: js;">
+
+sample:
+   zsi_bs_lib.Offset(p_Size=>5);
+
+result:
+	<div class="col-xs-5"></div>
+
+
+	</pre>
+
+<h2 id="opend">OpenDiv : <span class="func"> PROCEDURE (p_class VARCHAR2 DEFAULT NULL) </span> </h2>
+<p >create bootstrap div open</p>
+<pre class="brush: js;"> 
+
+
+sample:
+   zsi_bs_lib.OpenDiv;
+   zsi_bs_lib.OpenDiv(p_class=>'xl');
+   
+result:
+	&lt;div &gt;
+	&lt;div  class=&quot;xl&quot;&gt;
+	
+
+</pre>
+<h2 id="closed">CloseDiv : <span class="func"> PROCEDURE () </span> </h2>
+<p >create bootstrap div close</p>
+<pre class="brush: js;">
+
+sample:
+   zsi_bs_lib.CloseDiv;
+
+result:
+	&lt;/div &gt;
+   
+ </pre>
+
+<h2 id="opencloseef">OpenEntryForm / CloseEntryForm : <span class="func"> PROCEDURE () </span> </h2>
+<p >create bootstrap composite-control form.</p>
+<pre class="brush: js;"> 
+sample:
+   zsi_bs_lib.OpenEntryForm;   
+   
+      zsi_bs_lib.InputTextBox(p_labelName=>'Last Name', p_inputName=>'p_LastName',p_labelSize=>5 , p_inputSize=>7);   
+   
+   zsi_bs_lib.CloseEntryForm;
+   
+
+result:
+	<div class="container-fluid">
+	<div class="form-horizontal">
+	  <label class=" col-xs-5 control-label" >Last Name</label>
+	  <div class=" col-xs-7">
+		<input  type="text" class="form-control input-sm " id="p_LastName" name="p_LastName"    >
+	  </div>
+	</div>
+	</div>
+
+
+	
+</pre>
+
+<h2 id="openfg">OpenFormGroup : <span class="func"> PROCEDURE (p_additional_class IN VARCHAR2 DEFAULT NULL) </span> </h2>
+<p >create bootstrap composite-control open form-group.</p>
+
+<h2 id="closefg">CloseFormGroup : <span class="func"> PROCEDURE () </span> </h2>
+<p >create bootstrap composite-control  close form-group.</p>
+<pre class="brush: js;"> 
+Sample:
+   zsi_bs_lib.OpenFormGroup; 
+      zsi_bs_lib.InputTextBox(p_labelName=>'First Name', p_inputName=>'p_FirstName',p_labelSize=>2 , p_inputSize=>10);      
+   zsi_bs_lib.CloseFormGroup;
+
+
+   zsi_bs_lib.OpenFormGroup(p_additional_class=>'mynewclass');
+      zsi_bs_lib.InputTextBox(p_labelName=>'Last Name', p_inputName=>'p_LastName',p_labelSize=>2 , p_inputSize=>10);      
+   zsi_bs_lib.CloseFormGroup;
+   
+result:
+
+	<div class="form-group">
+	  <label class=" col-xs-2 control-label" >First Name</label>
+	  <div class=" col-xs-10">
+		<input  type="text" class="form-control input-sm " id="p_FirstName" name="p_FirstName"    >
+	  </div>
+	</div>
+	<div class="form-group mynewclass"">
+	  <label class=" col-xs-2 control-label" >Last Name</label>
+	  <div class=" col-xs-10">
+		<input  type="text" class="form-control input-sm " id="p_LastName" name="p_LastName"    >
+	  </div>
+	</div>
+
+	
+</pre>
+
+
+
+<h2 id="openmw">OpenModalWindow : <span class="func"> PROCEDURE (p_modalId IN VARCHAR2,p_title IN VARCHAR2,p_formId IN VARCHAR2,p_actionName IN VARCHAR2, p_method IN VARCHAR2 DEFAULT 'GET') </span> </h2>
+<p >create bootstrap composite-control open modal-window.</p>
+<h2 id="closemw">CloseModalWindow : <span class="func"> PROCEDURE (p_buttonType IN VARCHAR2,p_buttonName IN VARCHAR2,p_btn_attributes IN VARCHAR2 DEFAULT NULL) </span> </h2>
+<p >create bootstrap composite-control close modal-window.</p>
+<pre class="brush: js;"> 
+
+sample:
+
+	zsi_bs_lib.openModalWindow(p_modalId=>'modalWindow',p_title=>'Employee Search',p_formId=>'employees_frm',p_actionName=>'employees_list');
+		zsi_bs_lib.OpenEntryForm();
+		   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_id_no',p_inputValue=>123);
+		   
+			zsi_bs_lib.OpenFormGroup();
+			   zsi_bs_lib.InputTextBox(p_labelName =>'Tran No',p_inputName=>'p_tran_no', p_inputValue=>'',p_labelSize =>3, p_inputSize =>4);
+			zsi_bs_lib.CloseFormGroup();
+
+			zsi_bs_lib.OpenFormGroup();
+			   zsi_bs_lib.InputTextBox(p_labelName =>'Tran Date',p_inputName=>'p_tran_date', p_inputValue=>'',p_labelSize =>3, p_inputSize =>4);
+			zsi_bs_lib.CloseFormGroup();
+			
+		zsi_bs_lib.CloseEntryForm();
+
+	zsi_bs_lib.closeModalWindow('button','Search',p_btn_attributes=>'onclick="LoadData();"' );
+
+result:
+	<div class="modal fade" id="modalWindow" tabindex="-1" role="dialog" aria-labelledby="ModalTitle" aria-hidden="true">
+	  <div class="modal-dialog">
+		<div class="modal-content">
+		  <div class="modal-header">
+			<a class="close" data-dismiss="modal">&times;</a>
+			 <h4 class="modal-title" id="ModalTitle">Employee Search</h4>
+		  </div>
+		  <form id="employees_frm" class="form-horizontal" method="GET" action="employees_list" >
+		  <div class="modal-body">
+	<div class="container-fluid">
+	<div class="form-horizontal">
+	<input type="hidden" id="p_id_no" name="p_id_no" value="123">
+	<div class="form-group">
+	  <label class=" col-xs-3 control-label" >Tran No</label>
+	  <div class=" col-xs-4">
+		<input  type="text" class="form-control input-sm " id="p_tran_no" name="p_tran_no"    >
+	  </div>
+	</div>
+	<div class="form-group">
+	  <label class=" col-xs-3 control-label" >Tran Date</label>
+	  <div class=" col-xs-4">
+		<input  type="text" class="form-control input-sm " id="p_tran_date" name="p_tran_date"    >
+	  </div>
+	</div>
+	</div>
+	</div>
+		  </div>
+		  <div class="modal-footer">
+			 <button type="button" class="btn btn-primary btn-sm"  onclick="LoadData();" id="btnSearch" ><span class="glyphicon glyphicon-search"></span> Search</button>
+			 <button type="button" class="btn btn-default btn-sm" data-dismiss="modal"><span class="glyphicon glyphicon-off"></span> Close</button>
+		  </div>
+		  </form>
+		</div>
+	  </div>
+	</div>
+	
+	
+	
+</pre>
+
+
+<h2 id="openp">OpenPanel : <span class="func"> PROCEDURE (p_title VARCHAR2) </span> </h2>
+<p >create bootstrap composite-control open-panel.</p>
+<h2 id="closep">ClosePanel : <span class="func"> PROCEDURE () </span> </h2>
+<p >create html div for close-panel.</p>
+<pre class="brush: js;"> 
+
+Sample:
+   zsi_bs_lib.OpenPanel(p_title=>'New Item'); 
+   
+		zsi_bs_lib.OpenFormGroup();
+		   zsi_bs_lib.InputTextBox(p_labelName =>'Description',p_inputName=>'p_desc', p_labelSize =>2, p_inputSize =>10);
+		zsi_bs_lib.CloseFormGroup();			
+
+   zsi_bs_lib.ClosePanel;
+
+result:
+	<div class="panel panel-default">
+	
+		<div class="panel-heading">
+			<h4 class="panel-title">New Item</h4>
+		</div>
+		
+		<div class="panel-body form-horizontal">
+			<div class="form-group">
+				<label class=" col-xs-2 control-label" >Description</label>
+				<div class=" col-xs-10">
+					<input  type="text" class="form-control input-sm " id="p_desc" name="p_desc"    >
+				</div>
+			</div>
+		</div>
+	
+	
+	</div>   
+
+	
+	
+
+</pre>
+
+
+<h2 id="opent">OpenTag : <span class="func"> PROCEDURE (p_TagName  IN VARCHAR2 DEFAULT NULL, p_attributes IN VARCHAR2 DEFAULT NULL) </span> </h2>
+<p >create bootstrap composite-control open-tag.</p>
+<h2 id="closet">CloseTag : <span class="func"> PROCEDURE (p_TagName  IN VARCHAR2 DEFAULT NULL) </span> </h2>
+<p >create html div for close-tag.</p>
+<pre class="brush: js;"> 
+
+Sample:
+   zsi_bs_lib.OpenTag(p_TagName=>'div',p_attributes=>'class=''newclass'' style=''background-color:blue'' ');
+      htp.p('Hello world');   
+   zsi_bs_lib.CloseTag(p_TagName=>'div');
+   
+
+result:
+	<div class='newclass' style='background-color:blue' >
+	Hello world
+	</div>
+   
+</pre>
+
+
+<h2 id="selectb">SelectBox : <span class="func"> PROCEDURE (p_labelName  IN VARCHAR2 DEFAULT NULL, p_Name IN VARCHAR2, p_labelSize IN NUMBER DEFAULT NULL, p_selectSize IN NUMBER DEFAULT NULL, p_attributes IN VARCHAR2 DEFAULT NULL, p_Wrapper IN VARCHAR2 DEFAULT 'Y' ) </span> </h2>
+<p >create bootstrap composite-control select-box.</p>
+<pre class="brush: js;">
+
+sample:
+
+	zsi_bs_lib.SelectBox(p_labelName=>'Item Types', p_Name=>'p_types', p_labelSize=>2, p_selectSize=>10);
+
+result:
+	
+	<label class=" col-xs-2 control-label" >Item Types</label>
+	<div class=" col-xs-10">
+		<select  class="form-control input-sm" id="p_types" name="p_types"  ></select>
+	</div>
+  
+ </pre>
+
+<h2 id="showpctrl">ShowPagingCTRL : <span class="func"> PROCEDURE () </span> </h2>
+<p >create bootstrap composite-control paging.</p>
+<pre class="brush: js;"> 
+
+sample:
+   zsi_bs_lib.ShowPagingCtrl;
+
+result:
+	<div class="pageholder">
+	   <div class="pagectrl">
+		  <label id="page">Page </label>
+		  <select onchange="gotoPage(this)" id="p_page_no" name="p_page_no"> </select>
+		  <label id="of"> </label>
+	   </div>
+	   <div class="pagestatus"></div>
+	</div>
+
+
+
+</pre>
+
+<h2 id="sysg">SysGroup : <span class="func"> PROCEDURE (p_value IN  VARCHAR2 DEFAULT NULL,p_labelSize IN NUMBER DEFAULT NULL, p_SelectSize IN NUMBER DEFAULT NULL) </span> </h2>
+<p >create bootstrap composite-control selectbox for system group.</p>
+<pre class="brush: js;"> 
+
+sample:
+         zsi_bs_lib.SysGroup(p_labelSize=>3, p_SelectSize=>3,p_value=>2);
+result:
+  <label class=" col-xs-3 control-label" >System Group </label>
+  <div class=" col-xs-3">
+    <SELECT name="p_sysgroup" class="form-control input-sm" >
+      <OPTION></OPTION>
+      <OPTION value="1"  >Medical Clinic</OPTION>
+      <OPTION value="2" selected >Training</OPTION>
+      <OPTION value="3"  >HR Policy</OPTION>
+      <OPTION value="4"  >Employee Relations</OPTION>
+    </SELECT>
+  </div>
+  
+
+</pre>
+
+<h2 id="yn">YesNo : <span class="func"> FUNCTION (p_field      IN  VARCHAR2,
+                   p_value      IN  VARCHAR2 DEFAULT NULL,
+                   p_attributes IN  VARCHAR2 DEFAULT NULL,
+                   p_mandatory  IN  VARCHAR2 DEFAULT 'N',
+                   p_label_name  IN  VARCHAR2 DEFAULT NULL,
+                   p_label_size   IN  NUMBER   DEFAULT NULL,
+                   p_select_size IN  NUMBER DEFAULT NULL
+
+      ) RETURN VARCHAR2 </span> </h2>
+<p >create bootstrap composite-control for select "yes/no".</p>
+<pre class="brush: js;"> 
+
+sample:
+	htp.p( zsi_bs_lib.YesNo(p_field=>'is_admin',p_value=>1) );
+
+result:
+	<div class="form-group">
+		<div class="col-xs-10">
+			<select class="form-control input-sm" id="p_is_admin" name="p_is_admin" >
+				<option value=""></option>
+				<option value="1" selected>Yes</option>
+				<option value="0">No</option>
+			</SELECT>
+		</div>
+	</div>
+</pre>
+
+<h2 >YesNo : <span class="func"> PROCEDURE (p_field      IN  VARCHAR2,
+                   p_value      IN  VARCHAR2 DEFAULT NULL,
+                   p_attributes IN  VARCHAR2 DEFAULT NULL,
+                   p_mandatory  IN  VARCHAR2 DEFAULT 'N',
+                   p_label_name  IN  VARCHAR2 DEFAULT NULL,
+                   p_label_size   IN  NUMBER   DEFAULT NULL,
+                   p_select_size IN  NUMBER DEFAULT NULL,
+                   p_Wrapper IN VARCHAR2 DEFAULT 'Y'
+      ) </span> </h2>
+<p >create bootstrap composite-control for select "yes/no"</p>
+<pre class="brush: js;"> 
+
+sample:
+	zsi_bs_lib.YesNo(p_label_name=>'Is Admin?',p_field=>'is_admin',p_value=>1,p_label_size =>2,p_select_size =>10);
+
+		  
+result:
+<label class=" col-xs-2 control-label" >Is Admin?</label>
+<div class="col-xs-10">
+<select class="form-control input-sm" id="p_is_admin" name="p_is_admin" >
+<option value=""></option>
+<option value="1" selected>Yes</option>
+<option value="0">No</option>
+</SELECT>
+</div>
+
+
+
+
+</pre>
+ 
+</body>
+</html>

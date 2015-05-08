@@ -1,0 +1,251 @@
+<%@ plsql procedure="medacquired_clinic_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_id_no"       type="NUMBER" default="NULL"   %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   10-MAR-15  GT    Implemented autocomplete on p_medicine, p_treatment_desc
+   09-SEP-14  BD    Added security logic.
+   01-AUG-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_emp_rec               employee_v%ROWTYPE;
+   l_rec                   medicine_acquired_v%ROWTYPE;
+   l_tran_no               medicine_acquired_v.tran_no%TYPE := '';
+   l_tran_date             VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_id_no                 medicine_acquired_v.id_no%TYPE := '';
+   l_empl_type             medicine_acquired_v.empl_type%TYPE := '';
+   l_cost_center           medicine_acquired_v.cost_center%TYPE := '';
+   l_department            medicine_acquired_v.department%TYPE := '';
+   l_group_code            medicine_acquired_v.group_code%TYPE := '';
+   l_meds_code             medicine_acquired_v.meds_code%TYPE := '';
+   l_medicine              medicine_acquired_v.medicine%TYPE := '';
+   l_treatment_for         medicine_acquired_v.treatment_for%TYPE := '';
+   l_treatment_desc        medicine_acquired_v.treatment_desc%TYPE := '';
+   l_meds_qty              medicine_acquired_v.meds_qty%TYPE := 0;
+   l_post_status           medicine_acquired_v.post_status%TYPE := 0;
+   l_post_date             VARCHAR(20);
+   l_empl_name             medicine_acquired_v.empl_name%TYPE := '';
+   l_emp_type              medicine_acquired_v.emp_type%TYPE := '';
+   l_dept_desc             medicine_acquired_v.dept_desc%TYPE := '';
+   l_group_desc            medicine_acquired_v.group_desc%TYPE := '';
+   l_cc_desc               medicine_acquired_v.cc_desc%TYPE := '';
+   l_job_desc              medicine_acquired_v.job_desc%TYPE := '';
+   l_age_brak_code         medicine_acquired_v.age_brak_code%TYPE := '';
+   l_user_iswrite       NUMBER(1):=0;
+
+%>
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   IF p_tran_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM medicine_acquired_v WHERE tran_no = p_tran_no;
+      l_tran_no              :=l_rec.tran_no;
+      l_tran_date            :=TO_CHAR(l_rec.tran_date, l_date_format);
+      l_id_no                :=l_rec.id_no;
+      l_empl_type            :=l_rec.empl_type;
+      l_cost_center          :=l_rec.cost_center;
+      l_department           :=l_rec.department;
+      l_group_code           :=l_rec.group_code;
+      l_meds_code            :=l_rec.meds_code;
+      l_medicine             :=l_rec.medicine;
+      l_treatment_for        :=l_rec.treatment_for;
+      l_treatment_desc       :=l_rec.treatment_desc;
+      l_meds_qty             :=l_rec.meds_qty;
+      l_post_status          :=l_rec.post_status;
+      l_post_date            :=TO_CHAR(l_rec.post_date, l_date_format);
+      l_empl_name             :=l_rec.empl_name;
+      l_emp_type             :=l_rec.emp_type;
+      l_dept_desc            :=l_rec.dept_desc;
+      l_group_desc           :=l_rec.group_desc;
+      l_cc_desc              :=l_rec.cc_desc;
+      l_job_desc             :=l_rec.job_desc;
+      l_age_brak_code        :=l_rec.age_brak_code;
+   ELSE
+      SELECT * INTO l_emp_rec FROM employee_v WHERE empl_id_no = p_id_no;
+      l_empl_type             :=l_emp_rec.empl_type;
+      l_cost_center           :=l_emp_rec.empl_group_code;
+      l_department            :=l_emp_rec.department;
+      l_group_code            :=l_emp_rec.group_code;
+      l_age_brak_code         :=l_emp_rec.age_brak_code;
+   END IF;
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<form id="frmList" name="frmList">
+<%
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no',p_inputValue=>p_tran_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_id_no',p_inputValue=>p_id_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_type',p_inputValue=>l_empl_type);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_cost_center',p_inputValue=>l_cost_center);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_department',p_inputValue=>l_department);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_group_code',p_inputValue=>l_group_code);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_age_brak_code',p_inputValue=>l_age_brak_code);
+
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Date',p_inputName=>'p_tran_date',p_inputValue=>l_tran_date,p_labelSize =>4, p_inputSize =>1, p_attributes=>'style="width: 110px;"');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+     zsi_bs_lib.InputTextBox(p_labelName =>'Medicine',p_inputName=>'p_medicine',p_inputValue=>l_medicine, p_labelSize =>4, p_inputSize =>4);
+     zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_code',p_inputValue=>l_meds_code);
+   zsi_bs_lib.CloseFormGroup();
+
+    zsi_bs_lib.OpenFormGroup();
+     zsi_bs_lib.InputTextBox(p_labelName =>'Qty',p_inputName=>'p_meds_qty',p_inputValue=>l_meds_qty, p_labelSize =>4, p_inputSize =>1);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+     zsi_bs_lib.InputTextBox(p_labelName =>'Treatment For',p_inputName=>'p_treatment_desc',p_inputValue=>l_treatment_desc, p_labelSize =>4, p_inputSize =>4);
+     zsi_bs_lib.InputHiddenBox(p_inputName=>'p_treatment_for',p_inputValue=>l_treatment_for);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.YesNo(p_label_name=>'Is Posted?',p_field=>'post_status',p_value=>l_post_status,p_label_size =>4,p_select_size =>1);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.CloseEntryForm;
+
+%>
+</form>
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_post_status = 0 AND l_user_iswrite = 1 THEN
+      zsi_bs_lib.Offset(4);
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript">
+
+   $("form[name=frmList]").submit(function(){
+      var ischeckDate = false;
+      if( zsi.form.checkMandatory()!=true) return false;
+      
+      ischeckDate = zsi.form.checkDate(
+            [   
+               "p_tran_date"
+            ]
+            ,
+            [
+               "Transaction Date"
+            ]
+      );
+
+      return ischeckDate;
+      
+   }); 
+
+
+   //on page loaded
+   $(document).ready(function(){
+      
+       zsi.form.markMandatory({       
+         "groupNames":[ 
+               {"names" :  
+                     [  
+                      "p_tran_date"  
+                     ,"p_meds_code"
+                     ,"p_meds_qty"
+                     ,"p_treatment_for"
+                     ]
+               ,"type":"S"
+               }             
+         ]      
+         ,"groupTitles":[ 
+               {"titles" :  
+                     [                       
+                      "Transaction Date"
+                     ,"Medicine"
+                     ,"Acquired Qty"
+                     ,"Treatment For"
+                     ]
+               }
+
+         ]
+      });
+
+     $(".loadingStatus").css("display","none");
+     
+           new zsi.search({
+            column_names : ["Medicine", "Code"] 
+           ,column_indexes : [1,0] 
+           ,input:"input[name=p_medicine]"
+           ,url :"medicine_search_json"
+           ,parameter: "p_medicine"
+           ,onSelectedItem: 
+              function(currentObject,data,i){            
+                 currentObject.value=data[1];
+                 var td = currentObject.parentNode;
+                 $("input[name=p_meds_code]").val(data[0]);          
+              }
+      });  
+
+           new zsi.search({
+            column_names : ["Treatment For", "Code"] 
+           ,column_indexes : [1,0] 
+           ,input:"input[name=p_treatment_desc]"
+           ,url :"treatment_for_search_json"
+           ,parameter: "p_treatment_desc"
+           ,onSelectedItem: 
+              function(currentObject,data,i){            
+                 currentObject.value=data[1];
+                 var td = currentObject.parentNode;
+                 $("input[name=p_treatment_for]").val(data[0]);          
+              }
+      });  
+
+   });
+    
+ 
+   $("#p_meds_qty").keypress(function(event){
+      return zsi.form.checkNumber(event,'.,');
+   });
+
+    $("#p_meds_qty").blur(function(){
+        var obj= this;
+        zsi.form.checkNumberFormat(this);
+
+   });
+   
+$("#btnSubmit").click(function(){
+   $.ajax({
+      type:"POST"
+      ,url:"medacquired_clinic_update"
+      ,data:$("#frmList").serialize()
+      ,success: function(res){        
+       parent.parent.parent.HomeWindow.LoadData("?p_id_no=<%=p_id_no %>");
+       parent.LoadData("?p_id_no=<%=p_id_no %>");
+       parent.w1.close();
+      }
+   });
+   
+});     
+</script>
+<script type="text/javascript" src="zsi_employee_js"></script>
+
+</body>
+</html>
+

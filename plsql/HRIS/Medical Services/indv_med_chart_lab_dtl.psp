@@ -1,0 +1,99 @@
+<%@ plsql procedure="indv_med_chart_lab_dtl" %>
+<%@ plsql parameter="p_ldgr_no" type="NUMBER" default="NULL"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   25-JAN-15  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_prev_type                  NUMBER:=0;
+   l_prev_group                 NUMBER:=0;
+   
+   CURSOR lab_cur IS
+   SELECT * 
+     FROM S004_T08010_RESULTS_V
+    WHERE ldgr_no = p_ldgr_no
+    ORDER BY result_type, exam_group, exam_code;
+%>
+<%
+   pageheader(p_dgrid=>'Y');
+%>
+ 
+<table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="650px" id="gridbox1">
+   <tr valign="bottom">
+      <th nowrap align="left" width="200px">Result Type</th>
+      <th nowrap align="left" width="250px">Group</th>
+      <th nowrap align="left" width="250px">Exam</th>
+      <th nowrap align="center" width="250px">Normal Range</th>
+      <th nowrap align="center" width="250px">Result</th>
+   </tr>
+<%
+   l_dhtmlx_sort := 'str,str,str,int,str,na';
+   FOR i IN lab_cur LOOP
+%> 
+   <tr valign="bottom">
+<%   
+   IF l_prev_type <> i.result_type THEN
+      l_prev_type := i.result_type;
+%>
+      <td><%= i.result_desc %></td>
+<%   
+   ELSE
+%>
+      <td></td>
+<%   
+   END IF;
+   
+   IF l_prev_group <> i.exam_group THEN
+      l_prev_group := i.exam_group;
+%>         
+      <td><%= i.group_desc %></td>
+<%   
+   ELSE
+%>
+      <td></td>
+<%   
+   END IF;
+%>      
+      <td><%= i.exam_desc %></td>
+      <td><%= i.normal_range %></td>
+      <td><%= i.result %></td>
+   </tr>
+<%
+   END LOOP;
+%>
+</table>
+
+<script type="text/javascript">
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+
+</script>
+
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

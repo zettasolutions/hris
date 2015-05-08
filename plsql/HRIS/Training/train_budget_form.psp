@@ -1,0 +1,241 @@
+<%@ plsql procedure="train_budget_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"     type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   20-OCT-14  GT    Modified
+   13-OCT-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_rec                   TrainingBudget_V%ROWTYPE;
+   l_tran_no               TrainingBudget_V.tran_no%TYPE := '';
+   l_tran_year             TrainingBudget_V.tran_year%TYPE := '';
+   l_id_no                 TrainingBudget_V.id_no%TYPE := '';
+   l_budget_type           TrainingBudget_V.budget_type%TYPE := '';
+   l_conv_code             TrainingBudget_V.conv_code%TYPE := '';
+   l_emp_name              TrainingBudget_V.emp_name%TYPE := '';
+   l_emp_type              TrainingBudget_V.emp_type%TYPE := '';
+   l_dept_desc             TrainingBudget_V.dept_desc%TYPE := '';
+   l_budget_amt            TrainingBudget_V.budget_amt%TYPE := '';
+   l_remarks               TrainingBudget_V.remarks%TYPE := '';
+   l_budget_type_desc      TrainingBudget_V.budget_type_desc%TYPE :='';
+  l_user_iswrite       NUMBER(1):=0;
+
+%>
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+
+   l_budget_type_desc   :='Seminar';
+   l_budget_type        :='S';
+
+   IF p_tran_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM TrainingBudget_V WHERE tran_no = p_tran_no;
+      l_tran_no              :=l_rec.tran_no;
+      l_tran_year            :=l_rec.tran_year;
+      l_id_no                :=l_rec.id_no;
+      l_dept_desc            :=l_rec.dept_desc;
+      l_budget_type          :=l_rec.budget_type;
+      l_conv_code            :=l_rec.conv_code;
+      l_emp_name             :=l_rec.emp_name;
+      l_emp_type             :=l_rec.emp_type;
+      l_remarks              :=l_rec.remarks;
+      l_budget_type_desc     :=l_rec.budget_type_desc;
+   
+   END IF;
+   
+   
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<form name="frmList" action="train_budget_update" method="POST" >
+<%
+  if l_tran_year IS NULL THEN
+     l_tran_year := EXTRACT(YEAR FROM SYSDATE);
+  end if;
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no',p_inputValue=>l_tran_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_budget_type',p_inputValue=>l_budget_type);
+   
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Budget Year',p_inputName=>'p_tran_year',p_inputValue=>l_tran_year,p_labelSize =>2, p_inputSize =>1, p_attributes=>'style="width: 110px;"');
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputIdName(p_labelSize=>2);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Employee Type',p_inputName=>'p_empl_type_desc',p_inputValue=>l_emp_type, p_labelSize =>2, p_inputSize =>4, p_attributes=>' disabled');
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Department',p_inputName=>'p_empl_dept_desc',p_inputValue=>l_dept_desc, p_labelSize =>2, p_inputSize =>4, p_attributes=>'disabled');
+      zsi_bs_lib.CloseFormGroup();
+
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Budget Type',p_inputName=>'p_budget_type_desc',p_inputValue=>l_budget_type_desc, p_labelSize =>2, p_inputSize =>4, p_attributes=>'disabled');
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.SelectBox(p_labelName=>'Convention', p_Name=>'p_conv_code', p_labelSize=>2, p_selectSize=>4);
+      zsi_bs_lib.CloseFormGroup();
+      
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Budget Amount',p_inputName=>'p_budget_amt',p_inputValue=>l_budget_amt, p_labelSize =>2, p_inputSize =>2);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+          zsi_bs_lib.InputTextBoxArea(p_labelName =>'Remarks',p_inputName=>'p_remarks',p_labelSize =>2, p_inputValue=>l_remarks, p_inputSize =>8, p_attributes=>'rows="2"');
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.CloseEntryForm;
+
+%>
+
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Offset(2);
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+      </div>
+
+</form>
+
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript" src="zsi_employee_js"></script>
+<script type="text/javascript">
+
+
+function displayInfo(data){
+   $("#p_empl_type_desc").val(data[46]);
+   $("#p_empl_dept_desc").val(data[48]);   
+}
+
+   $("form[name=frmList]").submit(function(){
+      var ischeckDate = false;
+      if( zsi.form.checkMandatory()!=true) return false;
+   }); 
+                      
+   //on page loaded
+   $(document).ready(function(){
+      
+      
+      $("#p_empl_id_no").focus();
+      new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_id_no]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_id_no"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[0];
+            var td = currentObject.parentNode;
+            $("#p_empl_name").val(unescape(data[43]));             
+            displayInfo(data);
+         }
+      });    
+      
+     new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_name]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_name"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[43];
+             var td = currentObject.parentNode;
+             $("#p_empl_id_no").val(data[0]);
+             displayInfo(data);
+         }
+      });
+      
+  
+      //mandatory    
+      zsi.form.markMandatory({       
+         "groupNames":[ 
+               {"names" :  [  
+                            "p_tran_year"
+                           ,"p_empl_id_no"
+                           ,"p_budget_amt"
+                           ]
+               ,  "type":"S"
+               }             
+         ]      
+         ,"groupTitles":[          
+               {"titles" :  
+                           [                       
+                            "Transaction Year"
+                           ,"Employee ID#"
+                           ,"Budget Amount"
+                           ]
+               }
+
+         ]
+      });
+
+      ctrlSel("#p_conv_code","<%=l_conv_code%>","N","S004_T07010","conv_code","conv_desc","ORDER BY conv_desc");
+      
+   });//end document ready
+   
+   
+
+    $("#p_budget_amt").keypress(function(event){
+
+       return zsi.form.checkNumber(event,'.,');
+
+
+    });
+
+    $("#p_budget_amt").blur(function(){
+          var obj= this;
+        zsi.form.checkNumberFormat(this);
+
+   });
+   
+   
+   $("#p_conv_code").on('change blur', function() {
+   
+      if(this.value){
+         $("#p_budget_type_desc").val("Convention");           
+         $("#p_budget_type").val("C");
+      }
+      else{
+         $("#p_budget_type_desc").val("Seminar");
+         $("#p_budget_type").val("S");         
+      }
+      
+   
+   });
+      
+   
+
+</script>
+
+
+</body>
+</html>
+

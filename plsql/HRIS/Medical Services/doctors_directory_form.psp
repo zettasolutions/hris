@@ -1,0 +1,139 @@
+<%@ plsql procedure="doctors_directory_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_dd_code"     type="VARCHAR2" DEFAULT='NULL'%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-SEP-14  BD    Added security logic.
+   30-JUL-14  RN    New.
+*/
+
+   --DECLARATION SECTION
+   l_style_path     VARCHAR2(128) := zsi_lib.StylePath;
+   l_js_path        VARCHAR2(128) := zsi_lib.JSPath;
+   l_frmOffset      VARCHAR2(50):='';
+
+   l_rec  S004_T08006%ROWTYPE;
+   l_user_iswrite       NUMBER(1):=0;
+%>
+
+<%
+  pageheader(p_dgrid=>'Y');
+%>
+<body>
+<form name="frmDSList" action="doctors_directory_update" method="POST" >
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_dd_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_dd_name');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_dd_specialty');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_dd_contact_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_dd_remarks');
+
+
+   IF p_dd_code IS NOT NULL THEN
+      SELECT * INTO l_rec FROM S004_T08006 WHERE doctor_code = p_dd_code;
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_dd_code',p_inputValue=>l_rec.doctor_code);
+
+   zsi_bs_lib.OpenEntryForm;
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Name',p_inputName=>'p_dd_name',p_labelSize =>3, p_inputSize =>9,p_inputValue=>UPPER(l_rec.doctor_name));
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.SelectBox(p_labelName=>'Specialty', p_Name=>'p_dd_specialty', p_labelSize=>3, p_selectSize=>9);
+      zsi_bs_lib.CloseFormGroup();
+
+
+       zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Contact No.',p_inputName=>'p_dd_contact_no',p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.contact_no);
+      zsi_bs_lib.CloseFormGroup();
+
+       zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Remarks',p_inputName=>'p_dd_remarks',p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.remarks);
+      zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.CloseEntryForm;
+   l_frmOffset:='col-xs-offset-3';
+
+   ELSE
+%>
+   <table class="table">
+      <tr valign="bottom">
+         <th nowrap align="left">Name</th>
+         <th nowrap align="left">Specialty</th>
+         <th nowrap align="right">Contact No.</th>
+         <th>Remarks</th>
+      </tr>
+<%
+      FOR i IN 1..5 LOOP
+%>
+         <tr valign="bottom">
+
+            <td><input type="hidden" name="p_dd_code" value="">
+               <input type="text" name="p_dd_name" value="" class="form-control input-sm">
+            </td>
+            <td><select id="p_dd_specialty" name="p_dd_specialty" class="form-control"></select></td>
+            <td><input type="text" name="p_dd_contact_no" value="" class="form-control input-sm"></td>
+            <td><input type="text" name="p_dd_remarks" value="" class="form-control input-sm"></td>
+         </tr>
+<%
+      END LOOP;
+%>
+      </table>
+<%
+   END IF;
+%>
+<div class="buttonGroup <%=l_frmOffset%>">
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+</form>
+
+
+
+<script type="text/javascript">
+
+/*variable declaration*/
+var ctrlSel = zsi.control.SelectList;
+
+
+/*end of declaration*/
+
+$(document).ready(function(){
+   var selObj = $("select[id=p_dd_specialty]");
+   if(selObj.length>1){
+      /*new entry*/
+      ctrlSel("select[id=p_dd_specialty]","","N","doctor_specialty_v","seq_no","UPPER(displayed_text)","");
+   }
+   else{
+      /*edit entry*/
+      ctrlSel("select[id=p_dd_specialty]","<%=l_rec.specialty%>","N","doctor_specialty_v","seq_no","UPPER(displayed_text)","");
+  }
+
+});
+
+zsi.json.checkValueExist("input[name=p_dd_name]","S004_T08006","doctor_name");   
+
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>
+

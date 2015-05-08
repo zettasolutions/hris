@@ -1,0 +1,110 @@
+<%@ plsql procedure="standard_value_update" %>
+<%@ plsql parameter="p_seq_no"            type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_sv_code"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_sv_desc"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_sv_disp_text"         type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_sv_disp_seq"          type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_sv_can_be_modified"   type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   01-JUL-14  GT    Removed nextval on insert
+   01-JUL-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+
+
+   l_changed      VARCHAR2(1) := 'N';
+   l_rec          S004_T08000%ROWTYPE;
+   l_sele_value   NUMBER:=1;
+
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Standard Value </title>
+</head>
+<body>
+<%
+
+FOR i IN 2..p_seq_no.COUNT LOOP
+   IF p_seq_no(i) IS NULL  AND p_sv_code(i) IS NOT NULL AND p_sv_disp_text(i) IS NOT NULL THEN   
+      SELECT COUNT(sele_value) + 1 INTO l_sele_value FROM S004_T08000 WHERE sele_code = p_sv_code(i);
+      INSERT INTO S004_T08000 (
+         seq_no,
+         sele_code,
+         sele_value,
+         description,
+         displayed_text,
+         display_seq,
+         can_be_modified
+         ,created_by
+         ,date_created)
+      VALUES
+      (  S004_T08000_SQ001.NEXTVAL,
+         p_sv_code(i),
+         l_sele_value,
+         p_sv_desc(i),
+         p_sv_disp_text(i),
+         p_sv_disp_seq(i),
+         p_sv_can_be_modified(i),
+         zsi_sessions_lib.GetCookieUser,
+         SYSDATE
+      );
+      ELSIF p_seq_no(i) IS NOT NULL AND p_sv_code(i) IS NOT NULL AND p_sv_disp_text(i) IS NOT NULL THEN  
+
+      SELECT * INTO l_rec FROM S004_T08000 WHERE seq_no=p_seq_no(i);
+
+      IF zsi_lib.IsChanged(l_rec.sele_code, p_sv_code(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.sele_code := p_sv_code(i);
+      END IF;
+      IF zsi_lib.IsChanged(l_rec.description, p_sv_desc(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.description := p_sv_desc(i);
+      END IF;
+      IF zsi_lib.IsChanged(l_rec.displayed_text, p_sv_disp_text(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.displayed_text := p_sv_disp_text(i);
+      END IF;
+      IF zsi_lib.IsChanged(l_rec.display_seq, TO_NUMBER(p_sv_disp_seq(i))) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.display_seq := p_sv_disp_seq(i);
+      END IF;
+      IF zsi_lib.IsChanged(l_rec.can_be_modified, p_sv_can_be_modified(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.can_be_modified := p_sv_can_be_modified(i);
+      END IF;
+      IF l_changed='Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08000 SET row = l_rec WHERE seq_no = p_seq_no(i);
+      END IF;
+
+      END IF;
+   END LOOP;
+END;
+%>
+
+<script type="text/javascript">
+   parent.dhxLayout.cells("b").attachURL("standard_value_list");
+   parent.w1.close();
+</script>

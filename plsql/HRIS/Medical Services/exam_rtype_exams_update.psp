@@ -1,0 +1,135 @@
+<%@ plsql procedure="exam_rtype_exams_update" %>
+<%@ plsql parameter="p_seq_no"         type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_exam_desc"      type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_result_type"    type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_exam_group"     type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_normal_range"   type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_minimum_result" type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_maximum_result" type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ape_priority"   type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_remarks"        type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   05-JAN-15  GT    Added MINIMUM/MAXIMUM RESULT AND APE_PRIORITY
+   05-AUG-14  GT    Removed p_seq_no, S004_T08019_EXAM_SQ001.NEXTVAL
+   08-JUL-14  GT    Added p_seq_no.
+   04-JUL-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+
+
+   l_changed      VARCHAR2(1) := 'N';
+   l_rec          S004_T08019_EXAM%ROWTYPE;
+   l_exam_code    S004_T08019_EXAM.EXAM_CODE%TYPE;
+
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Examination Result Types - Exam</title>
+</head>
+<body>
+<%
+FOR i IN 2..p_seq_no.COUNT LOOP
+   IF p_seq_no(i) IS NULL  AND p_exam_desc(i) IS NOT NULL THEN       
+      SELECT COUNT(exam_code)+1 INTO l_exam_code FROM S004_T08019_EXAM WHERE exam_group = p_exam_group(i) and result_type = p_result_type(i);
+      INSERT INTO S004_T08019_EXAM (
+          seq_no
+         ,exam_code
+         ,exam_desc
+         ,result_type
+         ,exam_group
+         ,normal_range
+         ,minimum_result
+         ,maximum_result
+         ,ape_priority
+         ,remarks
+         ,created_by
+         ,date_created
+      )
+      VALUES
+      (  S004_T08019_EXAM_SQ001.NEXTVAL
+         ,l_exam_code
+         ,p_exam_desc(i)         
+         ,p_result_type(i)
+         ,p_exam_group(i)
+         ,p_normal_range(i)         
+         ,p_minimum_result(i)
+         ,p_maximum_result(i)
+         ,p_ape_priority(i)
+         ,p_remarks(i)
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+      );
+      ELSIF p_seq_no(i) IS NOT NULL  AND p_exam_desc(i) IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T08019_EXAM WHERE seq_no=p_seq_no(i);
+
+         IF zsi_lib.IsChanged(l_rec.result_type, TO_NUMBER(p_result_type(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.result_type := p_result_type(i);
+         END IF;
+         IF zsi_lib.IsChanged(l_rec.exam_group, TO_NUMBER(p_exam_group(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.exam_group := p_exam_group(i);
+         END IF;       
+
+         IF zsi_lib.IsChanged(l_rec.exam_desc, p_exam_desc(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.exam_desc := p_exam_desc(i);
+         END IF;
+         IF zsi_lib.IsChanged(l_rec.normal_range, p_normal_range(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.normal_range := p_normal_range(i);
+         END IF;
+         IF zsi_lib.IsChanged(l_rec.minimum_result, TO_NUMBER(p_minimum_result(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.minimum_result := p_minimum_result(i);
+         END IF;
+         IF zsi_lib.IsChanged(l_rec.maximum_result, TO_NUMBER(p_maximum_result(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.maximum_result := p_maximum_result(i);
+         END IF;
+         IF zsi_lib.IsChanged(l_rec.ape_priority, TO_NUMBER(p_ape_priority(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.ape_priority := p_ape_priority(i);
+         END IF;       
+         IF zsi_lib.IsChanged(l_rec.remarks, p_remarks(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_rec.remarks := p_remarks(i);
+         END IF;
+
+      IF l_changed='Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08019_EXAM SET row = l_rec WHERE seq_no = p_seq_no(i);
+      END IF;
+
+      END IF;
+   END LOOP;
+END;
+%>
+
+<script type="text/javascript">
+   parent.dhxLayout.cells("b").attachURL("exam_rtype_exm_list");
+   parent.w1.close();
+</script>

@@ -1,0 +1,56 @@
+<%@ plsql procedure="lab_results_update" %>
+<%@ plsql parameter="p_dtl_seq_no"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_result"                  type="zsi_lib.VC2_4K_ARR"%>
+<%!
+/*
+
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   29-OCT-14  GT    New
+*/
+--DECLARATION SECTION
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed               VARCHAR2(1) := 'N';
+   l_rec                   S004_T08020_RESULT%ROWTYPE;
+   l_date_format           VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Consultation </title>
+</head>
+<body>
+<%
+   FOR i IN 2..p_dtl_seq_no.COUNT LOOP
+      SELECT * INTO l_rec FROM S004_T08020_RESULT WHERE dtl_seq_no=p_dtl_seq_no(i);
+
+      IF zsi_lib.IsChanged(l_rec.result, p_result(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.result := p_result(i);
+      END IF;
+
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08020_RESULT SET row = l_rec WHERE dtl_seq_no=p_dtl_seq_no(i);
+      END IF;
+   END LOOP;
+ 
+END;
+%>
+<script type="text/javascript"> 
+   window.parent.w1.close();
+</script>

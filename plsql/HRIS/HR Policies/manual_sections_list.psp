@@ -1,0 +1,175 @@
+<%@ plsql procedure="manual_sections_list" %>
+<%@ plsql parameter="p_module_id"               type="NUMBER"%>
+<%@ plsql parameter="p_manual_code"             type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_chapter_code"            type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_chapter_seq_no"          type="NUMBER"   default="NULL"%>
+<%!
+   /*
+   ========================================================================
+   *
+   * Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+   */
+   /* Modification History
+      Date       By    History
+      ---------  ----  ---------------------------------------------------------------------
+      14-JAN-15  BD    Added module_id parameter.
+      26-OCT-14  BD    New
+   */
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_dhtmlx_sort                VARCHAR2(1024);
+   l_user_iswrite       NUMBER(1):=0;
+%>
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   pageheader(p_dgrid=>'Y',p_dwin=>'Y');
+%>
+<body>
+<%
+   zsi_bs_lib.openModalWindow('modalWindow2','Search Chapter','manual_sections_search_frm','manual_sections_list');
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Section Code',p_inputName=>'p_section_code', p_labelSize =>3, p_inputSize =>2);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Section Title',p_inputName=>'p_section_title', p_labelSize =>3, p_inputSize =>8);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Page Nos.',p_inputName=>'p_pages', p_labelSize =>3, p_inputSize =>5);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.YesNo(p_label_name=>'Ammended?',p_field=>'ammendment',p_label_size =>3,p_select_size =>2);
+      zsi_bs_lib.CloseFormGroup();
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Effectivity',p_inputName=>'p_effectivity_date',p_labelSize =>3, p_inputSize =>4);
+      zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.closeModalWindow('button','Search',p_btn_attributes=>'onclick="LoadData(GetParams());"' );
+
+   l_dhtmlx_sort := 'int,str,str,str,str,date,na,na';
+%>
+
+   <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+      <tr valign="bottom">
+         <th nowrap align="center"  width="75px">Section Code</th>
+         <th nowrap align="left"    width="300px">Section Title</th>
+         <th nowrap align="left"    width="400px">Section Summary</th>
+         <th nowrap align="center"  width="120px">Page Nos.</th>
+         <th nowrap align="center"  width="70px">Ammended?</th>
+         <th nowrap align="center"  width="90px">Effectivity Date</th>
+         <th nowrap align="left"    width="120px">Page Content</th>
+         <th nowrap align="center"  width="60px">Delete</th>
+      </tr>
+   </table>
+
+   <div class="bottomNav">
+   <div class="buttonGroup">
+
+<%
+   zsi_bs_lib.Button('btnSearch','Search',p_data_toggle =>'modal',p_data_target =>'#modalWindow2');
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnAdd','Add',p_onclick =>'parent.parent.parent.HomeWindow=window;parent.parent.parent.attachURL(''manual_section_form?p_module_id=' || p_module_id || '&p_seq_no=&p_manual_code='|| p_manual_code || '&p_chapter_code=' || p_chapter_seq_no || ''',''Add Section'', 700, 400)');
+      zsi_bs_lib.Button('btnDelete','Delete',p_onclick =>'return checkDelete(''s004_delete_doc?p_table=s004_t08402&p_field=seq_no'');');
+   END IF;
+%>
+</div>
+   <% zsi_bs_lib.ShowPagingCtrl; %>
+</div>
+
+<script type="text/javascript">
+   /*variable declaration*/
+   var ctrlSel = zsi.control.SelectList;
+   var l_page_rows=0;
+
+   $(document).ready(function(){
+      parent.parent.HomeWindow=window;
+      dhtmlxWin = new dhtmlXWindows();
+      dhtmlxWin.setImagePath("<%= l_dhtmlx_path %>dhtmlxWindows/codebase/imgs/");
+   });
+
+
+   //on window resize
+   $(window).resize(function(){
+      zsi.table.dhtmlx.ResizeGrid(window,mygrid);
+   });
+   function GetParams(){
+      var l_params="";
+      l_params += '?p_module_id=<%= p_module_id %>&p_manual_code=<%= p_manual_code %>&p_chapter_code=<%= p_chapter_seq_no %>';
+      l_params += '&p_section_code=' + $("#p_section_code").val();
+      l_params += '&p_section_title=' + $("#p_section_title").val();
+      l_params += '&p_pages=' + $("#p_pages").val();
+      l_params += '&p_ammendment=' + $("#p_ammendment").val();
+      l_params += '&p_effectivity_date=' + $("#p_effectivity_date").val();
+      return l_params;
+   }
+   function checkDelete(l_cmd) {
+      var l_stmt, l_count
+      l_stmt = zsi.table.getCheckBoxesValues("input[name=p_cb]:checked","p_value=","&");
+
+      if (l_stmt!="") {
+         if(confirm("Are you sure you want to delete ALL SELECTED manual sections(s)?")) {
+            $.post( l_cmd + "&" + l_stmt, function(d){
+               parent.ShowHideProgressWindow(false);
+               window.location.reload();
+            });
+         }
+      }
+   }
+
+
+   function gotoPage(p_this){
+      var l_params = GetParams() + "&p_rows="+ l_page_rows + "&p_page_no=" + p_this.value;
+      LoadData(l_params );
+   };
+
+
+   var mygrid = dhtmlXGridFromTable("gridbox1");
+   mygrid.setSkin("light");
+   mygrid.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid.setEditable(false);
+   mygrid.lockRow(0, true);
+   mygrid.enableLightMouseNavigation(true);
+   mygrid.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid.sortImg.src=mygrid.imgURL+"sort_desc.gif";
+   LoadData('?p_manual_code=<%= p_manual_code %>&p_chapter_code=<%= p_chapter_seq_no %>');
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid);
+
+   function LoadData(p_params){
+      $.getJSON("manual_sections_json" + p_params,onLoadComplete);
+   }
+
+   function onLoadComplete(data){
+      mygrid.clearAll();
+      zsi.table.dhtmlx.Unescape(data,1);
+      zsi.table.dhtmlx.Unescape(data,2);
+      mygrid.parse(data, "json");
+      l_page_rows=data.page_rows;
+      zsi.page.DisplayRecordPage(data.page_no,data.page_rows,data.row_count);
+      $("#modalWindow2").modal('hide');
+   }
+
+   function attachURL(winURL,winTitle,winWidth,winHeight) {
+      if (dhtmlxWin.isWindow("w1")) w1.close();
+      var w = $(document).width();
+      var x = (w - winWidth) / 2;
+      var h = $(document).height();
+      var y = (h - winHeight) / 2;
+      w1 = dhtmlxWin.createWindow("w1", x, y, winWidth, winHeight); // x,y,width,height
+      w1.setModal(true);
+      w1.button("close").enable();
+      w1.button("minmax1").enable();
+      w1.button("minmax2").enable();
+      w1.button("park").hide();
+      w1.setText(winTitle);
+      w1.attachURL(winURL);
+   }
+
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

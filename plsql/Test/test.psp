@@ -1,0 +1,58 @@
+<%@ plsql procedure="test" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   18-JUL-14   GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path        VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path            VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path         VARCHAR2(128) := zsi_lib.StylePath;
+   l_title              VARCHAR2(50);
+   l_rec                S004_T08021%ROWTYPE;
+   l_date_format        VARCHAR(20) := 'MM/DD/YYYY';
+   l_date               VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+%>
+<%
+
+   pageheader();
+
+%>
+<body>
+<div class="form-horizontal">
+   <div class="form-group">
+      <div class="form-inline">
+            <label for="IdNo" class="col-xs-1 control-label">Id No</label>
+            <div class="col-xs-4">               
+               <input type="text" class="form-control" id="firstname" width="100px" 
+               placeholder="Enter First Name">
+               <input type="text" class="form-control" id="lastname" 
+               placeholder="Enter Last Name">
+           </div>
+      </div> 
+   </div>   
+   <div class="row">
+      <div class="form-inline">
+            <label for="IdNo" class="col-xs-1 control-label">Id No</label>
+            <div class="col-xs-4">               
+               <input type="text" class="form-control" id="firstname" width="100px" 
+               placeholder="Enter First Name">
+               <input type="text" class="form-control" id="lastname" 
+               placeholder="Enter Last Name">
+           </div>
+     </div> 
+   </div>   
+</div>
+</body>
+</html>

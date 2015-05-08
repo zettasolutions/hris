@@ -1,0 +1,120 @@
+<%@ plsql procedure="train_trsa_form" %>
+<%@ plsql parameter="p_module_id"         type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_seq_no"            type="NUMBER" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-SEP-14  BD    Added security logic.
+   15-07-14         New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path  VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path      VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path   VARCHAR2(128) := zsi_lib.StylePath;
+   l_frmOffset    VARCHAR2(50):='';
+   l_rec          S004_T07017%ROWTYPE;
+   l_user_iswrite NUMBER(1):=0;
+%>
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   pageheader();
+
+%>
+<body>
+<form name="frmList" action="train_trsa_update" method="POST" >
+<%
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_assessment_type');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_assessment_desc');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_assessment_desc2');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_max_assessment');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_min_assessment');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ave_assessment');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_remarks');
+
+   IF p_seq_no IS NOT NULL THEN
+   SELECT * INTO l_rec FROM S004_T07017 WHERE seq_no = p_seq_no;
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no',p_InputValue=>l_rec.seq_no);
+   zsi_bs_lib.OpenFormGroup;
+      zsi_bs_lib.InputTextBox('Code','p_assessment_code',l_rec.assessment_code, p_inputSize =>1, p_attributes=>'disabled');
+   zsi_bs_lib.CloseFormGroup;
+   zsi_bs_lib.OpenFormGroup;
+      zsi_bs_lib.InputTextBox('Type','p_assessment_type',l_rec.assessment_type, p_inputSize =>1);
+   zsi_bs_lib.CloseFormGroup;
+   zsi_bs_lib.OpenFormGroup;
+      zsi_bs_lib.InputTextBox('Description1','p_assessment_desc',l_rec.assessment_desc, p_inputSize =>10);
+   zsi_bs_lib.CloseFormGroup;
+   zsi_bs_lib.OpenFormGroup;
+      zsi_bs_lib.InputTextBox('Description2','p_assessment_desc2',l_rec.assessment_desc2, p_inputSize =>10);
+   zsi_bs_lib.CloseFormGroup;
+   zsi_bs_lib.OpenFormGroup;
+      zsi_bs_lib.InputTextBox('Max','p_max_assessment',l_rec.max_assessment, p_inputSize =>10);
+   zsi_bs_lib.CloseFormGroup;
+   zsi_bs_lib.OpenFormGroup;
+      zsi_bs_lib.InputTextBox('Min','p_min_assessment',l_rec.min_assessment, p_inputSize =>10);
+   zsi_bs_lib.CloseFormGroup;
+   zsi_bs_lib.OpenFormGroup;
+      zsi_bs_lib.InputTextBox('Ave','p_ave_assessment',l_rec.ave_assessment, p_inputSize =>10);
+   zsi_bs_lib.CloseFormGroup;
+   zsi_bs_lib.OpenFormGroup;
+      zsi_bs_lib.InputTextBoxArea(p_labelName =>'Remarks',p_inputName=>'p_remarks',p_inputValue=>l_rec.remarks,p_labelSize =>2,  p_inputSize =>10, p_attributes=>'rows="2"');
+  zsi_bs_lib.CloseFormGroup;
+  zsi_bs_lib.CloseEntryForm;
+   l_frmOffset:='col-xs-offset-2';
+   ELSE
+%>
+   <table class="table">
+   <tr>
+      <th nowrap align="left">Type</th>
+      <th nowrap align="left">Description1</th>
+      <th nowrap align="left">Description2</th>
+      <th nowrap align="left">Max</th>
+      <th nowrap align="left">Min</th>
+      <th nowrap align="left">Ave</th>
+      <th nowrap align="left">Remarks</th>
+   </tr>
+<%
+   FOR i IN 1..5 LOOP
+%>
+   <tr style="display:none;"><td><input type="hidden" name="p_seq_no" value=""></td></tr>
+   <tr>
+      <td><input type="text" name="p_assessment_type" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_assessment_desc" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_assessment_desc2" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_max_assessment" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_min_assessment" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_ave_assessment" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_remarks" value="" class="form-control input-sm"></td>
+   </tr>
+   <% END LOOP; %>
+</table>
+<% END IF;%>
+<div class="buttonGroup <%=l_frmOffset%>">
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+</form>
+
+<script type="text/javascript">     
+   zsi.json.checkValueExist("input[name=p_assessment_desc]","S004_T07017","assessment_desc");   
+</script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+
+</body>
+</html>

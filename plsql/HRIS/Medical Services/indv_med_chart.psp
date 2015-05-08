@@ -1,0 +1,708 @@
+<%@ plsql procedure="indv_med_chart" %>
+<%@ plsql parameter="p_empl_id_no" type="VARCHAR2" default="NULL"%>
+
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   25-JAN-15  GT    Modified
+   17-AUG-14  GF    New
+*/
+--DECLARATION SECTION
+l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+l_dhtmlx_sort                VARCHAR2(1024);
+l_empl_id_no                 NUMBER;
+%>
+<%
+   pageheader(p_dwin=>'Y', p_dgrid=>'Y');
+%>
+<script type="text/javascript" src="<%= l_dhtmlx_path %>dhtmlxWindows/codebase/dhtmlxwindows.js"></script>
+<script type="text/javascript" src="<%= l_dhtmlx_path %>dhtmlxWindows/codebase/dhtmlxcontainer.js"></script>
+<body>
+<form name="frmList">
+<%
+zsi_bs_lib.OpenEntryForm; 
+   zsi_bs_lib.OpenFormGroup();  
+      zsi_bs_lib.InputIdName;
+      zsi_bs_lib.InputTextBox(p_labelName =>'Tran Date',p_inputName=>'p_tran_date',p_labelSize =>2, p_inputSize =>1,p_InputValue=>'');     
+      zsi_bs_lib.InputTextBox(p_labelName =>'By Year',p_inputName=>'p_year',p_labelSize =>2, p_inputSize =>1,p_InputValue=>EXTRACT(YEAR FROM SYSDATE));     
+      zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Dept.',p_inputName=>'p_empl_dept_desc',p_labelSize =>1, p_inputSize =>8,p_attributes=>'disabled');
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Coverage',p_inputName=>'p_plan_coverage',p_labelSize =>1, p_inputSize =>2,p_attributes=>'disabled');
+      zsi_bs_lib.InputTextBox(p_labelName =>'Curr Bal.',p_inputName=>'p_plan_curr_bal',p_labelSize =>1, p_inputSize =>2,p_attributes=>'disabled');
+      zsi_bs_lib.InputTextBox(p_labelName =>'Avail Bal',p_inputName=>'p_plan_avail_bal',p_labelSize =>1, p_inputSize =>2,p_attributes=>'disabled');
+      zsi_bs_lib.InputTextBox(p_labelName =>'Pending',p_inputName=>'p_unposted_amt',p_labelSize =>1, p_inputSize =>2,p_attributes=>'disabled');
+   zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.CloseEntryForm; 
+%>
+</form>
+ <br />
+<ul class="nav nav-tabs" role="tablist">
+  <li class="active"><a href="#" id="ldgrInfo">Ledger Summary</a></li>
+  <li><a href="#" id="billInfo">Billing Details</a></li>
+  <li><a href="#" id="medInfo">Illness & Medicines Details</a></li>
+  <li><a href="#" id="labInfo">Lab Results</a></li>
+  <li><a href="#" id="dentalInfo">Dental Services </a></li>
+  <li><a href="#" id="vaccineInfo">Vaccines</a></li>
+  <li><a href="#" id="inhouseInfo">In-house Services</a></li>
+  <li><a href="#" id="otcInfo">OTC</a></li>
+  <li><a href="#" id="phInfo">Philhealth</a></li>
+  <li><a href="#" id="apeInfo">APE</a></li>
+</ul>
+
+<div class="tab-pages">
+   <div id="ldgrInfo" class="tab active" style="height:350px; overflow-y:auto;">
+<%
+zsi_bs_lib.OpenEntryForm; 
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Medical Plan Type', p_Name=>'p_medplan_type', p_labelSize=>2, p_selectSize=>3);     
+      zsi_bs_lib.SelectBox(p_labelName=>'Medical Plan', p_Name=>'p_medplan_code', p_labelSize=>2, p_selectSize=>3);     
+     zsi_bs_lib.Button('btnSearchldgr','Search'); 
+     zsi_bs_lib.Button('btnPrint','Print');
+   zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.CloseEntryForm; 
+%>   
+   <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox0">
+      <tr valign="bottom">
+      <th nowrap align="center" width="65px">Ledger#</th>
+      <th nowrap align="center" width="90px">Tran Date</th>
+      <th nowrap align="center" width="75px">Tran Year</th>
+      <th nowrap align="left" width="150px">Medical Plan Type</th>
+      <th nowrap align="left" width="150px">Medical Plan</th>
+      <th nowrap align="left" width="150px">Complaint</th>
+      <th nowrap align="left" width="150px">Diagnosis</th>
+      <th nowrap align="left" width="150px">Treatment</th>
+      <th nowrap align="left" width="150px">Doctor</th>
+      <th nowrap align="left" width="150px">Specialty</th>
+     </table>
+   </div>
+   
+   <div id="billInfo" class="tab" style="height:350px; overflow-y:auto;">
+<%
+zsi_bs_lib.OpenEntryForm; 
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Complaint',p_inputName=>'p_bill_complaint',p_labelSize =>2, p_inputSize =>2);
+     zsi_bs_lib.Button('btnSearchBill','Search'); 
+     zsi_bs_lib.Button('btnPrint','Print');
+   zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.CloseEntryForm; 
+%>   
+   <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
+      <tr valign="bottom">
+      <th nowrap align="center" width="65px">Ledger#</th>
+      <th nowrap align="center" width="90px">Tran Date</th>
+      <th nowrap align="center" width="75px">Tran Year</th>
+      <th nowrap align="left" width="150px">Complaint</th>
+      <th nowrap align="left" width="150px">Diagnosis</th>
+      <th nowrap align="left" width="150px">Treatment</th>
+      <th nowrap align="right" width="120px">For Reimbursement</th>
+      <th nowrap align="right" width="120px">Not for Reimbursement</th>
+      <th nowrap align="right" width="120px">Billed Amount</th>
+      </table>
+   </div>
+
+   <div id="medInfo" class="tab" style="height:350px; overflow-y:auto;">
+<%
+zsi_bs_lib.OpenEntryForm; 
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Complaint',p_inputName=>'p_ill_complaint',p_labelSize =>2, p_inputSize =>2);
+      zsi_bs_lib.Button('btnSearchIll','Search'); 
+      zsi_bs_lib.Button('btnPrint','Print');
+   zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.CloseEntryForm; 
+%>   
+      <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox2">
+      <tr valign="bottom">
+      <th nowrap align="center" width="65px">Ledger#</th>
+      <th nowrap align="center" width="90px">Tran Date</th>
+      <th nowrap align="center" width="75px">Tran Year</th>
+      <th nowrap align="left" width="150px">Complaint</th>
+      <th nowrap align="left" width="150px">Diagnosis</th>
+      <th nowrap align="left" width="150px">Treatment</th>
+      <th nowrap align="center" width="100px">No. Illnesses</th>
+      <th nowrap align="center" width="100px">No. Medicines</th>
+      </table>
+   </div>
+
+   <div id="labInfo" class="tab" style="height:350px; overflow-y:auto;">
+<%
+zsi_bs_lib.OpenEntryForm; 
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Complaint',p_inputName=>'p_lab_complaint',p_labelSize =>2, p_inputSize =>2);
+      zsi_bs_lib.Button('btnSearchLab','Search'); 
+      zsi_bs_lib.Button('btnPrint','Print');
+   zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.CloseEntryForm; 
+%>   
+      <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox3">
+      <tr valign="bottom">
+      <th nowrap align="center" width="65px">Ledger#</th>
+      <th nowrap align="center" width="100px">Tran Date</th>
+      <th nowrap align="center" width="75px">Tran Year</th>
+      <th nowrap align="left" width="150px">Complaint</th>
+      <th nowrap align="left" width="150px">Diagnosis</th>
+      <th nowrap align="left" width="150px">Treatment</th>
+      <th nowrap align="center" width="100px">No. Lab.</th>
+      </table>
+   </div>
+
+   <div id="dentalInfo" class="tab" style="height:350px; overflow-y:auto;">
+<%
+zsi_bs_lib.OpenEntryForm; 
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Complaint',p_inputName=>'p_ds_complaint',p_labelSize =>2, p_inputSize =>2);
+      zsi_bs_lib.Button('btnSearchDental','Search'); 
+      zsi_bs_lib.Button('btnPrint','Print');
+   zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.CloseEntryForm; 
+%>     
+   <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox4">
+      <tr valign="bottom">
+      <th nowrap align="center" width="65px">Ledger#</th>
+      <th nowrap align="center" width="100px">Tran Date</th>
+      <th nowrap align="center" width="75px">Tran Year</th>
+      <th nowrap align="left" width="150px">Complaint</th>
+      <th nowrap align="left" width="150px">Diagnosis</th>
+      <th nowrap align="left" width="150px">Treatment</th>
+      <th nowrap align="center" width="100px">No. Services</th>
+     </table>
+   </div>
+
+   <div id="vaccineInfo" class="tab" style="height:350px; overflow-y:auto;">
+<%
+zsi_bs_lib.OpenEntryForm; 
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Vaccine', p_Name=>'p_vaccine_code', p_labelSize=>2, p_selectSize=>4);     
+      zsi_bs_lib.YesNo(p_label_name=>'In-House?',p_field=>'in_house',p_label_size =>2,p_select_size =>1);
+      zsi_bs_lib.Button('btnSearchVaccine','Search'); 
+      zsi_bs_lib.Button('btnPrint','Print');
+   zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.CloseEntryForm; 
+%>       
+   <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox5">
+      <tr valign="bottom">
+      <th nowrap align="center" width="65px">Ledger#</th>
+      <th nowrap align="center" width="100px">Tran Date</th>
+      <th nowrap align="center" width="75px">Tran Year</th>
+      <th nowrap align="left" width="100px">Vaccine</th>
+      <th nowrap align="left" width="100px">Frequency</th>
+      <th nowrap align="left" width="100px">Brand</th>
+      <th nowrap align="left" width="100px">Route</th>
+      <th nowrap align="left" width="100px">Site Given</th>
+      <th nowrap align="left" width="100px">Lot No</th>
+      <th nowrap align="left" width="100px">Manufacturer</th>
+      <th nowrap align="left" width="75px">In-house?</th>
+      <th nowrap align="left" width="100px">Next Vaccine</th>
+      </table>
+   </div>
+
+
+   <div id="inhouseInfo" class="tab" style="height:350px; overflow-y:auto;">
+<%
+zsi_bs_lib.OpenEntryForm; 
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Complaint',p_inputName=>'p_ihs_complaint',p_labelSize =>2, p_inputSize =>2);
+      zsi_bs_lib.Button('btnSearchIH','Search'); 
+      zsi_bs_lib.Button('btnPrint','Print');
+   zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.CloseEntryForm; 
+%>
+      <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox6">
+      <tr valign="bottom">
+      <th nowrap align="center" width="65px">Ledger#</th>
+      <th nowrap align="center" width="100px">Tran Date</th>
+      <th nowrap align="center" width="75px">Tran Year</th>
+      <th nowrap align="left" width="150px">Complaint</th>
+      <th nowrap align="left" width="150px">Diagnosis</th>
+      <th nowrap align="left" width="150px">Treatment</th>
+      <th nowrap align="center" width="100px">No. Services</th>
+      </table>
+   </div>
+   
+   <div id="otcInfo" class="tab" style="height:350px; overflow-y:auto;">
+<%
+zsi_bs_lib.OpenEntryForm; 
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Medicine', p_Name=>'p_meds_code', p_labelSize=>2, p_selectSize=>3);     
+      zsi_bs_lib.SelectBox(p_labelName=>'Treatment For', p_Name=>'p_treatment_for', p_labelSize=>2, p_selectSize=>3);     
+      zsi_bs_lib.Button('btnSearchOTC','Search'); 
+      zsi_bs_lib.Button('btnPrint','Print');
+   zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.CloseEntryForm; 
+%>
+      <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox7">
+      <tr valign="bottom">
+      <th nowrap align="center" width="70px">Ledger No</th>
+      <th nowrap align="center" width="100px">Tran Date</th>
+      <th nowrap align="center" width="100px">Tran Year</th>
+      <th nowrap align="left" width="100px">Medicine</th>
+      <th nowrap align="left" width="100px">Type</th>
+      <th nowrap align="left" width="100px">Class</th>
+      <th nowrap align="center" width="100px">Qty</th>
+      <th nowrap align="left" width="150px">Treatment For</th>
+      </table>
+   </div>   
+
+   <div id="phInfo" class="tab" style="height:350px; overflow-y:auto;">
+<%
+zsi_bs_lib.OpenEntryForm; 
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Dependent', p_Name=>'p_dependent_id', p_labelSize=>2, p_selectSize=>3);     
+      zsi_bs_lib.Button('btnSearchPH','Search'); 
+      zsi_bs_lib.Button('btnPrint','Print');
+   zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.CloseEntryForm; 
+%>
+      <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox8">
+      <tr valign="bottom">
+      <th nowrap align="center" width="70px">Ledger No</th>
+      <th nowrap align="center" width="100px">JV Tran Date</th>
+      <th nowrap align="center" width="100px">Tran Year</th>
+      <th nowrap align="left" width="200px">Dependent</th>
+      <th nowrap align="right" width="100px">Amount</th>
+      </table>
+   </div>
+
+   <div id="apeInfo" class="tab" style="height:350px; overflow-y:auto;">
+<%
+zsi_bs_lib.OpenEntryForm; 
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Complaint',p_inputName=>'p_ape_complaint',p_labelSize =>2, p_inputSize =>2);
+      zsi_bs_lib.Button('btnSearchAPE','Search'); 
+      zsi_bs_lib.Button('btnPrint','Print');
+   zsi_bs_lib.CloseFormGroup();
+zsi_bs_lib.CloseEntryForm; 
+%>
+      <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox9">
+      <tr valign="bottom">
+      <th nowrap align="center" width="65px">Ledger#</th>
+      <th nowrap align="center" width="100px">Tran Date</th>
+      <th nowrap align="center" width="75px">Tran Year</th>
+      <th nowrap align="left" width="150px">Complaint</th>
+      <th nowrap align="left" width="150px">Diagnosis</th>
+      </table>
+   </div>
+</div>
+
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript">
+
+
+function displayInfo(data){
+   $("#p_empl_dept_desc").val(data[48]);
+   $("#p_plan_coverage").val(data[55]);
+   $("#p_plan_curr_bal").val(data[56]);
+   $("#p_plan_avail_bal").val(data[57]);
+   $("#p_unposted_amt").val(data[58]);
+   $("#btnSearchldgr").click();
+ 
+   if (p_empl_id_no.val()) {
+      ctrlSel("select[id=p_dependent_id]","","N","S004_T01029","emde_dependent_id","emde_dependent_name"," WHERE emde_id_no=" + p_empl_id_no.val() + " ORDER BY emde_dependent_name");
+   }
+}
+
+   
+ //on page loaded  
+$(document).ready(function(){
+      $("#p_empl_id_no").focus();
+      new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_id_no]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_id_no"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[0];
+            var td = currentObject.parentNode;
+            $("#p_empl_name").val(unescape(data[43]));             
+            displayInfo(data);
+         }
+      });    
+      
+     new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_name]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_name"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[43];
+             var td = currentObject.parentNode;
+             $("#p_empl_id_no").val(data[0]);
+             displayInfo(data);
+         }
+      });
+      
+    
+      ctrlSel("#p_medplan_type","","N","medplan_types_v","sele_value","displayed_text","ORDER BY displayed_text");
+      ctrlSel("#p_medplan_code","","N","medplan_code_v","sele_value","displayed_text","ORDER BY displayed_text");
+      ctrlSel("select[id=p_meds_code]","","N","S004_T08003","meds_code","meds_name","ORDER BY meds_name");
+      ctrlSel("select[id=p_treatment_for]","","N","S004_T08014","treatment_for","treatment_desc","ORDER BY treatment_desc");
+      ctrlSel("select[id=p_vaccine_code]","","N","S004_T08005","vaccine_code","vaccine_name","ORDER BY vaccine_name");
+      ctrlSel("select[id=p_dependent_id]","","N","S004_T01029","emde_dependent_id","emde_dependent_name"," WHERE emde_id_no=0 ORDER BY emde_dependent_name");
+  setTimeout(function(){  
+         $("#btnSearchldgr").click();
+       }, 500);
+                     
+                     
+      $(".nav-tabs li").each(function(){
+         $(this).click(function(){
+            var tabIndex = $(this).index();
+            switch(tabIndex){
+               case 0:
+                     $("#btnSearchldgr").click();
+                     break;            
+               case 1:
+                     $("#btnSearchBill").click();
+                     break;            
+               case 2:
+                     $("#btnSearchIll").click();
+                     break;            
+               case 3:
+                     $("#btnSearchLab").click();
+                     break;
+               case 4:
+                     $("#btnSearchDental").click();
+                     break;            
+               case 5:
+                     $("#btnSearchVaccine").click();
+                     break;            
+               case 6:
+                     $("#btnSearchIH").click();
+                     break;            
+               case 7:
+                     $("#btnSearchOTC").click();
+                     break;            
+               case 8:
+                     $("#btnSearchPH").click();
+                     break;            
+               case 9:
+                     $("#btnSearchAPE").click();
+                     break;            
+               default:            
+                     break;                        
+            } 
+         });
+      });            
+});
+
+$("#btnSearchldgr").click(function(){
+
+  var params  = "p_empl_id_no=" + $("#p_empl_id_no").val();   
+      params += "&p_year=" + $("#p_year").val();    
+      params += "&p_tran_date=" + $("#p_tran_date").val()    
+      params += "&p_medplan_type=" + $("#p_medplan_type").val()    
+      params += "&p_medplan_code=" + $("#p_medplan_code").val()    
+
+  LoadData("indv_med_chart_ldgr_json?" + params
+            ,function(data){
+                mygrid0.clearAll();
+                mygrid0.parse(data, "json");
+            }
+   );
+
+});
+
+
+$("#btnSearchBill").click(function(){
+
+  var params  = "p_empl_id_no=" + $("#p_empl_id_no").val();   
+      params += "&p_year=" + $("#p_year").val();    
+      params += "&p_tran_date=" + $("#p_tran_date").val()    
+      params += "&p_bill_complaint=" + $("#p_bill_complaint").val()    
+
+  LoadData("indv_med_chart_bill_json?" + params
+            ,function(data){
+                mygrid1.clearAll();
+                mygrid1.parse(data, "json");
+            }
+   );
+
+});
+
+$("#btnSearchIll").click(function(){
+
+  var params = "p_empl_id_no=" + $("#p_empl_id_no").val();    
+      params += "&p_year=" + $("#p_year").val();    
+      params += "&p_tran_date=" + $("#p_tran_date").val()    
+      params += "&p_ill_complaint=" + $("#p_ill_complaint").val()    
+
+  LoadData("indv_med_chart_ill_json?" + params
+            ,function(data){
+                mygrid2.clearAll();
+                mygrid2.parse(data, "json");
+            }
+   );
+
+});
+
+$("#btnSearchLab").click(function(){
+
+  var params =  "p_empl_id_no=" + $("#p_empl_id_no").val();   
+      params += "&p_year=" + $("#p_year").val();    
+      params += "&p_tran_date=" + $("#p_tran_date").val()    
+      params += "&p_lab_complaint=" + $("#p_lab_complaint").val()    
+
+  LoadData("indv_med_chart_lab_json?" + params
+            ,function(data){
+                mygrid3.clearAll();
+                mygrid3.parse(data, "json");
+            }
+   );
+
+});
+
+$("#btnSearchDental").click(function(){
+
+  var params =  "p_empl_id_no=" + $("#p_empl_id_no").val();   
+      params += "&p_year=" + $("#p_year").val();    
+      params += "&p_tran_date=" + $("#p_tran_date").val()    
+      params += "&p_ds_complaint=" + $("#p_ds_complaint").val()    
+
+  LoadData("indv_med_chart_dental_json?" + params
+            ,function(data){
+                mygrid4.clearAll();
+                mygrid4.parse(data, "json");
+            }
+   );
+
+});
+
+$("#btnSearchVaccine").click(function(){
+
+  var params = "p_empl_id_no=" + $("#p_empl_id_no").val();   
+      params += "&p_year=" + $("#p_year").val();    
+      params += "&p_tran_date=" + $("#p_tran_date").val()    
+      params += "&p_vaccine_code=" + $("#p_vaccine_code").val() 
+      params += "&p_in_house=" + $("#p_in_house").val(); 
+
+  LoadData("indv_med_chart_vaccine_json?" + params
+            ,function(data){
+                mygrid5.clearAll();
+                mygrid5.parse(data, "json");
+            }
+   );
+
+});
+
+$("#btnSearchIH").click(function(){
+
+  var params = "p_empl_id_no=" + $("#p_empl_id_no").val();   
+      params += "&p_year=" + $("#p_year").val();    
+      params += "&p_tran_date=" + $("#p_tran_date").val()    
+      params += "&p_ihs_complaint=" + $("#p_ihs_complaint").val()    
+
+  LoadData("indv_med_chart_ih_json?" + params
+            ,function(data){
+                mygrid6.clearAll();
+                mygrid6.parse(data, "json");
+            }
+   );
+
+});
+
+$("#btnSearchOTC").click(function(){
+
+  var params = "p_empl_id_no=" + $("#p_empl_id_no").val();   
+      params += "&p_year=" + $("#p_year").val();    
+      params += "&p_tran_date=" + $("#p_tran_date").val();    
+      params += "&p_meds_code=" + $("#p_meds_code").val() ;   
+      params += "&p_treatment_for=" + $("#p_treatment_for").val();; 
+
+  LoadData("indv_med_chart_otc_json?" + params
+            ,function(data){
+                mygrid7.clearAll();
+                mygrid7.parse(data, "json");
+            }
+   );
+
+});
+
+$("#btnSearchPH").click(function(){
+
+  var params = "p_empl_id_no=" + $("#p_empl_id_no").val();   
+      params += "&p_year=" + $("#p_year").val();    
+      params += "&p_tran_date=" + $("#p_tran_date").val();   
+      params += "&p_dependent_id=" + $("#p_dependent_id").val();    
+
+  LoadData("indv_med_chart_ph_json?" + params
+            ,function(data){
+                mygrid8.clearAll();
+                mygrid8.parse(data, "json");
+            }
+   );
+
+});
+
+$("#btnSearchAPE").click(function(){
+
+  var params = "p_empl_id_no=" + $("#p_empl_id_no").val();   
+      params += "&p_year=" + $("#p_year").val();    
+      params += "&p_tran_date=" + $("#p_tran_date").val()    
+      params += "&p_ape_complaint=" + $("#p_ape_complaint").val()    
+
+  LoadData("indv_med_chart_ape_json?" + params
+            ,function(data){
+                mygrid9.clearAll();
+                mygrid9.parse(data, "json");
+            }
+   );
+
+});
+
+   mygrid0 = dhtmlXGridFromTable("gridbox0");
+   mygrid0.setSkin("light");
+   mygrid0.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid0.setEditable(false);
+   mygrid0.lockRow(0, true);
+   mygrid0.enableLightMouseNavigation(true);
+   mygrid0.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid0.sortImg.src=mygrid0.imgURL+"sort_desc.gif";
+   mygrid0.clearAll(); 
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid0);
+
+   mygrid1 = dhtmlXGridFromTable("gridbox1");
+   mygrid1.setSkin("light");
+   mygrid1.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid1.setEditable(false);
+   mygrid1.lockRow(0, true);
+   mygrid1.enableLightMouseNavigation(true);
+   mygrid1.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid1.sortImg.src=mygrid1.imgURL+"sort_desc.gif";
+   mygrid1.clearAll(); 
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid1);
+
+   mygrid2 = dhtmlXGridFromTable("gridbox2");
+   mygrid2.setSkin("light");
+   mygrid2.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid2.setEditable(false);
+   mygrid2.lockRow(0, true);
+   mygrid2.enableLightMouseNavigation(true);
+   mygrid2.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid2.sortImg.src=mygrid2.imgURL+"sort_desc.gif";
+   mygrid2.clearAll(); 
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid2);
+
+   mygrid3 = dhtmlXGridFromTable("gridbox3");
+   mygrid3.setSkin("light");
+   mygrid3.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid3.setEditable(false);
+   mygrid3.lockRow(0, true);
+   mygrid3.enableLightMouseNavigation(true);
+   mygrid3.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid3.sortImg.src=mygrid3.imgURL+"sort_desc.gif";
+   mygrid3.clearAll(); 
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid3);
+   
+   mygrid4 = dhtmlXGridFromTable("gridbox4");
+   mygrid4.setSkin("light");
+   mygrid4.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid4.setEditable(false);
+   mygrid4.lockRow(0, true);
+   mygrid4.enableLightMouseNavigation(true);
+   mygrid4.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid4.sortImg.src=mygrid4.imgURL+"sort_desc.gif";
+   mygrid4.clearAll(); 
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid4);
+
+   mygrid5 = dhtmlXGridFromTable("gridbox5");
+   mygrid5.setSkin("light");
+   mygrid5.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid5.setEditable(false);
+   mygrid5.lockRow(0, true);
+   mygrid5.enableLightMouseNavigation(true);
+   mygrid5.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid5.sortImg.src=mygrid5.imgURL+"sort_desc.gif";
+   mygrid5.clearAll(); 
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid5);
+
+   mygrid6 = dhtmlXGridFromTable("gridbox6");
+   mygrid6.setSkin("light");
+   mygrid6.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid6.setEditable(false);
+   mygrid6.lockRow(0, true);
+   mygrid6.enableLightMouseNavigation(true);
+   mygrid6.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid6.sortImg.src=mygrid6.imgURL+"sort_desc.gif";
+   mygrid6.clearAll(); 
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid6);
+
+   mygrid7 = dhtmlXGridFromTable("gridbox7");
+   mygrid7.setSkin("light");
+   mygrid7.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid7.setEditable(false);
+   mygrid7.lockRow(0, true);
+   mygrid7.enableLightMouseNavigation(true);
+   mygrid7.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid7.sortImg.src=mygrid7.imgURL+"sort_desc.gif";
+   mygrid7.clearAll(); 
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid7);
+
+   mygrid8 = dhtmlXGridFromTable("gridbox8");
+   mygrid8.setSkin("light");
+   mygrid8.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid8.setEditable(false);
+   mygrid8.lockRow(0, true);
+   mygrid8.enableLightMouseNavigation(true);
+   mygrid8.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid8.sortImg.src=mygrid8.imgURL+"sort_desc.gif";
+   mygrid8.clearAll(); 
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid8);
+
+   mygrid9 = dhtmlXGridFromTable("gridbox9");
+   mygrid9.setSkin("light");
+   mygrid9.setImagePath("<%= l_dhtmlx_path %>dhtmlxGrid/codebase/imgs/");
+   mygrid9.setEditable(false);
+   mygrid9.lockRow(0, true);
+   mygrid9.enableLightMouseNavigation(true);
+   mygrid9.setColSorting("<%= l_dhtmlx_sort %>");
+   mygrid9.sortImg.src=mygrid9.imgURL+"sort_desc.gif";
+   mygrid9.clearAll(); 
+   zsi.table.dhtmlx.ResizeGrid(window, mygrid9);
+
+    function LoadData(url,callbackfunc){
+         $.getJSON(url,callbackfunc);
+   }
+
+dhtmlxWin = new dhtmlXWindows();
+dhtmlxWin.setImagePath("<%= l_dhtmlx_path %>dhtmlxWindows/codebase/imgs/");
+function attachURL(winURL,winTitle,winWidth,winHeight) {
+//var w1;
+   if (dhtmlxWin.isWindow("w1")) w1.close();
+   //w1 = dhtmlxWin.createWindow("w1", 20, 50, winWidth, winHeight); // x,y,width,height
+   var w = $(document).width();
+   var x = (w - winWidth) / 2;
+   var h = $(document).height();
+   var y = (h - winHeight) / 2;
+   w1 = dhtmlxWin.createWindow("w1", x, y, winWidth, winHeight); // x,y,width,height
+   w1.setModal(true);
+   w1.button("close").enable();
+   w1.button("minmax1").enable();
+   w1.button("minmax2").enable();
+   w1.button("park").hide();
+   w1.setText(winTitle);
+   w1.attachURL(winURL);
+}
+
+</script>
+<script type="text/javascript" src="zsi_employee_js"></script>
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</body>
+</html>

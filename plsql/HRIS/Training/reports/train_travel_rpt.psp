@@ -1,0 +1,112 @@
+<%@ plsql procedure="train_travel_rpt" %>
+<%@ plsql parameter="p_module_id"            type="NUMBER" %>
+<%@ plsql parameter="p_travel_type"          type="VARCHAR2" %>
+<%@ plsql parameter="p_start_date"           type="VARCHAR2" %>
+<%@ plsql parameter="p_end_date"             type="VARCHAR2" %>
+<%@ plsql parameter="p_order"                type="VARCHAR2" default="'1'"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   28-JAN-15  BD    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(3000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_order                      VARCHAR2(1000);
+   l_sql                        VARCHAR2(9000);
+
+   train_cur                    SYS_REFCURSOR;
+   l_tran_no                    s004_t07003_trainees.tran_no%TYPE;
+   l_empl_name                  VARCHAR2(200);
+   l_travel_cost                s004_t07003_trainees.travel_cost%TYPE;
+   l_trn_desc                   trainingschedattend_v.trn_desc%TYPE;
+   l_start_date                 trainingschedattend_v.start_date%TYPE;
+   l_end_date                   trainingschedattend_v.end_date%TYPE;
+   l_venu_name                  trainingschedattend_v.venu_name%TYPE;
+   l_module_id                  s004_modules.module_id%TYPE := p_module_id;
+   l_rpt_title                  VARCHAR2(100);
+%>
+<%
+   l_rpt_title := zsi_lib.GetDescription('travel_types_v','displayed_text','sele_value', p_travel_type ) || ' Travel Report';
+
+   l_select := 'SELECT tn.tran_no  '
+            || ' ,zsi_lib.GetDescription(''employee_v'',''empl_name'',''empl_id_no'', tn.empl_id_no ) as empl_name '
+            || ', tn.travel_cost '
+            || ' ,ts.trn_desc '
+            || ' ,ts.start_date '
+            || ' ,ts.end_date '
+            || ' ,ts.venu_name ';
+   l_from   := '  FROM s004_t07003_trainees tn, trainingschedattend_v ts ';
+   l_where  := ' WHERE ts.travel_type = ' || p_travel_type
+            || ' AND ((ts.start_date BETWEEN ''' || TO_DATE(p_start_date,'MM/DD/YYYY') || ''' AND ''' || TO_DATE(p_end_date,'MM/DD/YYYY') || ''') '
+            || ' OR (ts.end_date BETWEEN ''' || TO_DATE(p_start_date,'MM/DD/YYYY') || ''' AND ''' || TO_DATE(p_end_date,'MM/DD/YYYY') || ''')) ';
+   l_order  := ' ORDER BY ' || p_order;
+
+   l_sql    := l_select || l_from || l_where || l_order;
+
+   reportheader(p_output=>'H');
+%>
+<body align="center" onload="window.print();">
+
+<table>
+   <tr valign="top">
+      <td align="left"  class="head4"><%= l_rpt_title %><br>
+      For the Period <%= p_start_date %> and <%= p_end_date %>
+      </td>
+      <td align="right" class="head6">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss')) %></td>
+   </tr>
+</table>
+
+<table>
+   <thead>
+   <tr valign="bottom">
+      <th nowrap align="left">Tran No</th>
+      <th nowrap align="left">Name of Employee</th>
+      <th nowrap align="left">Title of Training</th>
+      <th nowrap align="center">Inclusive Dates</th>
+      <th nowrap align="left">Venue</th>
+      <th nowrap align="right">Travel Cost</th>
+   </tr>
+   </thead>
+<%
+OPEN train_cur FOR l_sql;
+LOOP
+   FETCH train_cur INTO l_tran_no
+                        ,l_empl_name
+                        ,l_travel_cost
+                        ,l_trn_desc
+                        ,l_start_date
+                        ,l_end_date
+                        ,l_venu_name;
+   EXIT WHEN train_cur%NOTFOUND;
+   --l_row_count := l_row_count + 1;
+%>
+<tr valign="top">
+   <td align="left"><%= l_tran_no %></td>
+   <td align="left"><%= l_empl_name %></td>
+   <td align="left"><%= l_trn_desc %></td>
+   <td align="left" nowrap><%= l_start_date %> - <%= l_end_date %></td>
+   <td align="left"><%= l_venu_name %></td>
+   <td align="right"><%= zsi_lib.FormatAmount(l_travel_cost,2) %></td>
+</tr>
+<%
+END LOOP;
+%>
+</table>
+</body>
+</html>

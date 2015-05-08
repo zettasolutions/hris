@@ -1,0 +1,112 @@
+<%@ plsql procedure="train_indv_rec_rpt" %>
+<%@ plsql parameter="p_empl_id_no"      type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   15-FEB-15  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_rec                        employee_active_v%ROWTYPE;
+%>
+<%
+   reportheader(p_output=>'H');   
+   SELECT * INTO l_rec FROM employee_active_v WHERE empl_id_no = p_empl_id_no;
+%> 
+<body >
+
+ 
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+
+
+   <table>
+      <tr valign="top">
+         <th width="400px" align="center" class="head1 reportTitle">EMPLOYEE TRAINING SUMMARY</th>
+      </tr>
+       <tr valign="top">
+         <th  class="head5 ">EMPLOYEE : <%= l_rec.empl_id_no %>&nbsp;<%=l_rec.empl_name %></th>
+       </tr>
+       <tr>
+         <th class="head5 ">DEPARTMENT : <%= l_rec.dept_abbrv %></th>
+       </tr>  
+   </table>
+   
+   
+<table class="gridReport" >
+   <thead>
+      <tr valign="bottom">
+         <th align="left" width="400px">Title of Training</th>
+         <th align="center" width="100px">Training Hours </th>
+         <th align="center" width="70px">Start Date</th>
+         <th align="center" width="70px">End Date</th>  
+      </tr>
+   </thead>
+</table>
+
+
+<script type="text/javascript">
+
+function LoadData(){
+   var l_params="";
+   l_params += "p_empl_id_no=<%=p_empl_id_no%>";    
+      
+   $.getJSON("train_indv_rec_rpt_json?" + l_params
+      ,onLoadComplete
+   ).fail(function() {
+       $(".loadingStatus").css("display","none");
+       alert("Sorry, the current report cannot display at this moment.");
+   });
+}
+
+function onLoadComplete(data){
+   var jsonGrid = $(".gridReport");
+   var _ctr=0;
+   jsonGrid.clearGrid();
+   $.each(data.rows, function () {
+      var r = ""
+      r += "<tr>";
+      r += "<td>" + this.data[0]    + "</td>";
+      r += "<td align=center>" + this.data[1]   + "</td>";
+      r += "<td align=center>" + this.data[2]   + "</td>";
+      r += "<td align=center>" + this.data[3]   + "</td>";
+      r += "</tr>";   
+      jsonGrid.append(r);
+      _ctr++;
+   });
+      r += "<tr style='border-top:1pt solid #000;'>";
+      r += "<td>"Count:"</td>";
+      r += "<td>" + _ctr  + "</td>";
+      r += "<td></td>";
+      r += "<td></td>";
+      r += "</tr>";   
+      jsonGrid.append(r);
+      
+   $(".loadingStatus").css("display","none");   
+   window.print();
+}
+
+ 
+//on page loaded
+$(document).ready(function(){    
+   LoadData();
+});  
+</script>
+
+</body>
+</html>

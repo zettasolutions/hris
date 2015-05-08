@@ -1,0 +1,180 @@
+<%@ plsql procedure="illness_meds_form" %>
+<%@ plsql parameter="p_illness_id"    type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"       type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_post_status"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_user_iswrite"  type="NUMBER"   default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   07-JAN-17  GT    Added new fields.
+   30-SEP-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_ctr                   NUMBER := 1;
+
+
+   CURSOR l_med_cur IS
+   SELECT * FROM S004_T08020_MEDS_V WHERE illness_seqno = p_illness_id;
+%>
+<%
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<form name="frmList" action="illness_meds_update" method="POST" >
+<%
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_illness_seqno', p_inputValue=>p_illness_id);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no', p_inputValue=>p_tran_no);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_medicine');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_qty');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_dosage');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_instruction');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_is_maintenance');%>
+<div style="overflow-y:auto; height:250px">
+<%
+zsi_bs_lib.OpenEntryForm;
+%>
+
+   <div class="col-xs-12">
+      <table class="table">
+         <tr>
+            <th class="col-xs-3" nowrap align="left">Medicine</th>
+            <th class="col-xs-1" nowrap style="text-align:center">Qty</th>
+            <th class="col-xs-3" nowrap align="left">Dosage</th>
+            <th class="col-xs-3" nowrap align="left">Meds Instruction</th>
+            <th class="col-xs-1" nowrap align="left">Maintenance?</th>
+<% IF p_post_status = 0 AND p_user_iswrite = 1 THEN %>
+            <th class="col-xs-1" nowrap style="text-align:center">Delete</th>
+<% END IF; %>
+         </tr>
+      <%
+        FOR i in l_med_cur LOOP
+      %>
+         <tr>               
+            <td><input type="text" autocomplete="off" name="p_medicine" id="p_medicine" value="<%=i.medicine%>" class="form-control input-sm"> 
+                <input type="hidden" name="p_meds_code" id="p_meds_code" value="<%=i.meds_code %>">
+            </td>            
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_meds_qty',p_inputValue=>i.meds_qty, p_wrapper=>'N', p_attributes=>'style="text-align:center"');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_dosage',p_inputValue=>i.dosage, p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_meds_instruction',p_inputValue=>i.meds_instruction, p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no',p_inputValue=>i.seq_no); %>
+                <% zsi_bs_lib.YesNo(p_field=>'is_maintenance',p_value=>i.is_maintenance,p_wrapper=>'N');%></td>
+<% IF p_post_status = 0 AND p_user_iswrite = 1 THEN %>
+            <td class="col-xs-1" nowrap align="center"> <% zsi_bs_lib.ButtonDelete(p_table=>'S004_T08020_MEDS',p_Value=>i.seq_no);%>
+            </td>
+<% END IF; %>
+         </tr>
+      <%
+        END LOOP;
+     IF p_post_status <> 1 THEN
+         FOR i IN 1..5 LOOP
+      %>
+         <tr>
+            <td><input type="text" autocomplete="off" name="p_medicine" id="p_medicine" class="form-control input-sm"> 
+                <input type="hidden" name="p_meds_code" id="p_meds_code">
+            </td>            
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_meds_qty',p_wrapper=>'N', p_attributes=>'style="text-align:center"');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_dosage',p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_meds_instruction',p_wrapper=>'N');%></td>
+            <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no'); %>
+                <% zsi_bs_lib.YesNo(p_field=>'is_maintenance',p_value=>0, p_wrapper=>'N');%></td>
+            <td></td>
+         </tr>
+      <%
+         END LOOP;
+      END IF;
+      %>
+      </table>
+   </div>
+<%   
+   zsi_bs_lib.CloseEntryForm;
+%>
+</div>
+<div class="col-xs-12 buttonGroup">
+<%
+   IF p_post_status = 0 AND p_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+</form>
+
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript">
+/*variable declaration*/
+var ctrlSel = zsi.control.SelectList;
+
+//on page loaded
+$(document).ready(function(){
+   //populate list
+
+     $(".loadingStatus").css("display","none");
+     
+           new zsi.search({
+            column_names : ["Medicine", "Code"] 
+           ,column_indexes : [1,0] 
+           ,input:"input[name=p_medicine]"
+           ,url :"medicine_search_json"
+           ,parameter: "p_medicine"
+           ,onSelectedItem: 
+              function(currentObject,data,i){            
+                 currentObject.value=data[1];
+                 var td = currentObject.parentNode;
+                 $(td).children("#p_meds_code").val(data[0]);            
+
+              }
+      });  
+      
+      zsi.form.markMandatory({                  
+         "groupNames":[ 
+            {"names" :
+               [    
+                   "p_meds_code"
+                  ,"p_meds_qty"
+               ]
+            ,  "required_one":"N"
+            ,  "type":"M"
+            }
+          ]   
+         ,"groupTitles":[ 
+         
+            {"titles" : 
+               [         
+                   "Medicine"
+                  ,"Quantity"
+               ]
+            }
+         ]
+      });
+});
+
+zsi.table.onDeleteRow=function(){ 
+ window.parent.countIllnessMeds(<%=p_illness_id%>);   
+}
+
+</script>
+
+</body>
+</html>
+

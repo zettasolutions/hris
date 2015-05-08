@@ -1,0 +1,113 @@
+<%@ plsql procedure="availment_by_id_rpt" %>
+<%@ plsql parameter="p_id_no"         type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_medplan_code"  type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_tran_month"    type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_tran_year"     type="NUMBER" default="NULL"%>
+<%@ plsql parameter="p_Criteria"      type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   12-DEC-14  GF    New
+*/
+--DECLARATION SECTION
+l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+l_dhtmlx_sort                VARCHAR2(1024);
+l_year                       NUMBER := 2014;
+
+%>
+<%
+   reportheader(p_output=>'H');   
+%> 
+<body >
+
+ 
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+
+
+   <table>
+      <tr valign="top">
+         <td width="400px" align="left" class="head1 reportTitle">Availment By Age Bracket</td>
+      </tr>
+       <tr valign="top">
+         <td  class="reportcriteria">Criteria: <%=p_Criteria %></td>
+      </tr>     
+   </table>
+   
+   
+<table class="gridReport" >
+   <thead>
+      <tr valign="bottom">
+         <th align="left" width="300px">Medical Plan</th>
+         <th align="left" width="120px">Availed In-House </th>
+         <th align="left" width="120px">Availed Outside</th>
+         <th align="left" width="100px">Amount</th>  
+      </tr>
+   </thead>
+</table>
+
+
+<script type="text/javascript">
+
+function LoadData(){
+   var l_params="";
+   l_params += "p_id_no=<%=p_id_no%>";    
+   l_params += "&p_medplan_code=<%=p_medplan_code%>";  
+   l_params += "&p_tran_month=<%=p_tran_month%>";   
+   l_params += "&p_tran_year=<%=p_tran_year%>";   
+   
+   
+   
+   $.getJSON("availment_by_id_json?" + l_params
+      ,onLoadComplete
+   ).fail(function() {
+       $(".loadingStatus").css("display","none");
+       alert("Sorry, the current report cannot display at this moment.");
+   });
+
+
+}
+
+function onLoadComplete(data){
+   var jsonGrid = $(".gridReport");
+   jsonGrid.clearGrid();
+   $.each(data.rows, function () {
+      var r = ""
+      r += "<tr>";
+      r += "<td>" + this.data[0]    + "</td>";
+      r += "<td>" + this.data[1]   + "</td>";
+      r += "<td>" + this.data[2]  + "</td>";
+      r += "<td>" + this.data[3]   + "</td>";
+      r += "</tr>";   
+      jsonGrid.append(r);
+   });    
+   $(".loadingStatus").css("display","none");   
+   window.print();
+}
+
+ 
+//on page loaded
+$(document).ready(function(){    
+   LoadData();
+}); 
+   
+ 
+</script>
+
+</body>
+</html>

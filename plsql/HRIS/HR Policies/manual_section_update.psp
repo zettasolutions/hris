@@ -1,0 +1,229 @@
+<%@ plsql procedure="manual_section_update" %>
+<%@ plsql parameter="p_module_id"                type="NUMBER"%>
+<%@ plsql parameter="p_seq_no"                   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_manual_code"              type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_chapter_code"             type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_section_code"             type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_section_title"            type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_section_summary"          type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_remarks"                  type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_old_file"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_file"                     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_pages"                    type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_ammendment"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_effectivity_date"         type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   14-JAN-15  BD    Added module_id param.
+   26-OCT-14  BD    New
+*/
+--DECLARATION SECTION
+   l_js_path            VARCHAR2(100) := zsi_lib.JSPath;
+   l_date_format        VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+   l_changed            VARCHAR2(1) := 'N';
+   l_rec                S004_T08402%ROWTYPE;
+   l_create_error       BOOLEAN;
+   l_err_msg            VARCHAR2(32000);
+   l_effectivity_date   S004_T08402.effectivity_date%TYPE;
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Pragma"  content="no-cache">
+<meta http-equiv="Expires" content="-1">
+<title>Insert/Update sections </title>
+</head>
+<body>
+<body>
+<h4 align="center">Section - Update</h4>
+<br>
+<b class="required">Updating Section. Please wait... </b>
+<br>
+<br>
+<%
+   BEGIN
+
+
+      IF p_section_title IS NULL THEN
+%>
+         <hr size=-1>
+         <p>
+         <b class="error">section Title is Required</b>
+         <p>
+         </body>
+         </html>
+<%
+         l_create_error := TRUE;
+      ELSE
+         IF zsi_lib.IsStringValid(p_section_title)='N' THEN
+            l_err_msg := 'section Title cannot contain any of the following characters ' || zsi_lib.void_str1;
+            l_create_error := TRUE;
+%>
+            <b class="error"><%= l_err_msg %></b>
+            <hr size="-1">
+<%
+         END IF;
+      END IF;
+
+      IF p_file IS NULL AND p_old_file IS NULL THEN
+%>
+         <hr size=-1>
+         <p>
+         <b class="error">File Name is Required</b>
+         <p>
+         </body>
+         </html>
+<%
+         l_create_error := TRUE;
+      ELSE
+         IF zsi_lib.IsStringValid(p_file)='N' THEN
+            l_err_msg := 'File cannot contain any of the following characters ' || zsi_lib.void_str2;
+            l_create_error := TRUE;
+%>
+            <b class="error"><%= l_err_msg %></b>
+            <hr size="-1">
+<%
+         END IF;
+      END IF;
+
+      IF l_create_error THEN
+%>
+         <p>
+         <b class="error">Error: Unable to upload the document</b>
+         <p>
+         <hr size=-1>
+         </body>
+         </html>
+<%
+         RETURN;
+      END IF;
+
+      l_effectivity_date := TO_DATE(p_effectivity_date,l_date_format);
+
+      IF p_seq_no IS NULL THEN
+
+         SELECT MAX(section_code)
+           INTO l_rec.section_code
+           FROM S004_T08402
+          WHERE manual_code = p_manual_code
+            AND chapter_code = p_chapter_code;
+
+         l_rec.section_code := NVL(l_rec.section_code,0) + 1;
+
+
+         INSERT INTO s004_t08402 (seq_no,
+                                  manual_code,
+                                  chapter_code,
+                                  section_code,
+                                  section_title,
+                                  section_summary,
+                                  file_name,
+                                  page_no,
+                                  ammendment,
+                                  effectivity_date,
+                                  remarks,
+                                  created_by,
+                                  date_created)
+                          VALUES (s004_t08402_sq001.NEXTVAL,
+                                  p_manual_code,
+                                  p_chapter_code,
+                                  l_rec.section_code,
+                                  p_section_title,
+                                  p_section_summary,
+                                  p_file,
+                                  p_pages,
+                                  p_ammendment,
+                                  l_effectivity_date,
+                                  p_remarks,
+                                  zsi_sessions_lib.GetCookieUser,
+                                  SYSDATE);
+
+      ELSE
+
+         SELECT *
+           INTO l_rec
+           FROM s004_t08402
+          WHERE seq_no = p_seq_no;
+
+
+         IF zsi_lib.IsChanged(l_rec.section_title,p_section_title)='Y' THEN
+            l_changed := 'Y';
+         END IF;
+         IF zsi_lib.IsChanged(l_rec.section_summary,p_section_summary)='Y' THEN
+            l_changed := 'Y';
+         END IF;
+         IF zsi_lib.IsChanged(l_rec.file_name,NVL(p_file,p_old_file))='Y' THEN
+            l_changed := 'Y';
+         END IF;
+         IF zsi_lib.IsChanged(l_rec.remarks,p_remarks)='Y' THEN
+            l_changed := 'Y';
+         END IF;
+
+         IF l_changed = 'Y' THEN
+            IF p_file IS NOT NULL THEN
+
+               UPDATE s004_t08402
+                  SET section_title    = p_section_title,
+                      section_summary  = p_section_summary,
+                      file_name        = p_file,
+                      page_no          = p_pages,
+                      ammendment       = p_ammendment,
+                      effectivity_date = l_effectivity_date,
+                      remarks          = p_remarks,
+                      modified_by      = zsi_sessions_lib.GetCookieUser,
+                      date_modified    = SYSDATE
+                WHERE seq_no = p_seq_no;
+
+               -- Remove existing document
+               DELETE FROM s004_docs WHERE name=l_rec.file_name;
+
+            ELSE
+
+               UPDATE s004_t08402
+                  SET section_title    = p_section_title,
+                      section_summary  = p_section_summary,
+                      page_no          = p_pages,
+                      ammendment       = p_ammendment,
+                      effectivity_date = l_effectivity_date,
+                      remarks          = p_remarks,
+                      modified_by      = zsi_sessions_lib.GetCookieUser,
+                      date_modified    = SYSDATE
+                WHERE seq_no = p_seq_no;
+
+            END IF;
+         END IF;
+
+      END IF;
+
+   EXCEPTION
+      WHEN OTHERS THEN
+%>
+              <hr size=-1>
+              <b class="error">Unable to upload and update this section information</b>
+              <p>
+              <b class="error"><%= SQLERRM %></b>
+              <p>
+              </body>
+              </html>
+<%
+              ROLLBACK;
+              RETURN;
+
+   END;
+%>
+<script type="text/javascript">
+   parent.HomeWindow.LoadData("?p_manual_code=<%= p_manual_code %>&p_chapter_code=<%= p_chapter_code %>");
+   parent.w1.close();
+</script>

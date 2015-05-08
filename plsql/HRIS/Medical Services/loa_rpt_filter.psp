@@ -1,0 +1,104 @@
+<%@ plsql procedure="loa_rpt_filter" %>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   16-MAR-15  GT    New
+*/
+--DECLARATION SECTION
+l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+l_dhtmlx_sort                VARCHAR2(1024);
+%>
+<%
+   pageheader(p_dWin=>'Y');
+%>
+<body>
+<form name="frmList">
+<%
+zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputIdName(p_labelSize=>2);     
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Valid Until Date',p_inputName=>'p_valid_udate', p_labelSize =>2, p_inputSize =>2);   
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.SelectBox(p_labelName=>'Hospital/Clinic', p_Name=>'p_reference_code', p_labelSize=>2, p_selectSize=>4);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Amount',p_inputName=>'p_amount', p_labelSize =>2, p_inputSize =>1);   
+   zsi_bs_lib.CloseFormGroup();
+   
+   
+   
+zsi_bs_lib.CloseEntryForm;
+%>
+</form>
+<div class="col-xs-12 buttonGroup">     
+<%      
+   zsi_bs_lib.Offset(2);
+   zsi_bs_lib.Button('btnPrint','Print');
+%>
+</div>
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript">
+
+//on page loaded
+$(document).ready(function(){
+      ctrlSel("#p_reference_code","","N","S004_T08004","reference_code","reference_desc","ORDER BY reference_desc");
+
+      new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_id_no]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_id_no"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[0];
+            var td = currentObject.parentNode;
+            $("#p_empl_name").val(unescape(data[43])); 
+         }
+      });    
+      
+     new zsi.search({
+       column_names : ["Id","Employee Name"] 
+      ,column_indexes : [0,43] 
+      ,input:"input[name=p_empl_name]"
+      ,url :"employee_search_json"
+      ,parameter: "p_empl_name"
+      ,onSelectedItem: 
+         function(currentObject,data,i){            
+            currentObject.value=data[43];
+             var td = currentObject.parentNode;
+             $("#p_empl_id_no").val(data[0]);
+         }
+      });
+});
+
+$("#btnPrint").click(function(){
+   var l_params="";
+   l_params += "p_empl_id_no=" + $("#p_empl_id_no").val();
+   l_params += "&p_empl_name=" + $("#p_empl_name").val();
+   l_params += "&p_valid_udate=" + $("#p_valid_udate").val();
+   l_params += "&p_reference_code=" + $("#p_reference_code").val();
+   l_params += "&p_amount=" + $("#p_amount").val();
+   window.open("loa_rpt?" + l_params);
+});
+
+</script>
+<script type="text/javascript" src="zsi_employee_js"></script>
+</body>
+</html>

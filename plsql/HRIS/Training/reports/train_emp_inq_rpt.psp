@@ -1,0 +1,112 @@
+<%@ plsql procedure="train_emp_inq_rpt" %>
+<%@ plsql parameter="p_empl_id_no"      type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_Criteria"      type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   05-FEB-15  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_empl_name                  VARCHAR2(100) := zsi_lib.GetDescription('employee_active_v', 'empl_name', 'empl_id_no', p_empl_id_no);
+   
+%>
+<%
+   reportheader(p_output=>'H');   
+%> 
+<body >
+
+ 
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+
+
+   <table>
+      <tr valign="top">
+         <td width="400px" align="center" class="head1 reportTitle">PERSONNEL TRAINING ATTENDED</td>
+      </tr>
+       <tr valign="top">
+         <td  class="reportcriteria">Employee Name [<%=p_empl_id_no %>]<%=l_empl_name %></td>
+      </tr>     
+   </table>
+   
+   
+<table class="gridReport" >
+   <thead>
+      <tr valign="top">
+      <th align="center" width="100px">Tran No.</th>
+      <th align="center" width="100px">Code</th>
+      <th align="left" width="350px">Training Attended</th>
+      <th align="left" width="200px">Venue</th>
+      <th align="center" width="70px">Start Date</th>
+      <th align="center" width="70px">End Date</th>  
+      <th align="right" width="100px">Cost</th>
+      <th align="center" width="100px">Training Hours </th>
+      <th align="left" width="200px">Conducted By </th>
+      <th align="left" width="200px">Speaker(s)</th>
+      </tr>
+   </thead>
+</table>
+
+
+<script type="text/javascript">
+
+function LoadData(){
+   var l_params="";
+   l_params += "p_empl_id_no=<%=p_empl_id_no%>";    
+      
+   $.getJSON("train_emp_inq_json?" + l_params
+      ,onLoadComplete
+   ).fail(function() {
+       $(".loadingStatus").css("display","none");
+       alert("Sorry, the current report cannot display at this moment.");
+   });
+}
+
+function onLoadComplete(data){
+   var jsonGrid = $(".gridReport");
+   jsonGrid.clearGrid();
+   $.each(data.rows, function () {
+      var r = ""
+      r += "<tr>";
+      r += "<td align=center>" + this.data[0]    + "</td>";
+      r += "<td align=left>" + this.data[1]   + "</td>";
+      r += "<td align=left>" + this.data[2]   + "</td>";
+      r += "<td align=center>" + this.data[3]   + "</td>";
+      r += "<td align=center>" + this.data[4]   + "</td>";
+      r += "<td align=right>" + this.data[5]   + "</td>";
+      r += "<td align=center>" + this.data[6]   + "</td>";
+      r += "<td align=left>" + this.data[7]   + "</td>";
+      r += "<td align=left>" + this.data[8]   + "</td>";
+      r += "<td align=left>" + this.data[9]   + "</td>";
+      r += "</tr>";   
+      jsonGrid.append(r);
+   });    
+   $(".loadingStatus").css("display","none");   
+   window.print();
+}
+
+ 
+//on page loaded
+$(document).ready(function(){    
+   LoadData();
+});  
+</script>
+
+</body>
+</html>

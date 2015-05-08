@@ -1,0 +1,65 @@
+
+
+Part 1 : Oracle PL/SQL Web Toolkit
+
+1. Overview
+   a. Invoking PL/SQL Web Application
+   b. Implementing a PL/SQL Web Application
+
+2. Developing Application with Oracle Web Toolkit
+   a. HTML and Javascript
+      i. Web-Enabled Database
+      ii. Create Web-Pages in PL/SQL
+   b. Frames, Forms and Parameters
+      i. Frames
+      ii. Forms and Form Handlers
+      iii. Passing Parameter without Submitting Forms
+
+3. Passing Parameter to a PL/SQL Web Application
+   a. Passing List and Dropdown List Parameters from an HTML Form
+   b. Passing Radio Button and Checkbox Parameters from an HTML Form
+   c. Passing Entry Field Parameters from an HTML Form
+   d. Passing Hidden Parameters from an HTML Form
+   e. Uploading a File from an HTML Form
+   f. Submitting a Completed HTML Form
+   g. Maintaining State Information Between Web Pages
+
+
+PART 2: Oracle PL/SQL Server Pages (PSP)
+
+1. PL/SQL Server Pages: Overview
+   a. What Are PL/SQL Server Pages and Why Use Them?
+   b. Prerequisites for Developing and Deploying PL/SQL Server Pages
+   c. PSP and the HTP Package
+   d. PSP and Other Scripting Solutions
+
+2. Writing a PL/SQL Server Page
+   a. PSP Directives (Specifying Basic Server Page Characteristics)
+      i.    Page Directives
+      ii.   Procedure Directives
+      iii.  Parameter Directives
+   b. PSP Declaration
+   c. Commments in PSP Files
+   d. Specifying Executable Statements in a PSP Script
+   e. Substituting an Expression Result in a PSP Script
+   f. Quoting and Escaping Strings in a PSP Script
+   g. Including Comments in a PSP Script
+
+3. Loading a PL/SQL Server Page into the Database
+   a. Loading Script to Database
+   b. Querying PSP Source Code
+
+4. Executing a PL/SQL Server Page Through a URL
+5. Examples of PL/SQL Server Pages
+   a. Setup for PL/SQL Server Pages Examples
+   b. Printing the Sample Table with a Loop
+   c. Allowing a User Selection
+   d. Using an HTML Form to Call a PL/SQL Server Page
+
+6. Debugging PL/SQL Server Page Problems
+7. Notes for Putting PL/SQL Server Pages into Production
+
+PART 3 MOD_PLSQL Gateway Configuration
+Introduction to  DHTMLx
+
+PART 4 Exercises

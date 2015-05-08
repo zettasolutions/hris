@@ -1,0 +1,119 @@
+<%@ plsql procedure="module_procs_update" %>
+<%@ plsql parameter="p_proc_id"         type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_module_proc_id"  type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_table_view"      type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_type"            type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_cb"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_module_id"       type="NUMBER"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2015 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   02-MAR-15  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_sql                        VARCHAR2(1000);
+   l_changed                    VARCHAR2(1) := 'N';
+   l_rec                        S004_MODULE_PROCS%ROWTYPE;
+   l_seq_no                     NUMBER;
+   l_proc_type                  VARCHAR2(2);
+   l_module_id                  NUMBER;
+
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update HRIS User Modules </title>
+</head>
+<body>
+<%
+FOR i IN 2..p_module_proc_id.COUNT LOOP  
+   l_module_id := p_module_id;
+   IF p_proc_id(i) IS NOT NULL THEN
+      l_module_id := NULL;
+   END IF;   
+   IF p_module_proc_id(i) IS NULL  AND p_proc_id(i) IS NOT NULL and p_module_id IS NOT NULL THEN
+      SELECT S004_MODULE_PROCS_SQ001.NEXTVAL INTO l_seq_no FROM DUAL;
+      l_proc_type := zsi_lib.GetDescription('S004_MODULES','proc_type','module_id',p_proc_id(i));
+      INSERT INTO S004_MODULE_PROCS
+      (   module_proc_id
+         ,module_id
+         ,proc_id
+         ,table_view
+         ,type
+         ,created_by
+         ,date_created
+         
+      )
+      VALUES
+      (   l_seq_no
+         ,p_module_id
+         ,p_proc_id(i)
+         ,p_table_view(i)
+         ,p_type(i)
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+      );
+         IF NVL(l_proc_type,'ABC') <> 'D' THEN
+               INSERT INTO S004_MODULE_PROC_OBJ
+               (  module_proc_obj_id
+                 ,module_proc_id
+                 ,module_id
+                 ,field_name
+                ) 
+                SELECT
+                  S004_MODULE_PROC_OBJ_SQ001.NEXTVAL
+                 ,l_seq_no
+                 ,l_module_id
+                 ,column_name
+                FROM user_tab_columns
+                WHERE table_name = UPPER(p_table_view(i));
+         END IF;      
+      
+    ELSIF p_module_proc_id(i) IS NOT NULL AND p_proc_id(i) IS NOT NULL  THEN   
+      SELECT * INTO l_rec FROM S004_MODULE_PROCS WHERE module_proc_id = p_module_proc_id(i);
+      IF zsi_lib.IsChanged(l_rec.proc_id, TO_NUMBER(p_proc_id(i))) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.proc_id := p_proc_id(i);
+         DELETE FROM S004_MODULE_PROC_OBJ WHERE module_proc_id = p_module_proc_id(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.table_view, p_table_view(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.table_view := p_table_view(i);
+         DELETE FROM S004_MODULE_PROC_OBJ WHERE module_proc_id = p_module_proc_id(i);
+      END IF;
+
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_MODULE_PROCS SET row = l_rec WHERE module_proc_id= p_module_proc_id(i);
+      END IF;         
+    
+    ELSIF p_module_proc_id(i) IS NOT NULL AND p_proc_id(i) IS NULL  THEN
+      
+         DELETE FROM S004_MODULE_PROC_OBJ WHERE module_proc_id= p_module_proc_id(i);
+         DELETE FROM S004_MODULE_PROCS where module_proc_id=p_module_proc_id(i);
+      
+    END IF;
+END LOOP;
+END;
+%>
+

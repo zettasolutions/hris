@@ -1,0 +1,97 @@
+<%@ plsql procedure="train_tfq_delete" %>
+<%@ plsql parameter="p_tran_no"           type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_question_no"       type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_question_desc"     type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_question_desc2"    type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_remarks"           type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   15-07-14   GF    New
+*/
+--DECLARATION SECTION
+   l_js_path      VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed      VARCHAR2(1) := 'N';
+   l_rec          S004_T07018%ROWTYPE;
+   l_date_format  VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Training Follow-up Questionnaire Maintenance Table </title>
+</head>
+<body>
+<%
+FOR i IN 2..p_tran_no.COUNT LOOP
+
+
+   IF p_tran_no(i) IS NULL  AND p_question_no(i) IS NOT NULL THEN
+      INSERT INTO S004_T07018 (
+         tran_no,
+         question_no,
+         question_desc,
+         question_desc2,
+         remarks
+      )
+      VALUES
+      (  
+         S004_T07018_SQ001.NEXTVAL,
+         p_question_no(i),
+         p_question_desc(i),
+         p_question_desc2(i),
+         p_remarks(i)
+   );
+   ELSIF p_tran_no(i) IS NOT NULL AND p_question_no(i) IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T07018 WHERE tran_no=p_tran_no(i);
+
+      IF zsi_lib.IsChanged(l_rec.question_no, TO_NUMBER(p_question_no(i))) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.question_no := p_question_no(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.question_desc, p_question_desc(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.question_desc := p_question_desc(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.question_desc2, p_question_desc2(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.question_desc2 := p_question_desc2(i);
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.remarks, p_remarks(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.remarks := p_remarks(i);
+      END IF;
+      
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T07018 SET row = l_rec WHERE tran_no=p_tran_no(i);
+      END IF;
+      
+
+   END IF;
+END LOOP;
+END;
+%>
+<script type="text/javascript">
+   var ifr = parent.dhxLayout.cells("b").getFrame();
+   ifr.contentWindow.location.reload();
+   parent.w1.close();
+</script>

@@ -1,0 +1,93 @@
+<%@ plsql procedure="treatment_for_update" %>
+<%@ plsql parameter="p_tf_for"      type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_tf_desc"     type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_is_dental"   type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_remarks"     type="zsi_lib.VC2_255_ARR"%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   01-JUL-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+
+
+   l_changed VARCHAR2(1) := 'N';
+   l_rec     S004_T08014%ROWTYPE;
+
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Treatment For </title>
+</head>
+<body>
+<%
+FOR i IN 2..p_tf_for.COUNT LOOP
+   IF p_tf_for(i) IS NULL  AND p_tf_desc(i) IS NOT NULL THEN        
+      INSERT INTO S004_T08014 (
+         treatment_for,
+         treatment_desc,
+         is_dental,
+         remarks
+         ,created_by
+         ,date_created)
+      VALUES  (
+         S004_T08014_SQ001.NEXTVAL,
+         p_tf_desc(i),
+         p_is_dental(i),
+         p_remarks(i),
+         zsi_sessions_lib.GetCookieUser,
+         SYSDATE
+);
+         
+      ELSIF p_tf_for(i) IS NOT NULL AND p_tf_desc(i) IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T08014 WHERE treatment_for=p_tf_for(i);
+
+      IF zsi_lib.IsChanged(l_rec.treatment_desc, p_tf_desc(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.treatment_desc := p_tf_desc(i);
+      END IF;
+      IF zsi_lib.IsChanged(l_rec.is_dental, TO_NUMBER(p_is_dental(i))) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.is_dental := p_is_dental(i);
+      END IF;
+      
+      IF zsi_lib.IsChanged(l_rec.remarks, p_remarks(i)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.remarks := p_remarks(i);
+      END IF;
+
+      IF l_changed='Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08014 SET row = l_rec WHERE treatment_for = p_tf_for(i);
+      END IF;
+
+      END IF;
+   END LOOP;
+END;
+%>
+
+<script type="text/javascript">
+   parent.dhxLayout.cells("b").attachURL("treatment_for_list");
+   parent.w1.close();
+</script>

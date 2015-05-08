@@ -1,0 +1,67 @@
+<%@ plsql procedure="reportheader" %>
+<%@ plsql parameter="p_output"   type="VARCHAR2" default="'H'"%>
+<%@ plsql parameter="p_amchart"  type="VARCHAR2" default="'N'"%>
+<%!
+   /*
+   =======================================================================
+   *
+   * Copyright (c) 2014-2015 ZettaSolutions,Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+   */
+
+   /* Modification History
+   Date       By    History
+   ---------  ----  ------------------------------------------------------------------------
+   07-JAN-15  BD    New.
+   28-JAN-15  GF    Transfer code css to single file.
+   
+   */
+   l_style_path     VARCHAR2(128) := zsi_lib.StylePath;
+   l_js_path        VARCHAR2(128) := zsi_lib.JSPath;
+   l_amchart_path   VARCHAR2(128) := zsi_lib.AMChartsPath || 'amcharts/';
+   l_user           VARCHAR2(100);
+%>
+<%
+   l_user := zsi_sessions_lib.GetCookieUser;
+   IF l_user IS NULL THEN
+      zsi_sessions_lib.RedirectURL('errorpage');
+      RETURN;
+   END IF;
+   
+   IF UPPER(p_output) = 'H' THEN
+%>
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+<META HTTP-EQUIV="EXPIRES" CONTENT="<%= TO_CHAR(SYSDATE,'Dy, DD Mon YYYY HH:MI:SS') %>">
+<META CHARSET="UTF-8">
+<META NAME="VIEWPORT" CONTENT="WIDTH=DEVICE-WIDTH, INITIAL-SCALE=1">
+<title>MCWD - HRIS (<%= l_user %>)</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script type="text/javascript" src="<%= l_js_path %>jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="zsi_lib_js"></script>
+<link rel="stylesheet" type="text/css" href="zsi_style_rpt_css">
+<%
+      IF UPPER(p_amchart) = 'Y' THEN
+%>
+<script type="text/javascript" src="<%= l_amchart_path %>amcharts.js"></script>
+<script type="text/javascript" src="<%= l_amchart_path %>pie.js"></script>
+<script type="text/javascript" src="<%= l_amchart_path %>serial.js"></script>
+<script type="text/javascript" src="<%= l_amchart_path %>themes/light.js"></script>
+<%
+      END IF;
+   ELSIF UPPER(p_output) IN ('E','W') THEN
+%>
+<!DOCTYPE excel>
+<html lang="en-US">
+<head>
+<title>MCWD - HRIS (<%= l_user %>)</title>
+<%
+   END IF;
+%>
+</head>

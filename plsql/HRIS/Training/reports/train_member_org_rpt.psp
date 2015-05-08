@@ -1,0 +1,93 @@
+<%@ plsql procedure="train_member_org_rpt" %>
+<%@ plsql parameter="p_order1"      type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_order2"      type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_order3"      type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   04-FEB-15  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                     VARCHAR2(3000);
+   l_from                       VARCHAR2(1000);
+   l_where                      VARCHAR2(4000);
+   l_order                      VARCHAR2(4000);
+   l_sql                        VARCHAR2(8000);
+   TYPE ts_cur IS REF CURSOR;
+   tsref              ts_cur;
+   l_empl_name                   train_member_org_v.empl_name%TYPE;
+   l_job_desc                    train_member_org_v.job_desc%TYPE;
+   l_dept_abbrv                  train_member_org_v.dept_abbrv%TYPE;
+   l_conv_desc                   train_member_org_v.conv_desc%TYPE;
+   l_module_id                   s004_modules.module_id%TYPE := zsi_lib.GetModuleID(owa_util.get_procedure);
+%>
+
+<%
+   l_select := 'SELECT DISTINCT empl_name,job_desc,dept_abbrv, conv_desc';
+   l_from   := '  FROM train_member_org_v ';
+   l_where  := ' WHERE 1=1';
+   
+   
+
+   l_sql := l_select || l_from || l_where || ' order by ' || p_order1 || ',' || p_order2 || ',' ||  p_order3;
+
+   reportheader(p_output=>'H');   
+%>
+<body onload="window.print();">
+
+   <table>
+      <tr valign="top">
+         <td width="400px" align="left" class="head1">List of Active Employees (Member of Organization)</td>
+         <td width="200px" align="right" class="head6">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss')) %></td>
+      </tr>
+   </table>
+
+   <table >
+      <thead>
+         <tr valign="bottom">
+            <th align="left">Name</th>
+            <th >Job Position</th>
+            <th >Department</th>
+            <th >Organization</th>
+         </tr>
+      </thead>
+      <tbody>
+<%
+   OPEN tsref FOR l_sql;
+   LOOP
+       FETCH tsref INTO l_empl_name 
+                       ,l_job_desc  
+                       ,l_dept_abbrv
+                       ,l_conv_desc;
+   EXIT WHEN tsref%NOTFOUND;
+%>
+         <tr valign="bottom">
+            <td align="left"><%=l_empl_name %></td>
+            <td ><%=l_job_desc %></td>
+            <td ><%=l_dept_abbrv %></td>
+            <td ><%=l_conv_desc %></td>
+         </tr>
+<%
+   END LOOP;
+%>
+   </tbody>
+   </table>
+
+ 
+ 
+</body>
+</html>

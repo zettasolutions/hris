@@ -1,0 +1,62 @@
+<%@ plsql procedure="conv_emp_rpt_filter"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   31-MAR-15  GT    New
+*/
+   --DECLARATION SECTION
+   l_user                       VARCHAR2(30);
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_amchart_path               VARCHAR2(128);
+   l_module_id                  s004_modules.module_id%TYPE;
+   l_user_iswrite               NUMBER(1):=0;
+%>
+<%
+   l_user       := zsi_sessions_lib.GetCookieUser;
+   l_module_id  := zsi_lib.GetModuleID('TRAIN_SPEAKER_RPT');
+   l_user_iswrite := 1;
+   pageheader;
+%>
+<body>
+<form name="frmList">
+<%
+   zsi_bs_lib.OpenEntryForm;
+
+   zsi_bs_lib.OpenFormGroup();
+   zsi_bs_lib.InputTextBox(p_labelName =>'Date From',p_inputName=>'p_start_date',p_inputValue=>NULL,p_labelSize =>1, p_inputSize =>1);
+   zsi_bs_lib.InputTextBox(p_labelName =>'Date To',p_inputName=>'p_end_date',p_inputValue=>NULL,p_labelSize =>2, p_inputSize =>1);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.CloseEntryForm;
+%>
+
+</form>
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_user_iswrite = 1 then
+      zsi_bs_lib.Offset(1);
+      zsi_bs_lib.Button('btnPrint','Run Report');
+   END IF;
+%>
+</div>
+<script type="text/javascript">
+$("#btnPrint").click(function(){
+   var l_params="";
+   l_params += "p_start_date=" + $("#p_start_date").val();
+   l_params += "&p_end_date=" + $("#p_end_date").val();
+   window.open("conv_emp_rpt?" + l_params);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<%@ plsql procedure="med_inv_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_tran_no"     type="VARCHAR2" default="NULL"%>
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-SEP-14  BD    Added security logic.
+   01-AUG-14  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_title                 VARCHAR2(50);
+   l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
+   l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_rec                   medicine_inventory_v%ROWTYPE;
+   l_tran_no               medicine_inventory_v.tran_no%TYPE := '';
+   l_tran_date             VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
+   l_meds_code             medicine_inventory_v.meds_code%TYPE := '';
+   l_medicine              medicine_inventory_v.medicine%TYPE := '';
+   l_meds_type             medicine_inventory_v.meds_type%TYPE := '';
+   l_quantity              medicine_inventory_v.quantity%TYPE := 0;
+   l_unit_price            medicine_inventory_v.unit_price%TYPE := '';
+   l_expiry_date           VARCHAR(20);
+   l_purchase_date         VARCHAR(20);
+   l_remarks               medicine_inventory_v.remarks%TYPE;
+   l_post_status           medicine_inventory_v.post_status%TYPE := 0;
+   l_post_date             VARCHAR(20);
+   l_total                 NUMBER;
+   l_user_iswrite       NUMBER(1):=0;
+
+%>
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   IF p_tran_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM medicine_inventory_v WHERE tran_no = p_tran_no;
+      l_tran_no              :=l_rec.tran_no;
+      l_tran_date            :=TO_CHAR(l_rec.tran_date, l_date_format);
+      l_meds_code            :=l_rec.meds_code;
+      l_meds_type            :=l_rec.meds_type;
+      l_quantity             :=l_rec.quantity;
+      l_unit_price           :=l_rec.unit_price;
+      l_expiry_date          :=TO_CHAR(l_rec.expiry_date, l_date_format);
+      l_purchase_date        :=TO_CHAR(l_rec.purchase_date, l_date_format);
+      l_remarks              :=l_rec.remarks;
+      l_post_status          :=l_rec.post_status;
+      l_post_date            :=l_rec.post_date;
+      l_total                :=l_rec.quantity * l_rec.unit_price;
+      l_medicine             :=l_rec.medicine;
+   END IF;
+   pageheader(p_dwin=>'Y');
+
+%>
+<body>
+<form id="frmList" name="frmList">
+<%
+
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no',p_inputValue=>l_tran_no);
+
+   zsi_bs_lib.OpenEntryForm;
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Date',p_inputName=>'p_tran_date',p_inputValue=>l_tran_date,p_labelSize =>2, p_inputSize =>1, p_attributes=>'style="width: 110px;"');
+      zsi_bs_lib.YesNo(p_label_name=>'Is Posted?',p_field=>'post_status',p_value=>l_post_status ,p_label_size =>2,p_select_size =>1);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+     zsi_bs_lib.InputTextBox(p_labelName =>'Medicine',p_inputName=>'p_medicine',p_inputValue=>l_medicine, p_labelSize =>2, p_inputSize =>4);
+     zsi_bs_lib.InputHiddenBox(p_inputName=>'p_meds_code',p_inputValue=>l_meds_code);
+   zsi_bs_lib.CloseFormGroup();
+
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Quantity',p_inputName=>'p_quantity',p_inputValue=>l_quantity, p_labelSize =>2, p_inputSize =>1);
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Purchase Date',p_inputName=>'p_purchase_date',p_inputValue=>l_purchase_date, p_labelSize =>2, p_inputSize =>1, p_attributes=>'style="width: 110px;"');
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Unit Price',p_inputName=>'p_unit_price',p_inputValue=>l_unit_price, p_labelSize =>2, p_inputSize =>1);
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Total',p_inputName=>'p_total',p_inputValue=>zsi_lib.FormatAmount(l_total,2), p_labelSize =>2, p_inputSize =>1, p_attributes=>'disabled');
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBox(p_labelName =>'Expiry Date',p_inputName=>'p_expiry_date',p_inputValue=>l_expiry_date, p_labelSize =>2, p_inputSize =>1, p_attributes=>'style="width: 110px;"');
+   zsi_bs_lib.CloseFormGroup();
+
+   zsi_bs_lib.OpenFormGroup();
+      zsi_bs_lib.InputTextBoxArea(p_labelName =>'Remarks',p_inputName=>'p_remarks',p_labelSize =>2, p_inputValue=>l_remarks, p_inputSize =>4, p_attributes=>'rows="2"');
+   zsi_bs_lib.CloseFormGroup();
+   zsi_bs_lib.CloseEntryForm;
+
+%>
+</form>
+
+<div class="col-xs-12 buttonGroup">
+<%
+   IF l_post_status = 0 AND l_user_iswrite = 1 THEN
+      zsi_bs_lib.Offset(2);
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+
+<script type="text/javascript" src="zsi_search_js"></script>
+<script type="text/javascript">
+/*declaration*/
+   var ctrlSel = zsi.control.SelectList;
+     
+/*end of declaration*/
+
+
+   $("form[name=frmList]").submit(function(){
+      var ischeckDate = false;
+      if( zsi.form.checkMandatory()!=true) return false;
+
+      ischeckDate = zsi.form.checkDate(
+                  [   
+                     "p_tran_date"
+                  ]
+                  ,
+                  [
+                     "Transaction Date"
+                  ]
+      );
+
+      return ischeckDate;      
+   }); 
+
+   //on page loaded
+   $(document).ready(function(){
+   
+     $(".loadingStatus").css("display","none");
+     
+           new zsi.search({
+            column_names : ["Medicine", "Code"] 
+           ,column_indexes : [1,0] 
+           ,input:"input[name=p_medicine]"
+           ,url :"medicine_search_json"
+           ,parameter: "p_medicine"
+           ,onSelectedItem: 
+              function(currentObject,data,i){            
+                 currentObject.value=data[1];
+                 var td = currentObject.parentNode;
+                 $("input[name=p_meds_code]").val(data[0]);          
+              }
+      });  
+
+       zsi.form.markMandatory({       
+         "groupNames":[ 
+            {"names" :  
+               [  
+                "p_tran_date" 
+               ,"p_meds_code"
+               ,"p_quantity"
+               ]
+            ,"type":"S"
+            }             
+         ]      
+         ,"groupTitles":[ 
+            {"titles" :  
+               [                       
+                "Transaction Date"
+               ,"Medicine"
+               ,"Quanity"
+               ]
+            }
+
+         ]
+      });
+      
+      
+//      ctrlSel("#p_meds_code","<%=l_meds_code%>","N","meds_v","meds_code","medicine","ORDER BY medicine");
+
+      $("#p_quantity,#p_unit_price").blur(function(){
+        $("#p_total").val(
+             (    $("#p_quantity").val() * $("#p_unit_price").val() ).toFixed(2)
+          );
+      });
+   });
+
+$("#btnSubmit").click(function(){
+   $.ajax({
+      type:"POST"
+      ,url:"med_inv_update"
+      ,data:$("#frmList").serialize()
+      ,success: function(res){        
+         parent.HomeWindow.LoadData("");
+         parent.w1.close();
+      }
+   });
+   
+}); 
+
+</script>
+
+
+</body>
+</html>
+

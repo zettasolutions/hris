@@ -1,0 +1,73 @@
+<%@ plsql procedure="cases_stat_hb_update" %>
+<%@ plsql parameter="p_tran_no"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_status_seq_no"           type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_seq_no"                  type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_handled_by"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_handled_by_name"         type="zsi_lib.VC2_255_ARR"%>
+
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-FEB-15  GT    New
+*/
+--DECLARATION SECTION
+   l_js_path         VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed         VARCHAR2(1) := 'N';
+   l_recHand         S004_T08800_HANDLEDBY%ROWTYPE;
+   l_date_format     VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+   val_error         BOOLEAN := FALSE;
+   l_err_msg         VARCHAR2(255);
+   l_date_endorsed   DATE;
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Cases Status Handled By </title>
+</head>
+<body>
+<%
+   FOR i IN 2..p_seq_no.COUNT LOOP
+      IF p_seq_no(i) IS NULL  AND p_handled_by(i) IS NOT NULL THEN
+         INSERT INTO S004_T08800_HANDLEDBY (
+             tran_no
+            ,status_seq_no
+            ,seq_no                  
+            ,handled_by)
+         VALUES
+         (   p_tran_no
+            ,p_status_seq_no
+            ,S004_T08800_SQ001.NEXTVAL
+            ,p_handled_by(i));    
+      ELSIF p_seq_no(i) IS NOT NULL  AND p_handled_by(i) IS NOT NULL THEN
+         SELECT * INTO l_recHand FROM S004_T08800_HANDLEDBY WHERE seq_no=p_seq_no(i);
+         IF zsi_lib.IsChanged(l_recHand.handled_by, TO_NUMBER(p_handled_by(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_recHand.handled_by := p_handled_by(i);
+         END IF;
+         IF l_changed = 'Y' THEN
+            l_recHand.modified_by := zsi_sessions_lib.GetCookieUser;
+            l_recHand.date_modifIed := SYSDATE;
+            UPDATE S004_T08800_HANDLEDBY SET row = l_recHand WHERE seq_no=p_seq_no(i);
+         END IF;            
+      END IF;            
+   END LOOP;   
+END;
+%>
+<script type="text/javascript">
+   window.parent.countStatusHB(<%=p_status_seq_no%>);   
+   window.parent.w1.close();
+</script>

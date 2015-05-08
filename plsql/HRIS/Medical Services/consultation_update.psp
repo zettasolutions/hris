@@ -1,0 +1,1012 @@
+<%@ plsql procedure="consultation_update" %>
+<%@ plsql parameter="p_tran_no"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tran_date"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_empl_id_no"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_age_brak_code"           type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_empl_type"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_cost_center"             type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_department"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_group_code"              type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_dep_id"                  type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_medplan_type"            type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_medplan_code"            type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_complaint"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_diagnosis"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_treatment"               type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_remarks"                 type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_post_status"             type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_module_id"               type="VARCHAR2" default="NULL"%>
+
+
+<%@ plsql parameter="p_tab"                     type="VARCHAR2" default="NULL"%>
+
+
+<% /* Doctor */ %>
+<%@ plsql parameter="p_doc_seq_no"               type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_doctor_code"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_doc_reference_code"       type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_doc_remarks"              type="zsi_lib.VC2_255_ARR"%>
+
+<% /* Billing */%>
+<%@ plsql parameter="p_bill_seq_no"             type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_bill_medservice_code"    type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_amnt_billed"             type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_amnt_covered"            type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_amnt_not_covered"        type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_or_date"                 type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_or_number"               type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_issued_by"               type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_for_refund"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_bill_doctor_code"        type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_reference_code"          type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_payment_tag"             type="zsi_lib.VC2_255_ARR"%>
+
+<% /* Dental Services */ %>
+<%@ plsql parameter="p_ds_seq_no"               type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ds_code"                 type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ds_rate"                 type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ds_qty"                  type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ds_next_visit_date"      type="zsi_lib.VC2_255_ARR"%>
+
+<% /* Illnesses */%>
+<%@ plsql parameter="p_ill_seq_no"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_illness_code"            type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ill_next_visit_date"     type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ill_remarks"             type="zsi_lib.VC2_255_ARR"%>
+
+<% /* Inhouse */%>
+<%@ plsql parameter="p_ih_seq_no"               type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ih_medservice_code"      type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ih_systolic"             type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ih_diastolic"             type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_ih_remarks"              type="zsi_lib.VC2_255_ARR"%>
+
+<% /* Lab Result */%>
+<%@ plsql parameter="p_lr_seq_no"               type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_result_type"             type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_follow_up_lab_date"      type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_lr_remarks"              type="zsi_lib.VC2_255_ARR"%>
+
+<%!
+/*
+
+========================================================================
+*
+* Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   07-AUG-14  GT    New
+*/
+--DECLARATION SECTION
+   l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
+   l_changed               VARCHAR2(1) := 'N';
+   l_rec                   S004_T08020%ROWTYPE;
+   l_recDoc                S004_T08020_DOCTOR%ROWTYPE;
+   l_recBill               S004_T08020_BILLING%ROWTYPE;
+   l_recMed                S004_T08020_MEDS%ROWTYPE;
+   l_recIll                S004_T08020_ILLNESS%ROWTYPE;
+   l_recDs                 S004_T08020_DENTAL%ROWTYPE;
+   l_recIh                 S004_T08020_SERVICES%ROWTYPE;
+   l_recLr                 S004_T08020_RESULT_HDR%ROWTYPE;
+   l_date_format           VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+
+   l_tran_date             DATE;
+   l_tran_year             NUMBER;
+   l_post_date             DATE;
+   l_or_date               DATE;
+   l_ds_next_visit_date    DATE;
+   l_ill_next_visit_date   DATE;
+   l_follow_up_lab_date    DATE;
+   l_is_followup           NUMBER:=0;
+   l_age_brak              NUMBER:=p_age_brak_code;
+   l_seq_no                NUMBER:=0;
+
+   l_tran_no               S004_T08020.TRAN_NO%TYPE;
+   l_ledger_no             NUMBER:=0;
+
+   l_amnt_billed           S004_T08020_BILLING.amnt_billed%TYPE;
+   l_amnt_covered          S004_T08020_BILLING.amnt_covered%TYPE;
+   l_amnt_not_covered      S004_T08020_BILLING.amnt_not_covered%TYPE;
+   l_ds_qty                S004_T08020_DENTAL.ds_qty%TYPE;
+   l_ds_rate               S004_T08020_DENTAL.ds_rate%TYPE;
+   
+   
+%>
+<%
+BEGIN
+%>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Insert/Update Consultation </title>
+</head>
+<body>
+<%
+   l_tran_no := p_tran_no;  
+   l_tran_date  := TO_DATE(p_tran_date,l_date_format);
+   l_tran_year := EXTRACT(YEAR FROM TO_DATE(p_tran_date,l_date_format));
+   
+   IF p_dep_id IS NOT NULL THEN
+      l_age_brak := zsi_lib.GetDescription('dependents_v', 'age_brak_code', 'emde_dependent_id', p_dep_id);
+   END IF;
+   
+   IF p_post_status = 1 then
+      l_post_date := SYSDATE;
+   ELSE 
+      l_post_date := NULL;
+   END IF;
+
+
+   IF p_tran_no IS NULL  AND p_empl_id_no IS NOT NULL THEN
+     SELECT S004_T08020_SQ001.NEXTVAL INTO l_tran_no FROM DUAL;      
+      INSERT INTO S004_T08020 (
+          tran_no
+         ,tran_date
+         ,id_no
+         ,age_brak_code
+         ,empl_type
+         ,cost_center
+         ,department
+         ,group_code
+         ,medplan_type
+         ,medplan_code
+         ,complaint
+         ,diagnosis
+         ,treatment
+         ,remarks
+         ,post_status
+         ,post_date
+         ,created_by
+         ,date_created
+      )
+      VALUES
+      (   l_tran_no 
+         ,l_tran_date
+         ,p_empl_id_no
+         ,l_age_brak
+         ,p_empl_type
+         ,p_cost_center
+         ,p_department
+         ,p_group_code
+         ,p_medplan_type
+         ,p_medplan_code
+         ,p_complaint
+         ,p_diagnosis
+         ,p_treatment
+         ,p_remarks
+         ,p_post_status
+         ,l_post_date
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+);
+   
+   ELSIF p_tran_no IS NOT NULL AND p_empl_id_no IS NOT NULL  THEN
+
+      SELECT * INTO l_rec FROM S004_T08020 WHERE tran_no=p_tran_no;
+
+      IF zsi_lib.IsChanged(l_rec.tran_date, l_tran_date) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.tran_date := l_tran_date;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.id_no, TO_NUMBER(p_empl_id_no)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.id_no := p_empl_id_no;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.age_brak_code, TO_NUMBER(l_age_brak)) = 'Y' THEN
+         l_changed :='Y';
+         l_rec.age_brak_code := l_age_brak;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.empl_type, p_empl_type) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.empl_type := p_empl_type;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.cost_center, p_cost_center) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.cost_center := p_cost_center;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.department, p_department) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.department := p_department;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.group_code, p_group_code) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.group_code := p_group_code;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.medplan_type, p_medplan_type) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.medplan_type := p_medplan_type;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.medplan_code, p_medplan_code) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.medplan_code := p_medplan_code;
+      END IF;
+      
+      IF zsi_lib.IsChanged(l_rec.complaint, p_complaint) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.complaint := p_complaint;
+      END IF;      
+      
+      IF zsi_lib.IsChanged(l_rec.diagnosis, p_diagnosis) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.diagnosis := p_diagnosis;
+      END IF;      
+
+      IF zsi_lib.IsChanged(l_rec.treatment, p_treatment) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.treatment := p_treatment;
+      END IF;      
+
+      IF zsi_lib.IsChanged(l_rec.post_status, TO_NUMBER(p_post_status)) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.post_status := p_post_status;
+      END IF;
+
+      IF zsi_lib.IsChanged(l_rec.post_date, l_post_date) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.post_date := l_post_date;
+      END IF;
+
+      IF l_changed = 'Y' THEN
+         l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
+         l_rec.date_modifIed := SYSDATE;
+         UPDATE S004_T08020 SET row = l_rec WHERE tran_no=p_tran_no;
+      END IF;
+   END IF;
+   
+     
+   
+/* Tab Details */   
+   FOR i IN 2..p_doctor_code.COUNT LOOP
+   l_seq_no := p_doc_seq_no(i);
+      IF p_doctor_code(i) IS NOT NULL  AND p_doc_seq_no(i) IS NULL THEN
+         SELECT S004_T08020_DOCTOR_SQ001.NEXTVAL INTO l_seq_no FROM DUAL;
+         INSERT INTO S004_T08020_DOCTOR (
+             tran_no
+            ,tran_year                  
+            ,tran_date                  
+            ,id_no                      
+            ,dep_id                     
+            ,seq_no
+            ,doctor_code
+            ,reference_code)
+         VALUES
+         (   l_tran_no
+            ,l_tran_year
+            ,l_tran_date
+            ,p_empl_id_no
+            ,p_dep_id
+            ,l_seq_no
+            ,p_doctor_code(i)
+            ,p_doc_reference_code(i));  
+      ELSIF p_doctor_code(i) IS NOT NULL  AND p_doc_seq_no(i) IS NOT NULL THEN
+
+         SELECT * INTO l_recDoc FROM S004_T08020_DOCTOR WHERE seq_no=p_doc_seq_no(i);
+
+         IF zsi_lib.IsChanged(l_recDoc.doctor_code, TO_NUMBER(p_doctor_code(i))) = 'Y' THEN
+            l_changed :='Y';
+         l_recDoc.doctor_code := p_doctor_code(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recDoc.reference_code, TO_NUMBER(p_doc_reference_code(i))) = 'Y' THEN
+            l_changed :='Y';
+         l_recDoc.reference_code := p_doc_reference_code(i);
+         END IF;
+
+         IF l_changed = 'Y' THEN
+            l_recDoc.modified_by := zsi_sessions_lib.GetCookieUser;
+            l_recDoc.date_modifIed := SYSDATE;
+            UPDATE S004_T08020_DOCTOR SET row = l_recDoc WHERE seq_no=p_doc_seq_no(i);
+         END IF;            
+      END IF;   
+   END LOOP;  
+      
+   l_changed := 'N';
+
+   FOR i IN 2..p_bill_medservice_code.COUNT LOOP
+      l_or_date            := TO_DATE(p_or_date(i),l_date_format);       
+      l_amnt_billed         := REPLACE(p_amnt_billed(i),',','');   
+      l_amnt_covered        := REPLACE(p_amnt_covered(i),',','');  
+      l_amnt_not_covered    := REPLACE(p_amnt_not_covered(i),',',''); 
+      l_seq_no := p_bill_seq_no(i);
+      IF p_bill_medservice_code(i) IS NOT NULL  AND p_bill_seq_no(i) IS NULL THEN
+         SELECT S004_T08020_BILLING_SQ001.NEXTVAL INTO l_seq_no FROM DUAL;
+         INSERT INTO S004_T08020_BILLING (
+             tran_no
+            ,tran_year                  
+            ,tran_date                  
+            ,id_no                      
+            ,dep_id                     
+            ,seq_no
+            ,medservice_code
+            ,amnt_billed
+            ,amnt_covered
+            ,amnt_not_covered
+            ,or_date
+            ,or_number
+            ,issued_by
+            ,for_refund
+            ,doctor_code
+            ,reference_code
+            ,payment_tag)
+         VALUES
+         (   l_tran_no
+            ,l_tran_year
+            ,l_tran_date
+            ,p_empl_id_no
+            ,p_dep_id
+            ,l_seq_no
+            ,p_bill_medservice_code(i)
+            ,l_amnt_billed
+            ,l_amnt_covered
+            ,l_amnt_not_covered
+            ,l_or_date
+            ,p_or_number(i)
+            ,p_issued_by(i)
+            ,p_for_refund(i)
+            ,p_bill_doctor_code(i)
+            ,p_reference_code(i)
+            ,p_payment_tag(i));  
+      ELSIF p_bill_medservice_code(i) IS NOT NULL  AND p_bill_seq_no(i) IS NOT NULL THEN
+         SELECT * INTO l_recBill FROM S004_T08020_BILLING WHERE seq_no=p_bill_seq_no(i);
+
+         IF zsi_lib.IsChanged(l_recBill.medservice_code, p_bill_medservice_code(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_recBill.medservice_code := p_bill_medservice_code(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recBill.amnt_billed, l_amnt_billed) = 'Y' THEN
+            l_changed :='Y';
+            l_recBill.amnt_billed := l_amnt_billed;
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recBill.amnt_covered, l_amnt_covered) = 'Y' THEN
+            l_changed :='Y';
+            l_recBill.amnt_covered := l_amnt_covered;
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recBill.amnt_not_covered, l_amnt_not_covered) = 'Y' THEN
+            l_changed :='Y';
+            l_recBill.amnt_not_covered := l_amnt_not_covered;
+         END IF;
+         
+         IF zsi_lib.IsChanged(l_recBill.or_date, l_or_date) = 'Y' THEN
+            l_changed :='Y';
+            l_recBill.or_date := l_or_date;
+         END IF; 
+         
+         IF zsi_lib.IsChanged(l_recBill.or_number, p_or_number(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_recBill.or_number := p_or_number(i);
+         END IF;         
+         
+         IF zsi_lib.IsChanged(l_recBill.issued_by, p_issued_by(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_recBill.issued_by := p_issued_by(i);
+         END IF;
+         
+         IF zsi_lib.IsChanged(l_recBill.for_refund, TO_NUMBER(p_for_refund(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_recBill.for_refund := p_for_refund(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recBill.doctor_code, TO_NUMBER(p_bill_doctor_code(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_recBill.doctor_code := p_bill_doctor_code(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recBill.reference_code, TO_NUMBER(p_reference_code(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_recBill.reference_code := p_reference_code(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recBill.payment_tag, TO_NUMBER(p_payment_tag(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_recBill.payment_tag := p_payment_tag(i);
+         END IF;
+
+         IF l_changed = 'Y' THEN
+            l_recBill.modified_by := zsi_sessions_lib.GetCookieUser;
+            l_recBill.date_modifIed := SYSDATE;
+            UPDATE S004_T08020_BILLING SET row = l_recBill WHERE seq_no=p_bill_seq_no(i);
+         END IF;            
+      END IF;
+   END LOOP;   
+      
+   l_changed := 'N';
+
+
+   FOR i IN 2..p_ds_code.COUNT LOOP
+      l_ds_qty             := REPLACE(p_ds_qty(i),',','');       
+      l_ds_rate            := REPLACE(p_ds_rate(i),',','');     
+      l_ds_next_visit_date := TO_DATE(p_ds_next_visit_date(i),l_date_format);
+      l_is_followup        := 0;
+      IF l_ds_next_visit_date IS NOT NULL THEN
+         l_is_followup        := 1;
+      END IF;
+      
+      l_seq_no := p_ds_seq_no(i);
+      IF p_ds_code(i) IS NOT NULL  AND p_ds_seq_no(i) IS NULL THEN
+         SELECT S004_T08020_DENTAL_SQ001.NEXTVAL INTO l_seq_no FROM DUAL;
+         INSERT INTO S004_T08020_DENTAL (
+             tran_no
+            ,tran_year                  
+            ,tran_date                  
+            ,id_no                      
+            ,dep_id                     
+            ,seq_no
+            ,ds_code
+            ,ds_qty
+            ,ds_rate
+            ,is_followup
+            ,next_visit)
+         VALUES
+         (   l_tran_no
+            ,l_tran_year
+            ,l_tran_date
+            ,p_empl_id_no
+            ,p_dep_id
+            ,l_seq_no
+            ,p_ds_code(i)
+            ,l_ds_qty
+            ,l_ds_rate
+            ,l_is_followup
+            ,l_ds_next_visit_date
+         );
+      ELSIF p_ds_code(i) IS NOT NULL  AND p_ds_seq_no(i) IS NOT NULL THEN
+
+         SELECT * INTO l_recDs FROM S004_T08020_DENTAL WHERE seq_no=p_ds_seq_no(i);
+
+         IF zsi_lib.IsChanged(l_recDs.ds_code, TO_NUMBER(p_ds_code(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_recDs.ds_code := p_ds_code(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recDs.ds_qty, l_ds_qty) = 'Y' THEN
+            l_changed :='Y';
+            l_recDs.ds_qty := l_ds_qty;
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recDs.ds_rate, l_ds_rate) = 'Y' THEN
+            l_changed :='Y';
+            l_recDs.ds_rate := l_ds_rate;
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recDs.next_visit, l_ds_next_visit_date) = 'Y' THEN
+            l_changed :='Y';
+            l_recDs.next_visit := l_ds_next_visit_date;
+            l_recDs.is_followup := l_is_followup;
+         END IF;
+         
+         IF l_changed = 'Y' THEN
+            l_recDs.modified_by := zsi_sessions_lib.GetCookieUser;
+            l_recDs.date_modifIed := SYSDATE;
+            UPDATE S004_T08020_DENTAL SET row = l_recDs WHERE seq_no=p_ds_seq_no(i);
+         END IF;            
+      END IF;            
+   END LOOP;   
+  
+   l_changed := 'N';
+    
+   FOR i IN 2..p_illness_code.COUNT LOOP
+      l_ill_next_visit_date:=TO_DATE(p_ill_next_visit_date(i),l_date_format);
+      l_is_followup        := 0;
+      IF l_ill_next_visit_date IS NOT NULL THEN
+         l_is_followup    := 1;
+      END IF;
+      l_seq_no := p_ill_seq_no(i);
+      IF p_illness_code(i) IS NOT NULL  AND p_ill_seq_no(i) IS NULL THEN
+         SELECT S004_T08020_ILLNESS_SQ001.NEXTVAL INTO l_seq_no FROM DUAL;
+         INSERT INTO S004_T08020_ILLNESS (
+             tran_no
+            ,tran_year                  
+            ,tran_date                  
+            ,id_no                      
+            ,dep_id                     
+            ,seq_no
+            ,illness_code
+            ,is_followup
+            ,next_visit
+            ,remarks)
+         VALUES
+         (   l_tran_no
+            ,l_tran_year
+            ,l_tran_date
+            ,p_empl_id_no
+            ,p_dep_id
+            ,l_seq_no
+            ,p_illness_code(i)
+            ,l_is_followup
+            ,l_ill_next_visit_date
+            ,p_ill_remarks(i)
+         );    
+      ELSIF p_illness_code(i) IS NOT NULL  AND p_ill_seq_no(i) IS NOT NULL THEN
+
+         SELECT * INTO l_recIll FROM S004_T08020_ILLNESS WHERE seq_no=p_Ill_seq_no(i);
+
+         IF zsi_lib.IsChanged(l_recIll.illness_code, TO_NUMBER(p_illness_code(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_recIll.illness_code := p_illness_code(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recIll.next_visit, l_Ill_next_visit_date) = 'Y' THEN
+            l_changed :='Y';
+            l_recIll.next_visit := l_Ill_next_visit_date;
+            l_recIll.is_followup := l_is_followup;
+         END IF;
+ 
+          IF zsi_lib.IsChanged(l_recIll.remarks, p_ill_remarks(i)) = 'Y' THEN
+             l_changed :='Y';
+             l_recIll.remarks := p_ill_remarks(i);
+          END IF;
+
+         IF l_changed = 'Y' THEN
+            l_recIll.modified_by := zsi_sessions_lib.GetCookieUser;
+            l_recIll.date_modifIed := SYSDATE;
+            UPDATE S004_T08020_ILLNESS SET row = l_recIll WHERE seq_no=p_Ill_seq_no(i);
+         END IF;            
+      END IF;            
+   END LOOP;   
+   
+   l_changed := 'N';
+   
+   FOR i IN 2..p_ih_medservice_code.COUNT LOOP
+      l_seq_no := p_ih_seq_no(i);
+      IF p_ih_medservice_code(i) IS NOT NULL  AND p_ih_seq_no(i) IS NULL THEN
+         SELECT S004_T08020_RESULT_SQ001.NEXTVAL INTO l_seq_no FROM DUAL;
+         INSERT INTO S004_T08020_SERVICES (
+             tran_no
+            ,tran_year                  
+            ,tran_date                  
+            ,id_no                      
+            ,dep_id                     
+            ,seq_no
+            ,medservice_code
+            ,systolic
+            ,diastolic
+            ,remarks
+            )
+         VALUES
+         (   l_tran_no
+            ,l_tran_year
+            ,l_tran_date
+            ,p_empl_id_no
+            ,p_dep_id
+            ,l_seq_no
+            ,p_ih_medservice_code(i)
+            ,p_ih_systolic(i)
+            ,p_ih_diastolic(i)
+            ,p_ih_remarks(i)
+         );  
+      ELSIF p_ih_medservice_code(i) IS NOT NULL  AND p_ih_seq_no(i) IS NOT NULL THEN
+
+         SELECT * INTO l_recIh FROM S004_T08020_SERVICES WHERE seq_no=p_Ih_seq_no(i);
+
+         IF zsi_lib.IsChanged(l_recIh.medservice_code, p_ih_medservice_code(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_recIh.medservice_code := p_ih_medservice_code(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recIh.systolic, TO_NUMBER(p_ih_systolic(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_recIh.systolic := p_ih_systolic(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recIh.diastolic, TO_NUMBER(p_ih_diastolic(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_recIh.diastolic := p_ih_diastolic(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recIh.remarks, p_ih_remarks(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_recIh.remarks := p_ih_remarks(i);
+         END IF;
+
+         IF l_changed = 'Y' THEN
+            l_recIh.modified_by := zsi_sessions_lib.GetCookieUser;
+            l_recIh.date_modifIed := SYSDATE;
+            UPDATE S004_T08020_SERVICES SET row = l_recIh WHERE seq_no=p_ih_seq_no(i);
+         END IF;            
+      END IF;            
+   END LOOP;   
+   
+   l_changed := 'N';
+     
+   
+   FOR i IN 2..p_lr_seq_no.COUNT LOOP
+      l_follow_up_lab_date:=TO_DATE(p_follow_up_lab_date(i),l_date_format);
+      l_is_followup := 0;
+      IF l_follow_up_lab_date IS NOT NULL  THEN
+         l_is_followup := 1;
+      END IF;
+      l_seq_no := p_lr_seq_no(i);
+      IF p_result_type(i) IS NOT NULL  AND p_lr_seq_no(i) IS NULL THEN       
+         SELECT S004_T08020_RESULT_SQ001.NEXTVAL INTO l_seq_no FROM DUAL;
+         INSERT INTO S004_T08020_RESULT_HDR (
+             tran_no
+            ,tran_year                  
+            ,tran_date                  
+            ,id_no                      
+            ,dep_id                     
+            ,seq_no
+            ,medservice_code
+            ,result_type
+            ,remarks
+            ,is_followup
+            ,follow_up_lab)
+         VALUES
+         (   l_tran_no
+            ,l_tran_year
+            ,l_tran_date
+            ,p_empl_id_no
+            ,p_dep_id
+            ,l_seq_no
+            ,3
+            ,p_result_type(i)
+            ,p_lr_remarks(i)
+            ,l_is_followup
+            ,l_follow_up_lab_date
+         );  
+         
+         INSERT INTO S004_T08020_RESULT (
+                                          tran_no
+                                          ,hdr_seq_no
+                                          ,dtl_seq_no
+                                          ,result_type
+                                          ,exam_group
+                                          ,exam_code
+                                          ,result
+                                          ,created_by
+                                          ,date_created) 
+                                    SELECT l_tran_no
+                                          ,l_seq_no
+                                          ,S004_T08020_RESULT_SQ001.NEXTVAL
+                                          ,result_type
+                                          ,exam_group
+                                          ,seq_no
+                                          ,null
+                                          ,zsi_sessions_lib.GetCookieUser
+                                          ,SYSDATE
+                                      FROM S004_T08019_EXAM
+                                     WHERE result_type = p_result_type(i);
+         
+      ELSIF p_result_type(i) IS NOT NULL  AND p_lr_seq_no(i) IS NOT NULL THEN
+
+         SELECT * INTO l_recLr FROM S004_T08020_RESULT_HDR WHERE seq_no=p_lr_seq_no(i);
+
+         IF zsi_lib.IsChanged(l_recLr.result_type, TO_NUMBER(p_result_type(i))) = 'Y' THEN
+            l_changed :='Y';
+            l_recLr.result_type := p_result_type(i);
+            DELETE FROM S004_T08020_RESULT WHERE tran_no = l_tran_no AND result_type = p_result_type(i);
+            
+         INSERT INTO S004_T08020_RESULT (
+                                          tran_no
+                                          ,hdr_seq_no
+                                          ,dtl_seq_no
+                                          ,result_type
+                                          ,exam_group
+                                          ,exam_code
+                                          ,result
+                                          ,created_by
+                                          ,date_created) 
+                                    SELECT l_tran_no
+                                          ,l_seq_no
+                                          ,S004_T08020_RESULT_SQ001.NEXTVAL
+                                          ,result_type
+                                          ,exam_group
+                                          ,seq_no
+                                          ,null
+                                          ,zsi_sessions_lib.GetCookieUser
+                                          ,SYSDATE
+                                      FROM S004_T08019_EXAM
+                                     WHERE result_type = p_result_type(i);           
+            
+         END IF;
+         
+         IF zsi_lib.IsChanged(l_recLr.remarks, p_lr_remarks(i)) = 'Y' THEN
+            l_changed :='Y';
+            l_recLr.remarks := p_lr_remarks(i);
+         END IF;
+
+         IF zsi_lib.IsChanged(l_recLr.follow_up_lab, l_follow_up_lab_date) = 'Y' THEN
+            l_changed :='Y';
+            l_recLr.follow_up_lab := l_follow_up_lab_date;
+            l_recLr.is_followup := l_is_followup;
+         END IF;
+
+         IF l_changed = 'Y' THEN
+            l_recLr.modified_by := zsi_sessions_lib.GetCookieUser;
+            l_recLr.date_modifIed := SYSDATE;
+            UPDATE S004_T08020_RESULT_HDR SET row = l_recLr WHERE seq_no=p_lr_seq_no(i);
+         END IF;            
+      END IF;
+   END LOOP;   
+
+   IF p_post_status = 1 THEN
+    
+      SELECT S004_T08010_SQ001.NEXTVAL INTO l_ledger_no FROM DUAL; 
+      
+      INSERT INTO S004_T08010
+         (ldgr_no
+         ,tran_no                
+         ,tran_year                  
+         ,tran_date                  
+         ,id_no                      
+         ,age_brak_code
+         ,dep_id                     
+         ,empl_type                  
+         ,cost_center                
+         ,department                 
+         ,group_code                 
+         ,medplan_type               
+         ,medplan_code
+         ,remarks
+         ,created_by
+         ,date_created)   
+   SELECT l_ledger_no
+         ,tran_no
+         ,l_tran_year
+         ,tran_date
+         ,id_no
+         ,age_brak_code
+         ,dep_id
+         ,empl_type
+         ,cost_center
+         ,department
+         ,group_code
+         ,medplan_type
+         ,medplan_code
+         ,remarks
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+    FROM S004_T08020
+   WHERE tran_no = p_tran_no;
+        
+      INSERT INTO S004_T08010_DOCTOR
+         (ldgr_no
+         ,seq_no
+         ,tran_year                  
+         ,tran_date                  
+         ,id_no                      
+         ,dep_id         
+         ,doctor_code                
+         ,reference_code
+         ,created_by
+         ,date_created)               
+      SELECT l_ledger_no
+         ,seq_no
+         ,tran_year
+         ,tran_date
+         ,id_no
+         ,dep_id                      
+         ,doctor_code
+         ,reference_code
+         ,zsi_sessions_lib.GetCookieUser
+         ,SYSDATE
+      FROM S004_T08020_DOCTOR
+      WHERE tran_no = p_tran_no;
+      
+      INSERT INTO S004_T08010_BILLING
+            (ldgr_no                        
+            ,seq_no
+            ,tran_year                  
+            ,tran_date                  
+            ,id_no                      
+            ,dep_id
+            ,medservice_code            
+            ,amnt_billed                
+            ,amnt_covered               
+            ,amnt_not_covered           
+            ,or_date                    
+            ,or_number                  
+            ,issued_by                  
+            ,for_refund
+            ,doctor_code
+            ,reference_code
+            ,payment_tag
+            ,created_by
+            ,date_created)  
+       SELECT l_ledger_no
+            ,seq_no
+            ,tran_year
+            ,tran_date
+            ,id_no
+            ,dep_id
+            ,medservice_code
+            ,amnt_billed     
+            ,amnt_covered    
+            ,amnt_not_covered
+            ,or_date
+            ,or_number
+            ,issued_by
+            ,for_refund 
+            ,doctor_code
+            ,reference_code
+            ,payment_tag
+            ,zsi_sessions_lib.GetCookieUser
+            ,SYSDATE
+      FROM S004_T08020_BILLING
+      WHERE tran_no = p_tran_no;
+      
+          INSERT INTO S004_T08010_DENTAL
+             (ldgr_no    
+             ,seq_no     
+             ,tran_year  
+             ,tran_date  
+             ,id_no                  
+             ,dep_id                 
+             ,ds_code                
+             ,ds_qty
+             ,ds_rate
+             ,total_amt              
+             ,is_followup            
+             ,next_visit
+             ,created_by
+             ,date_created)             
+         SELECT l_ledger_no
+             ,seq_no
+             ,tran_year
+             ,tran_date
+             ,id_no
+             ,dep_id
+             ,ds_code
+             ,ds_qty
+             ,ds_rate
+             ,ds_qty * ds_rate
+             ,is_followup
+             ,next_visit
+             ,zsi_sessions_lib.GetCookieUser
+             ,SYSDATE
+      FROM S004_T08020_DENTAL
+      WHERE tran_no = p_tran_no;
+
+ 
+         INSERT INTO S004_T08010_SERVICES
+            (ldgr_no    
+            ,seq_no     
+            ,tran_year  
+            ,tran_date  
+            ,id_no                  
+            ,dep_id                 
+            ,medservice_code                
+            ,systolic
+            ,diastolic
+            ,remarks
+            ,created_by
+            ,date_created)             
+        SELECT l_ledger_no
+            ,seq_no
+            ,tran_year
+            ,tran_date
+            ,id_no
+            ,dep_id
+            ,medservice_code
+            ,systolic
+            ,diastolic
+            ,remarks
+            ,zsi_sessions_lib.GetCookieUser
+            ,SYSDATE
+      FROM S004_T08020_SERVICES
+      WHERE tran_no = p_tran_no;
+
+      INSERT INTO S004_T08010_RESULT
+            (ldgr_no    
+            ,seq_no     
+            ,tran_year  
+            ,tran_date  
+            ,id_no                  
+            ,dep_id                 
+            ,medservice_code 
+            ,result_type
+            ,exam_group
+            ,exam_code
+            ,result
+            ,is_followup
+            ,follow_up_lab
+            ,remarks
+            ,created_by
+            ,date_created)
+      SELECT l_ledger_no
+            ,seq_no
+            ,tran_year
+            ,tran_date
+            ,id_no
+            ,dep_id
+            ,3
+            ,result_type
+            ,exam_group
+            ,exam_code
+            ,result
+            ,is_followup
+            ,follow_up_lab
+            ,remarks
+            ,zsi_sessions_lib.GetCookieUser
+            ,SYSDATE
+      FROM S004_T08020_RESULTS_V
+      WHERE tran_no = p_tran_no;
+
+   INSERT INTO S004_T08010_ILLNESS
+            (ldgr_no    
+            ,seq_no     
+            ,tran_year  
+            ,tran_date  
+            ,id_no                  
+            ,dep_id                 
+            ,illness_code                
+            ,is_followup            
+            ,next_visit
+            ,created_by
+            ,date_created)             
+      SELECT l_ledger_no
+            ,seq_no
+            ,tran_year
+            ,tran_date
+            ,id_no
+            ,dep_id
+            ,illness_code
+            ,is_followup
+            ,next_visit
+            ,zsi_sessions_lib.GetCookieUser
+            ,SYSDATE
+      FROM S004_T08020_ILLNESS
+      WHERE tran_no = p_tran_no;
+            
+      INSERT INTO S004_T08010_MEDS             
+               (ldgr_no
+               ,seq_no
+               ,tran_year
+               ,tran_date
+               ,id_no
+               ,dep_id
+               ,meds_code
+               ,meds_qty
+               ,meds_dosage
+               ,meds_instruction
+               ,is_maintenance
+               ,remarks
+               ,illness_seqno
+               ,created_by
+               ,date_created)  
+        SELECT  l_ledger_no
+               ,seq_no
+               ,tran_year
+               ,tran_date
+               ,id_no
+               ,dep_id
+               ,meds_code
+               ,meds_qty
+               ,dosage
+               ,meds_instruction
+               ,is_maintenance
+               ,remarks
+               ,illness_seqno 
+               ,zsi_sessions_lib.GetCookieUser
+               ,SYSDATE
+         FROM S004_T08020_MEDS
+         WHERE tran_no = p_tran_no;
+   
+      END IF; 
+
+END;
+%>
+<script type="text/javascript">
+   parent.parent.parent.HomeWindow.LoadData("?p_id_no=<%=p_empl_id_no %>");
+   parent.LoadData("?p_id_no=<%=p_empl_id_no %>");
+   location.href="consultation_form?p_tran_no=<%=l_tran_no%>&p_id_no=<%=p_empl_id_no %>&p_tab=<%=p_tab %>&p_module_id=<%=p_module_id %>";
+</script>
+</body>
+</html>

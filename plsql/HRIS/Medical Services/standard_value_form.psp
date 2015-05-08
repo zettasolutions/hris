@@ -1,0 +1,124 @@
+<%@ plsql procedure="standard_value_form" %>
+<%@ plsql parameter="p_module_id"   type="NUMBER"   default="NULL"%>
+<%@ plsql parameter="p_seq_no" type="VARCHAR2" DEFAULT='NULL'%>
+<%!
+/*
+   ========================================================================
+   *
+   * Copyright (c) 2014 ZettaSolution, Inc.  All rights reserved.
+   *
+   * Redistribution and use in source and binary forms, with or without
+   * modification is strictly prohibited.
+   *
+   ========================================================================
+*/
+
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   09-SEP-14  BD    Added security logic.
+   01-JUL-14  GT    New.
+*/
+
+   --DECLARATION SECTION
+   l_style_path     VARCHAR2(128) := zsi_lib.StylePath;
+   l_js_path        VARCHAR2(128) := zsi_lib.JSPath;
+   l_frmOffset      VARCHAR2(50):='';
+
+   l_rec  S004_T08000%ROWTYPE;
+   l_user_iswrite       NUMBER(1):=0;
+%>
+<%
+   pageheader();
+
+%>
+<body>
+<form name="frmSVList" action="standard_value_update" method="POST" >
+<%
+   l_user_iswrite := zsi_lib.IsWrite(zsi_sessions_lib.GetCookieUser,p_module_id);
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_sv_code');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_sv_desc');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_sv_disp_text');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_sv_disp_seq');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_sv_can_be_modified');
+
+
+
+   IF p_seq_no IS NOT NULL THEN
+      SELECT * INTO l_rec FROM S004_T08000 WHERE seq_no = p_seq_no;
+      zsi_bs_lib.OpenEntryForm;
+      zsi_bs_lib.InputHiddenBox(p_inputName=>'p_seq_no',p_inputValue=>l_rec.seq_no);
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Code',p_inputName=>'p_sv_code',p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.sele_code);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Description',p_inputName=>'p_sv_desc',p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.description);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Displayed Text',p_inputName=>'p_sv_disp_text',p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.displayed_text);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+         zsi_bs_lib.InputTextBox(p_labelName =>'Display Seq',p_inputName=>'p_sv_disp_seq',p_labelSize =>3, p_inputSize =>9,p_inputValue=>l_rec.display_seq);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.OpenFormGroup();
+       zsi_bs_lib.YesNo(p_label_name=>'Can be Modified?',p_field=>'sv_can_be_modified',p_value=>l_rec.can_be_modified,p_label_size =>3,p_select_size =>2);
+      zsi_bs_lib.CloseFormGroup();
+
+      zsi_bs_lib.CloseEntryForm;
+      l_frmOffset:='col-xs-offset-3';
+
+
+   ELSE
+%>
+<table class="table">
+   <tr valign="bottom">
+      <th nowrap align="left">Code</th>
+      <th nowrap align="left">Description</th>
+      <th nowrap align="left">Displayed Text</th>
+      <th nowrap align="center">Display Seq.</th>
+      <th nowrap align="right">Can be Modified</th>
+   </tr>
+<%
+   FOR i IN 1..5 LOOP
+%>
+   <tr valign="bottom">
+
+      <td><input type="hidden" name="p_seq_no" value="">
+         <input type="text" name="p_sv_code" value="" class="form-control input-sm">
+      </td>
+      <td><input type="text" name="p_sv_desc" value="" class="form-control input-sm"></td>
+      <td><input type="text" name="p_sv_disp_text" value=""class="form-control input-sm"></td>
+      <td><input type="text" name="p_sv_disp_seq" value="" class="form-control input-sm"></td>
+      <td><%= zsi_lib.YesNo('sv_can_be_modified', '','') %> </td>
+   </tr>
+<%
+   END LOOP;
+   END IF;
+%>
+</table>
+
+
+<div class="buttonGroup <%=l_frmOffset%>">
+<%
+   IF l_user_iswrite = 1 THEN
+      zsi_bs_lib.Button('btnSubmit','Save',p_type =>'submit');
+      zsi_bs_lib.Button('btnReset','Reset',p_type =>'reset');
+   END IF;
+%>
+</div>
+<script type="text/javascript">
+
+ zsi.json.checkValueExist("input[name=p_sv_desc]","S004_T08000","description"); 
+ 
+</script>
+
+<script type="text/javascript" src="<%= l_js_path %>bootstrap.min.js"></script>
+</form>
+</body>
+</html>

@@ -51,7 +51,7 @@
       l_seq_no                :=l_rec.seq_no;
       l_plan_coverage         :=l_rec.plan_coverage;
       l_plan_curr_bal         :=l_rec.plan_curr_bal;
-      l_plan_avail_bal        :=l_rec.plan_avail_bal;
+      l_plan_avail_bal        :=l_rec.avail_bal;
       l_avail_ape             :=l_rec.avail_ape;
       l_avail_ade             :=l_rec.avail_ade;
       l_avail_eyeglass        :=l_rec.avail_eyeglass;
@@ -104,7 +104,7 @@
          zsi_bs_lib.OpenFormGroup();
             zsi_bs_lib.InputTextBox(p_labelName =>'Plan Coverage',  p_inputName=>'p_plan_coverage',p_inputValue=>zsi_lib.FormatAmount(l_plan_coverage,2), p_labelSize =>2, p_inputSize =>2 );
             zsi_bs_lib.InputTextBox(p_labelName =>'Plan Current Bal.',p_inputName=>'p_plan_curr_bal',p_inputValue=>zsi_lib.FormatAmount(l_plan_curr_bal,2), p_labelSize =>2, p_inputSize =>2);
-            zsi_bs_lib.InputTextBox(p_labelName =>'Plan Available Bal.',p_inputName=>'p_plan_avail_bal',p_inputValue=>zsi_lib.FormatAmount(l_plan_avail_bal,2), p_labelSize =>2, p_inputSize =>2);
+            zsi_bs_lib.InputTextBox(p_labelName =>'Plan Available Bal.',p_inputName=>'p_plan_avail_bal',p_inputValue=>zsi_lib.FormatAmount(l_plan_avail_bal,2), p_labelSize =>2, p_inputSize =>2, p_attributes=>'disabled');
          zsi_bs_lib.CloseFormGroup();
          zsi_bs_lib.OpenFormGroup();
             zsi_bs_lib.YesNo(p_label_name=>'Avail APE',p_field=>'avail_ape',p_value=>l_avail_ape,p_label_size =>2,p_select_size =>2);

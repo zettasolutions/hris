@@ -60,13 +60,8 @@ BEGIN
 
    l_select := 'SELECT DISTINCT ldgr_no, tran_month, tran_date, begbal_qty, nvl(debit_qty,0), nvl(credit_qty,0),  purchase_date, unit_price, expiry_date,treatment   ';
    l_from   := '  FROM med_inv_ledger_v ';
-   l_where  := ' WHERE 1=1';
-   l_order  := ' ORDER BY ldgr_no';
-
-   IF p_meds_code IS NOT NULL THEN
-      l_where := l_where || ' AND meds_code= ' || p_meds_code || ' AND tyear=' || l_year;
-   END IF;
-   
+   l_where  := ' WHERE meds_code= ' || p_meds_code || ' AND tyear=' || l_year;
+   l_order  := ' ORDER BY tyear, seqno DESC,  tran_date ASC';
    
    IF p_page_no = 1 AND p_rows IS NULL THEN
    l_sql := 'SELECT COUNT(*) ' || l_from || l_where;

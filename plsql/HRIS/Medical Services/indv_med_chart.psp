@@ -73,7 +73,6 @@ zsi_bs_lib.OpenEntryForm;
       zsi_bs_lib.SelectBox(p_labelName=>'Medical Plan Type', p_Name=>'p_medplan_type', p_labelSize=>2, p_selectSize=>3);     
       zsi_bs_lib.SelectBox(p_labelName=>'Medical Plan', p_Name=>'p_medplan_code', p_labelSize=>2, p_selectSize=>3);     
      zsi_bs_lib.Button('btnSearchldgr','Search'); 
-     zsi_bs_lib.Button('btnPrint','Print');
    zsi_bs_lib.CloseFormGroup();
 zsi_bs_lib.CloseEntryForm; 
 %>   
@@ -98,7 +97,6 @@ zsi_bs_lib.OpenEntryForm;
    zsi_bs_lib.OpenFormGroup();
       zsi_bs_lib.InputTextBox(p_labelName =>'Complaint',p_inputName=>'p_bill_complaint',p_labelSize =>2, p_inputSize =>2);
      zsi_bs_lib.Button('btnSearchBill','Search'); 
-     zsi_bs_lib.Button('btnPrint','Print');
    zsi_bs_lib.CloseFormGroup();
 zsi_bs_lib.CloseEntryForm; 
 %>   
@@ -122,7 +120,6 @@ zsi_bs_lib.OpenEntryForm;
    zsi_bs_lib.OpenFormGroup();
       zsi_bs_lib.InputTextBox(p_labelName =>'Complaint',p_inputName=>'p_ill_complaint',p_labelSize =>2, p_inputSize =>2);
       zsi_bs_lib.Button('btnSearchIll','Search'); 
-      zsi_bs_lib.Button('btnPrint','Print');
    zsi_bs_lib.CloseFormGroup();
 zsi_bs_lib.CloseEntryForm; 
 %>   
@@ -145,7 +142,6 @@ zsi_bs_lib.OpenEntryForm;
    zsi_bs_lib.OpenFormGroup();
       zsi_bs_lib.InputTextBox(p_labelName =>'Complaint',p_inputName=>'p_lab_complaint',p_labelSize =>2, p_inputSize =>2);
       zsi_bs_lib.Button('btnSearchLab','Search'); 
-      zsi_bs_lib.Button('btnPrint','Print');
    zsi_bs_lib.CloseFormGroup();
 zsi_bs_lib.CloseEntryForm; 
 %>   
@@ -167,7 +163,6 @@ zsi_bs_lib.OpenEntryForm;
    zsi_bs_lib.OpenFormGroup();
       zsi_bs_lib.InputTextBox(p_labelName =>'Complaint',p_inputName=>'p_ds_complaint',p_labelSize =>2, p_inputSize =>2);
       zsi_bs_lib.Button('btnSearchDental','Search'); 
-      zsi_bs_lib.Button('btnPrint','Print');
    zsi_bs_lib.CloseFormGroup();
 zsi_bs_lib.CloseEntryForm; 
 %>     
@@ -190,7 +185,6 @@ zsi_bs_lib.OpenEntryForm;
       zsi_bs_lib.SelectBox(p_labelName=>'Vaccine', p_Name=>'p_vaccine_code', p_labelSize=>2, p_selectSize=>4);     
       zsi_bs_lib.YesNo(p_label_name=>'In-House?',p_field=>'in_house',p_label_size =>2,p_select_size =>1);
       zsi_bs_lib.Button('btnSearchVaccine','Search'); 
-      zsi_bs_lib.Button('btnPrint','Print');
    zsi_bs_lib.CloseFormGroup();
 zsi_bs_lib.CloseEntryForm; 
 %>       
@@ -218,7 +212,6 @@ zsi_bs_lib.OpenEntryForm;
    zsi_bs_lib.OpenFormGroup();
       zsi_bs_lib.InputTextBox(p_labelName =>'Complaint',p_inputName=>'p_ihs_complaint',p_labelSize =>2, p_inputSize =>2);
       zsi_bs_lib.Button('btnSearchIH','Search'); 
-      zsi_bs_lib.Button('btnPrint','Print');
    zsi_bs_lib.CloseFormGroup();
 zsi_bs_lib.CloseEntryForm; 
 %>
@@ -241,7 +234,6 @@ zsi_bs_lib.OpenEntryForm;
       zsi_bs_lib.SelectBox(p_labelName=>'Medicine', p_Name=>'p_meds_code', p_labelSize=>2, p_selectSize=>3);     
       zsi_bs_lib.SelectBox(p_labelName=>'Treatment For', p_Name=>'p_treatment_for', p_labelSize=>2, p_selectSize=>3);     
       zsi_bs_lib.Button('btnSearchOTC','Search'); 
-      zsi_bs_lib.Button('btnPrint','Print');
    zsi_bs_lib.CloseFormGroup();
 zsi_bs_lib.CloseEntryForm; 
 %>
@@ -264,7 +256,6 @@ zsi_bs_lib.OpenEntryForm;
    zsi_bs_lib.OpenFormGroup();
       zsi_bs_lib.SelectBox(p_labelName=>'Dependent', p_Name=>'p_dependent_id', p_labelSize=>2, p_selectSize=>3);     
       zsi_bs_lib.Button('btnSearchPH','Search'); 
-      zsi_bs_lib.Button('btnPrint','Print');
    zsi_bs_lib.CloseFormGroup();
 zsi_bs_lib.CloseEntryForm; 
 %>
@@ -284,7 +275,6 @@ zsi_bs_lib.OpenEntryForm;
    zsi_bs_lib.OpenFormGroup();
       zsi_bs_lib.InputTextBox(p_labelName =>'Complaint',p_inputName=>'p_ape_complaint',p_labelSize =>2, p_inputSize =>2);
       zsi_bs_lib.Button('btnSearchAPE','Search'); 
-      zsi_bs_lib.Button('btnPrint','Print');
    zsi_bs_lib.CloseFormGroup();
 zsi_bs_lib.CloseEntryForm; 
 %>

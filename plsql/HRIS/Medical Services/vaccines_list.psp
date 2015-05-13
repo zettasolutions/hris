@@ -142,7 +142,7 @@
          <a href="javascript:void(0)" TITLE="Click here to Edit Vaccine" onClick="parent.attachURL('vaccines_form?p_module_id=<%= l_module_id %>&p_vc_code=<%= l_vaccine_code %>','Edit Vaccine Code &raquo <%=l_vaccine_code %>', 450, 200)"><%=l_vaccine_code %></a>
       </td>
       <td nowrap align="left"><%=l_vaccine_name %></td>
-      <td><%= zsi_lib.GetDescription('S004_T08000','description','seq_no', l_frequency)%></td>
+      <td><%= zsi_lib.GetDescription('frequency_v','displayed_text','sele_value', l_frequency)%></td>
       <td><%=l_remarks %></td>
       <td><input type="checkbox" name="p_cb" onclick="zsi.table.setCheckBox(this,<%= l_vaccine_code %>);">
                          <input type="hidden" name="p_del_vc" value=""></td>
@@ -174,7 +174,7 @@ var ctrlSel = zsi.control.SelectList;
 $(document).ready(function(){
    $('.modal-dialog').css('width', '450px');
 
-   ctrlSel("#p_vc_freq","","N","S004_T08000","seq_no","description","WHERE UPPER(sele_code)='FREQUENCY' ORDER BY display_seq");
+   ctrlSel("#p_vc_freq","","N","frequency_v","sele_value","displayed_text"," ORDER BY display_seq");
 });
 
    //on window resize

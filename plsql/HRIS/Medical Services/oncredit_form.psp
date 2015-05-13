@@ -1,4 +1,7 @@
 <%@ plsql procedure="oncredit_form" %>
+<%@ plsql parameter="p_tran_type"         type="NUMBER"     default="NULL"%>
+<%@ plsql parameter="p_establishment"     type="NUMBER"     default="NULL"%>
+<%@ plsql parameter="p_payment_tag"       type="NUMBER"     default="NULL"%>
 <%!
 /*
 ========================================================================
@@ -19,16 +22,35 @@
    l_dhtmlx_path           VARCHAR2(100) := zsi_lib.DHTMLXPath;
    l_js_path               VARCHAR2(100) := zsi_lib.JSPath;
    l_style_path            VARCHAR2(128) := zsi_lib.StylePath;
+   l_select                VARCHAR2(3000);
+   l_from                  VARCHAR2(1000);
+   l_where                 VARCHAR2(4000);
+   l_order                 VARCHAR2(1000);
+   l_sql                   VARCHAR2(8000);
    l_title                 VARCHAR2(50);
    l_date_format           VARCHAR(20) := 'MM/DD/YYYY';
    l_date                  VARCHAR(20) := TO_CHAR(SYSDATE,l_date_format);
    l_ctr                   NUMBER := 0;
    l_user_iswrite          NUMBER(1):=0;
 
-   CURSOR oc_cur IS
-     SELECT * 
-       FROM oncredit_v
-      WHERE post_status = 0; 
+TYPE l_cur IS REF CURSOR;
+   l_ref          l_cur;
+   l_tran_no        ONCREDIT_V.tran_no%TYPE;
+   l_tran_type      ONCREDIT_V.tran_type%TYPE;
+   l_invoice_no     ONCREDIT_V.invoice_no%TYPE;
+   l_invoice_date   ONCREDIT_V.invoice_date%TYPE;   
+   l_id_no          ONCREDIT_V.id_no%TYPE;
+   l_amount         ONCREDIT_V.amount%TYPE;
+   l_establishment  ONCREDIT_V.establishment%TYPE;
+   l_payment_tag    ONCREDIT_V.payment_tag%TYPE;
+   l_post_status    ONCREDIT_V.post_status%TYPE;
+   l_post_date      ONCREDIT_V.post_date%TYPE;
+   l_created_by     ONCREDIT_V.created_by%TYPE;
+   l_date_created   ONCREDIT_V.date_created%TYPE;   
+   l_modified_by    ONCREDIT_V.modified_by%TYPE;
+   l_date_modified  ONCREDIT_V.date_modified%TYPE;
+   l_empl_name      ONCREDIT_V.empl_name%TYPE;
+   l_status         ONCREDIT_V.status%TYPE;
 
 %>
 <%  
@@ -48,9 +70,10 @@
    zsi_bs_lib.InputHiddenBox(p_inputName=>'p_post_status',p_inputValue=>'');
    zsi_bs_lib.OpenEntryForm;   
       zsi_bs_lib.OpenFormGroup();  
-         zsi_bs_lib.SelectBox(p_labelName=>'Transaction Type',p_Name=>'p_tran_type',  p_labelSize=>2, p_selectSize=>2);
-         zsi_bs_lib.SelectBox(p_labelName=>'Establishment',p_Name=>'p_establishment',   p_labelSize=>2, p_selectSize=>3);
-          zsi_bs_lib.SelectBox(p_labelName=>'Payment Tag',p_Name=>'p_payment_tag',  p_Attributes=>'SelectedValue="' || 1 || '"', p_labelSize=>2, p_selectSize=>1);
+         zsi_bs_lib.SelectBox(p_labelName=>'Tran Type',p_Name=>'p_tran_type',  p_Attributes=>'SelectedValue="' || p_tran_type || '"',  p_labelSize=>1, p_selectSize=>2);
+         zsi_bs_lib.SelectBox(p_labelName=>'Establishment',p_Name=>'p_establishment',  p_Attributes=>'SelectedValue="' || p_establishment || '"',   p_labelSize=>2, p_selectSize=>3);
+         zsi_bs_lib.SelectBox(p_labelName=>'Payment Tag',p_Name=>'p_payment_tag',  p_Attributes=>'SelectedValue="' || 1 || '"', p_labelSize=>2, p_selectSize=>1);
+         zsi_bs_lib.button('btnReload','Search');
       zsi_bs_lib.CloseFormGroup();
     zsi_bs_lib.CloseEntryForm; 
 
@@ -68,22 +91,43 @@
             <th class="col-xs-1" nowrap style="text-align:center">Post</th>
 
          </tr>
-      <%
-       FOR i IN oc_cur LOOP
-      %>
+<%
+   l_select := 'SELECT tran_no ,tran_type,invoice_no,invoice_date,id_no,amount,establishment,payment_tag,post_status,post_date,created_by,date_created,modified_by,date_modified,empl_name,status ';
+   l_from   := '  FROM ONCREDIT_V ';
+   l_where  := ' WHERE post_status =0' ;
+   l_order  := ' ORDER BY tran_no ';
+
+   IF p_tran_type IS NOT NULL THEN
+      l_where := l_where || ' AND tran_type= ' || p_tran_type;
+   END IF;
+
+   IF p_establishment IS NOT NULL THEN
+      l_where := l_where || ' AND establishment= ' || p_establishment;
+   END IF;
+
+   IF p_payment_tag IS NOT NULL THEN
+      l_where := l_where || ' AND payment_tag= ' || p_payment_tag;
+   END IF;
+
+   l_sql := l_select || l_from || l_where || l_order;
+   OPEN l_ref FOR l_sql;
+   LOOP
+      FETCH l_ref INTO l_tran_no ,l_tran_type,l_invoice_no,l_invoice_date,l_id_no,l_amount,l_establishment,l_payment_tag,l_post_status,l_post_date,l_created_by,l_date_created,l_modified_by,l_date_modified,l_empl_name,l_status;
+      EXIT WHEN l_ref%NOTFOUND;
+%>
          <tr>               
-             <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no', p_inputValue=>i.tran_no); %>
-                 <input type="text" autocomplete="off" name="p_empl_id_no" id="p_empl_id_no" value="<%= i.id_no %>" class="form-control input-sm"> 
+             <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_no', p_inputValue=>l_tran_no); %>
+                 <input type="text" autocomplete="off" name="p_empl_id_no" id="p_empl_id_no" value="<%= l_id_no %>" class="form-control input-sm"> 
              </td>    
-             <td><input type="text" autocomplete="off" name="p_empl_name" id="p_empl_name" value="<%= i.empl_name %>" class="form-control input-sm"> </td>
-             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_invoice_no',p_inputValue=>i.invoice_no, p_wrapper=>'N');%></td>
-             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_invoice_date',p_inputValue=>TO_CHAR(i.invoice_date,l_date_format), p_wrapper=>'N');%></td>
-             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_amount',p_inputValue=>zsi_lib.FormatAmount(i.amount,2), p_wrapper=>'N',p_inputclass=>'numeric', p_attributes=>'style="text-align:right"');%></td>
-             <td><% zsi_bs_lib.YesNo(p_field=>'post_status', p_value=>i.post_status, p_mandatory=>'Y');%></td>
+             <td><input type="text" autocomplete="off" name="p_empl_name" id="p_empl_name" value="<%= l_empl_name %>" class="form-control input-sm"> </td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_invoice_no',p_inputValue=>l_invoice_no, p_wrapper=>'N');%></td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_invoice_date',p_inputValue=>TO_CHAR(l_invoice_date,l_date_format), p_wrapper=>'N');%></td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_amount',p_inputValue=>zsi_lib.FormatAmount(l_amount,2), p_wrapper=>'N',p_inputclass=>'numeric', p_attributes=>'style="text-align:right"');%></td>
+             <td><% zsi_bs_lib.YesNo(p_field=>'post_status', p_value=>l_post_status, p_mandatory=>'Y');%></td>
              <td></td>             
          </tr>
-      <%
-       END LOOP;
+<%
+    END LOOP;
       
         l_ctr :=0;
         FOR i IN 1..10 LOOP
@@ -185,6 +229,16 @@ var ctrlSel = zsi.control.SelectList;
 
       
    })    
+
+$("#btnReload").click(function(){
+   var l_params="oncredit_form?";
+   l_params += "p_tran_type=" + $("#p_tran_type").val();
+   l_params += "&p_establishment=" + $("#p_establishment").val();
+   l_params += "&p_payment_tag=" + $("#p_payment_tag").val();
+//   console.log(l_params);
+   window.location.href=l_params;
+});
+
 
 $("form[name=frmList]").submit(function(){
    if( zsi.form.checkMandatory()!=true) return false;

@@ -239,6 +239,9 @@ BEGIN
          ,group_code                 
          ,medplan_type               
          ,medplan_code
+         ,complaint
+         ,diagnosis
+         ,treatment
          ,remarks
          ,created_by
          ,date_created)   
@@ -255,6 +258,9 @@ BEGIN
          ,group_code
          ,medplan_type
          ,medplan_code
+         ,complaint
+         ,diagnosis
+         ,treatment         
          ,remarks
          ,zsi_sessions_lib.GetCookieUser
          ,SYSDATE

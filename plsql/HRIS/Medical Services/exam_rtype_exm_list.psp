@@ -186,7 +186,7 @@
       <td><%= zsi_lib.GetDescription('S004_T08019','result_desc','result_type', l_result_type)%></td>
       <td><%= zsi_lib.GetDescription('S004_T08019_GROUP','group_desc','seq_no', l_exam_group)%></td>
        <td nowrap align="center">
-         <a href="javascript:void(0)" TITLE="Click here to Edit Examination Result Type - Exam" onClick="parent.attachURL('exam_rtype_exm_form?p_module_id=<%= l_module_id %>&p_seq_no=<%= l_seq_no %>','Edit Examination Result Type - Exam Code &raquo; <%= l_exam_code %>', 600, 265)"><%=l_exam_code %></a>
+         <a href="javascript:void(0)" TITLE="Click here to Edit Examination Result Type - Exam" onClick="parent.attachURL('exam_rtype_exm_form?p_module_id=<%= l_module_id %>&p_seq_no=<%= l_seq_no %>','Edit Examination Result Type - Exam Code &raquo; <%= l_exam_code %>', 900, 350)"><%=l_exam_code %></a>
       </td>
       <td><%=l_exam_desc %></td>
      <td nowrap align="center"><%=l_normal_range %></td>

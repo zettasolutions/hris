@@ -14,7 +14,7 @@
 
 /* Modification History
    Date       By    History
-   ---------  ----  ---------------------------------------------------------------------
+   ---------  ----  ---------------------------------------------------------------------   
    25-JAN-15  GT    New.
 */
 
@@ -26,9 +26,9 @@
    l_ttl_bill                   NUMBER:=0;
    l_ctr                        NUMBER:=0;
    
-   CURSOR bill_cur IS
+   CURSOR ihs_cur IS
    SELECT * 
-     FROM S004_T08010_BILLING_V
+     FROM S004_T08010_SERVICES_V
     WHERE ldgr_no = p_ldgr_no;
 %>
 <%
@@ -38,26 +38,21 @@
 <table class="dhtmlxGrid" gridWidth="99.5%" gridHeight="500px" id="gridbox1">
    <tr valign="bottom">
       <th nowrap align="left" width="200px">Med. Service</th>
-      <th nowrap align="left" width="250px">Doctor</th>
-      <th nowrap align="left" width="250px">Establishment</th>
-      <th nowrap align="center" width="100px">Payment Tag</th>
-      <th nowrap align="center" width="115px">Reimbursement?</th>
-      <th nowrap align="right" width="100px">Billed Amount</th>
+      <th nowrap align="left" width="250px">Systolic</th>
+      <th nowrap align="left" width="250px">Diastolic</th>
+      <th nowrap align="center" width="100px">Remarks</th>
    </tr>
 <%
-   l_dhtmlx_sort := 'str,str,str,int,str,na';
-   FOR i IN bill_cur LOOP
+   l_dhtmlx_sort := 'str,str,str,str';
+   FOR i IN ihs_cur LOOP
 %> 
    <tr valign="bottom">
       <td><%= i.medservice %></td>
-      <td><%= i.doctor_name %></td>
-      <td><%= i.hcp %></td>
-      <td><%= i.pay_tag %></td>
-      <td><%= i.forrefund %></td>
-      <td><%= zsi_lib.FormatAmount(i.amnt_billed,2) %></td>
+      <td><%= i.systolic %></td>
+      <td><%= i.diastolic %></td>
+      <td><%= i.remarks %></td>
    </tr>
 <%
-   l_ttl_bill := l_ttl_bill + i.amnt_billed;
    l_ctr := l_ctr + 1;
    END LOOP;
 %>
@@ -66,8 +61,6 @@
       <td><%= l_ctr %></td>
       <td></td>
       <td></td>
-      <td align="right">Total Billing</td>
-      <td align="right"><%= zsi_lib.FormatAmount(l_ttl_bill,2) %></td>
    </tr>
 </table>
  

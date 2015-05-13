@@ -116,8 +116,8 @@
 var ctrlSel = zsi.control.SelectList;
 
    $(document).ready(function(){
-      ctrlSel("select[name=p_meds_class]","<%=l_rec.meds_class%>","N","meds_class_v","seq_no","displayed_text","");
-      ctrlSel("select[name=p_meds_type]","<%=l_rec.meds_type%>","N","meds_type_v","seq_no","displayed_text","");
+      ctrlSel("select[name=p_meds_class]","<%=l_rec.meds_class%>","N","meds_class_v","seq_no","displayed_text"," ORDER BY upper(displayed_text)");
+      ctrlSel("select[name=p_meds_type]","<%=l_rec.meds_type%>","N","meds_type_v","seq_no","displayed_text"," ORDER BY upper(displayed_text)");
    });
 
  zsi.json.checkValueExist("input[name=p_meds_name]","S004_T08003","meds_name"); 

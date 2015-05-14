@@ -82,6 +82,7 @@
 /* Modification History
    Date       By    History
    ---------  ----  ---------------------------------------------------------------------
+   14-MAY-15  GT    Fixed Posting to s004_t08010's tables.
    07-AUG-14  GT    New
 */
 --DECLARATION SECTION
@@ -735,11 +736,10 @@ BEGIN
          END IF;            
       END IF;
    END LOOP;   
+ 
 
-   IF p_post_status = 1 THEN
-    
+   IF p_post_status = 1 THEN     
       SELECT S004_T08010_SQ001.NEXTVAL INTO l_ledger_no FROM DUAL; 
-      
       INSERT INTO S004_T08010
          (ldgr_no
          ,tran_no                
@@ -780,7 +780,7 @@ BEGIN
          ,zsi_sessions_lib.GetCookieUser
          ,SYSDATE
     FROM S004_T08020
-   WHERE tran_no = p_tran_no;
+   WHERE tran_no = l_tran_no;
         
       INSERT INTO S004_T08010_DOCTOR
          (ldgr_no
@@ -804,7 +804,7 @@ BEGIN
          ,zsi_sessions_lib.GetCookieUser
          ,SYSDATE
       FROM S004_T08020_DOCTOR
-      WHERE tran_no = p_tran_no;
+      WHERE tran_no = l_tran_no;
       
       INSERT INTO S004_T08010_BILLING
             (ldgr_no                        
@@ -846,7 +846,7 @@ BEGIN
             ,zsi_sessions_lib.GetCookieUser
             ,SYSDATE
       FROM S004_T08020_BILLING
-      WHERE tran_no = p_tran_no;
+      WHERE tran_no = l_tran_no;
       
           INSERT INTO S004_T08010_DENTAL
              (ldgr_no    
@@ -878,7 +878,7 @@ BEGIN
              ,zsi_sessions_lib.GetCookieUser
              ,SYSDATE
       FROM S004_T08020_DENTAL
-      WHERE tran_no = p_tran_no;
+      WHERE tran_no = l_tran_no;
 
  
          INSERT INTO S004_T08010_SERVICES
@@ -907,7 +907,7 @@ BEGIN
             ,zsi_sessions_lib.GetCookieUser
             ,SYSDATE
       FROM S004_T08020_SERVICES
-      WHERE tran_no = p_tran_no;
+      WHERE tran_no = l_tran_no;
 
       INSERT INTO S004_T08010_RESULT
             (ldgr_no    
@@ -943,7 +943,7 @@ BEGIN
             ,zsi_sessions_lib.GetCookieUser
             ,SYSDATE
       FROM S004_T08020_RESULTS_V
-      WHERE tran_no = p_tran_no;
+      WHERE tran_no = l_tran_no;
 
    INSERT INTO S004_T08010_ILLNESS
             (ldgr_no    
@@ -969,7 +969,7 @@ BEGIN
             ,zsi_sessions_lib.GetCookieUser
             ,SYSDATE
       FROM S004_T08020_ILLNESS
-      WHERE tran_no = p_tran_no;
+      WHERE tran_no = l_tran_no;
             
       INSERT INTO S004_T08010_MEDS             
                (ldgr_no
@@ -1003,10 +1003,8 @@ BEGIN
                ,zsi_sessions_lib.GetCookieUser
                ,SYSDATE
          FROM S004_T08020_MEDS
-         WHERE tran_no = p_tran_no;
-   
+         WHERE tran_no = l_tran_no;   
       END IF; 
-
 END;
 %>
 <script type="text/javascript">

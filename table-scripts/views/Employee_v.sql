@@ -174,8 +174,8 @@ CREATE OR REPLACE FORCE VIEW "S004"."EMPLOYEE_ACTIVE_V" AS
    ,zsi_lib.GetDescription('age_bracket_v','displayed_text','sele_value', GetAgeBracket(floor(months_between(sysdate,empl_birthdate)/12))) as age_bracket
    ,zsi_lib.GetDescription('medplan_coverage_v','pc','id_no', empl_id_no ) as plan_coverage
    ,zsi_lib.GetDescription('medplan_coverage_v','pcb','id_no', empl_id_no ) as plan_curr_bal
-   ,zsi_lib.GetDescription('medplan_coverage_v','pab','id_no', empl_id_no ) as plan_avail_bal
-   ,zsi_lib.GetDescription('unposted_billing_v','unposted_amt','id_no', empl_id_no ) as unposted_amt
+   ,zsi_lib.GetDescription('medplan_coverage_v','avail_bal','id_no', empl_id_no ) as plan_avail_bal
+   ,zsi_lib.GetDescription('medplan_coverage_v','unposted_amt','id_no', empl_id_no ) as unposted_amt
    ,zsi_lib.GetDescription('blood_type_v','displayed_text','sele_value', empl_blood_type ) as blood_type
    ,zsi_lib.GetDescription('CCNT_DEPT_V','ccnt_abbrv','ccnt_cd', substr(empl_group_code,1,2)||'0'  ) as dept_abbrv
   FROM S004_T01000

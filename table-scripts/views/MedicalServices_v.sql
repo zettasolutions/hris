@@ -663,7 +663,8 @@ CREATE OR REPLACE FORCE VIEW medplan_coverage_v  AS
    ,plan_coverage
    ,plan_curr_bal
    ,plan_avail_bal
-   ,plan_curr_bal - (NVL(zsi_lib.GetSum('amount','S004_T08023',' id_no=' || id_no || ' AND post_status=0'),0) + NVL(zsi_lib.GetSum('amnt_billed','S004_T08020_BILLING_V',' id_no=' || id_no || ' AND post_status=0'),0) + NVL(zsi_lib.GetSum('amnt_billed','Availed_Vaccination_v',' id_no=' || id_no || ' AND post_status=0'),0)) as avail_bal
+   ,plan_curr_bal - (NVL(zsi_lib.GetSum('amount','S004_T08023',' id_no=' || id_no || ' AND post_status=0'),0) + NVL(zsi_lib.GetSum('amnt_billed','S004_T08020_BILLING_V',' id_no=' || id_no || ' AND post_status=0'),0) + NVL(zsi_lib.GetSum('amnt_billed','Availed_Vaccination_v',' id_no=' || id_no || ' AND post_status=0'),0)) as avail_bal   
+   ,NVL(zsi_lib.GetSum('amount','S004_T08023',' id_no=' || id_no || ' AND post_status=0'),0) + NVL(zsi_lib.GetSum('amnt_billed','S004_T08020_BILLING_V',' id_no=' || id_no || ' AND post_status=0'),0) + NVL(zsi_lib.GetSum('amnt_billed','Availed_Vaccination_v',' id_no=' || id_no || ' AND post_status=0'),0) as unposted_amt
    ,avail_ape
    ,avail_ade
    ,avail_eyeglass
@@ -694,6 +695,7 @@ CREATE OR REPLACE FORCE VIEW ONCREDIT_V AS
           ,id_no
           ,amount
           ,establishment
+          ,payment_tag
           ,post_status
           ,post_date
           ,created_by

@@ -68,6 +68,10 @@ TYPE l_cur IS REF CURSOR;
    zsi_bs_lib.InputHiddenBox(p_inputName=>'p_empl_name',p_inputValue=>'');
    zsi_bs_lib.InputHiddenBox(p_inputName=>'p_amount',p_inputValue=>'');
    zsi_bs_lib.InputHiddenBox(p_inputName=>'p_post_status',p_inputValue=>'');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_tran_type',p_inputValue=>'');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_establishment',p_inputValue=>'');
+   zsi_bs_lib.InputHiddenBox(p_inputName=>'p_payment_tag',p_inputValue=>'');
+
    zsi_bs_lib.OpenEntryForm;   
       zsi_bs_lib.OpenFormGroup();  
          zsi_bs_lib.SelectBox(p_labelName=>'Tran Type',p_Name=>'p_tran_type_filter',  p_Attributes=>'SelectedValue="' || p_tran_type || '"',  p_labelSize=>1, p_selectSize=>2);
@@ -88,7 +92,7 @@ TYPE l_cur IS REF CURSOR;
             <th class="col-xs-1" nowrap align="left">Invoice#</th>
             <th class="col-xs-1" nowrap align="right">Invoice Date</th>
             <th class="col-xs-1" nowrap align="left">Amount</th>
-            <th class="col-xs-2" nowrap align="left">Tran Type#</th>
+            <th class="col-xs-1" nowrap align="left">Tran Type#</th>
             <th class="col-xs-2" nowrap align="right">Establishment</th>
             <th class="col-xs-1" nowrap align="left">Payment Tag</th>
             <th class="col-xs-1" nowrap style="text-align:center">Post</th>

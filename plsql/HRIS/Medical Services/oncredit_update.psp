@@ -84,13 +84,13 @@ FOR i IN 2..p_tran_no.COUNT LOOP
       )
       VALUES
       (   S004_T08023_SQ001.NEXTVAL
-         ,p_tran_type(i)
+         ,NVL(p_tran_type(i),p_tran_type_filter)
          ,p_invoice_no(i)
          ,l_invoice_date
          ,p_empl_id_no(i)
          ,l_amount
-         ,p_establishment(i)
-         ,p_payment_tag(i)
+         ,NVL(p_establishment(i),p_establishment_filter)
+         ,NVL(p_payment_tag(i),p_payment_tag_filter)
          ,p_post_status(i)
          ,l_post_date
          ,zsi_sessions_lib.GetCookieUser
@@ -99,9 +99,9 @@ FOR i IN 2..p_tran_no.COUNT LOOP
 
     ELSIF p_tran_no(i) IS NOT NULL  AND p_empl_id_no(i) IS NOT NULL AND p_tran_type IS NOT NULL AND p_establishment IS NOT NULL AND p_payment_tag IS NOT NULL THEN
       SELECT * INTO l_rec FROM S004_T08023 WHERE tran_no = p_tran_no(i);
-      IF zsi_lib.IsChanged(l_rec.tran_type, TO_NUMBER(p_tran_type(i))) = 'Y' THEN
+      IF zsi_lib.IsChanged(l_rec.tran_type, TO_NUMBER(NVL(p_tran_type(i),p_tran_type_filter))) = 'Y' THEN
          l_changed :='Y';
-         l_rec.tran_type := p_tran_type(i);
+         l_rec.tran_type := NVL(p_tran_type(i),p_tran_type_filter);
       END IF;
 
       IF zsi_lib.IsChanged(l_rec.invoice_no, p_invoice_no(i)) = 'Y' THEN
@@ -124,14 +124,14 @@ FOR i IN 2..p_tran_no.COUNT LOOP
          l_rec.amount := l_amount;
       END IF;
 
-      IF zsi_lib.IsChanged(l_rec.establishment, TO_NUMBER(p_establishment(i))) = 'Y' THEN
+      IF zsi_lib.IsChanged(l_rec.establishment, TO_NUMBER(NVL(p_establishment(i),p_establishment_filter))) = 'Y' THEN
          l_changed :='Y';
-         l_rec.establishment := p_establishment(i);
+         l_rec.establishment := NVL(p_establishment(i),p_establishment_filter);
       END IF;
 
-      IF zsi_lib.IsChanged(l_rec.payment_tag, TO_NUMBER(p_payment_tag(i))) = 'Y' THEN
+      IF zsi_lib.IsChanged(l_rec.payment_tag, TO_NUMBER(NVL(p_payment_tag(i),p_payment_tag_filter))) = 'Y' THEN
          l_changed :='Y';
-         l_rec.payment_tag :=  p_payment_tag(i);
+         l_rec.payment_tag :=  NVL(p_payment_tag(i),p_payment_tag_filter);
       END IF;
 
       IF zsi_lib.IsChanged(l_rec.post_status, TO_NUMBER(p_post_status(i))) = 'Y' THEN

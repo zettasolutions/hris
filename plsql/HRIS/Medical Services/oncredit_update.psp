@@ -1,13 +1,13 @@
 <%@ plsql procedure="oncredit_update" %>
 <%@ plsql parameter="p_tran_no"         type="zsi_lib.VC2_255_ARR"%>
-<%@ plsql parameter="p_tran_type"       type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_tran_type"       type="zsi_lib.VC2_255_ARR"%>
 <%@ plsql parameter="p_invoice_no"      type="zsi_lib.VC2_255_ARR"%>
 <%@ plsql parameter="p_invoice_date"    type="zsi_lib.VC2_255_ARR"%>
 <%@ plsql parameter="p_empl_id_no"      type="zsi_lib.VC2_255_ARR"%>
 <%@ plsql parameter="p_empl_name"       type="zsi_lib.VC2_255_ARR"%>
 <%@ plsql parameter="p_amount"          type="zsi_lib.VC2_255_ARR"%>
-<%@ plsql parameter="p_establishment"   type="VARCHAR2" default="NULL"%>
-<%@ plsql parameter="p_payment_tag"     type="VARCHAR2" default="NULL"%>
+<%@ plsql parameter="p_establishment"   type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_payment_tag"     type="zsi_lib.VC2_255_ARR"%>
 <%@ plsql parameter="p_post_status"     type="zsi_lib.VC2_255_ARR"%>
 <%!
 /*
@@ -24,6 +24,7 @@
 /* Modification History
    Date       By    History
    ---------  ----  ---------------------------------------------------------------------
+   15-MAY-15  GT    Change params to arrays.
    05-JAN-15  GT    New
 */
 
@@ -79,13 +80,13 @@ FOR i IN 2..p_tran_no.COUNT LOOP
       )
       VALUES
       (   S004_T08023_SQ001.NEXTVAL
-         ,p_tran_type
+         ,p_tran_type(i)
          ,p_invoice_no(i)
          ,l_invoice_date
          ,p_empl_id_no(i)
          ,l_amount
-         ,p_establishment
-         ,p_payment_tag
+         ,p_establishment(i)
+         ,p_payment_tag(i)
          ,p_post_status(i)
          ,l_post_date
          ,zsi_sessions_lib.GetCookieUser
@@ -94,9 +95,9 @@ FOR i IN 2..p_tran_no.COUNT LOOP
 
     ELSIF p_tran_no(i) IS NOT NULL  AND p_empl_id_no(i) IS NOT NULL AND p_tran_type IS NOT NULL AND p_establishment IS NOT NULL AND p_payment_tag IS NOT NULL THEN
       SELECT * INTO l_rec FROM S004_T08023 WHERE tran_no = p_tran_no(i);
-      IF zsi_lib.IsChanged(l_rec.tran_type, TO_NUMBER(p_tran_type)) = 'Y' THEN
+      IF zsi_lib.IsChanged(l_rec.tran_type, TO_NUMBER(p_tran_type(i))) = 'Y' THEN
          l_changed :='Y';
-         l_rec.tran_type := p_tran_type;
+         l_rec.tran_type := p_tran_type(i);
       END IF;
 
       IF zsi_lib.IsChanged(l_rec.invoice_no, p_invoice_no(i)) = 'Y' THEN
@@ -119,14 +120,14 @@ FOR i IN 2..p_tran_no.COUNT LOOP
          l_rec.amount := l_amount;
       END IF;
 
-      IF zsi_lib.IsChanged(l_rec.establishment, TO_NUMBER(p_establishment)) = 'Y' THEN
+      IF zsi_lib.IsChanged(l_rec.establishment, TO_NUMBER(p_establishment(i))) = 'Y' THEN
          l_changed :='Y';
-         l_rec.establishment := p_establishment;
+         l_rec.establishment := p_establishment(i);
       END IF;
 
-      IF zsi_lib.IsChanged(l_rec.payment_tag, TO_NUMBER(p_payment_tag)) = 'Y' THEN
+      IF zsi_lib.IsChanged(l_rec.payment_tag, TO_NUMBER(p_payment_tag(i))) = 'Y' THEN
          l_changed :='Y';
-         l_rec.payment_tag :=  p_payment_tag;
+         l_rec.payment_tag :=  p_payment_tag(i);
       END IF;
 
       IF zsi_lib.IsChanged(l_rec.post_status, TO_NUMBER(p_post_status(i))) = 'Y' THEN

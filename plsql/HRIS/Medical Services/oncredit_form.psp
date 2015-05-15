@@ -70,9 +70,9 @@ TYPE l_cur IS REF CURSOR;
    zsi_bs_lib.InputHiddenBox(p_inputName=>'p_post_status',p_inputValue=>'');
    zsi_bs_lib.OpenEntryForm;   
       zsi_bs_lib.OpenFormGroup();  
-         zsi_bs_lib.SelectBox(p_labelName=>'Tran Type',p_Name=>'p_tran_type',  p_Attributes=>'SelectedValue="' || p_tran_type || '"',  p_labelSize=>1, p_selectSize=>2);
-         zsi_bs_lib.SelectBox(p_labelName=>'Establishment',p_Name=>'p_establishment',  p_Attributes=>'SelectedValue="' || p_establishment || '"',   p_labelSize=>2, p_selectSize=>3);
-         zsi_bs_lib.SelectBox(p_labelName=>'Payment Tag',p_Name=>'p_payment_tag',  p_Attributes=>'SelectedValue="' || 1 || '"', p_labelSize=>2, p_selectSize=>1);
+         zsi_bs_lib.SelectBox(p_labelName=>'Tran Type',p_Name=>'p_tran_type_filter',  p_Attributes=>'SelectedValue="' || p_tran_type || '"',  p_labelSize=>1, p_selectSize=>2);
+         zsi_bs_lib.SelectBox(p_labelName=>'Establishment',p_Name=>'p_establishment_filter',  p_Attributes=>'SelectedValue="' || p_establishment || '"',   p_labelSize=>2, p_selectSize=>3);
+         zsi_bs_lib.SelectBox(p_labelName=>'Payment Tag',p_Name=>'p_payment_tag_filter',  p_Attributes=>'SelectedValue="' || 1 || '"', p_labelSize=>2, p_selectSize=>1);
          zsi_bs_lib.button('btnReload','Search');
       zsi_bs_lib.CloseFormGroup();
     zsi_bs_lib.CloseEntryForm; 
@@ -244,11 +244,11 @@ var ctrlSel = zsi.control.SelectList;
 
 $("#btnReload").click(function(){
    var l_params="oncredit_form?";
-   l_params += "p_tran_type=" + $("#p_tran_type").val();
-   l_params += "&p_establishment=" + $("#p_establishment").val();
-   l_params += "&p_payment_tag=" + $("#p_payment_tag").val();
-//   console.log(l_params);
+   l_params += "p_tran_type=" + $("#p_tran_type_filter").val();
+   l_params += "&p_establishment=" + $("#p_establishment_filter").val();
+   l_params += "&p_payment_tag=" + $("#p_payment_tag_filter").val();
    window.location.href=l_params;
+   return false;
 });
 
 
@@ -278,9 +278,9 @@ $("form[name=frmList]").submit(function(){
 $(document).ready(function(){
    //populate list
  
-   ctrlSel("#p_tran_type","","N","ON_CREDIT_TYPES_V","sele_value","displayed_text","ORDER BY displayed_text");
-   ctrlSel("#p_establishment","","N","REFERENCE_V","reference_code","reference_desc","ORDER BY reference_desc");
-   ctrlSel("#p_payment_tag","","N","PAYMENT_TAG_V","sele_value","displayed_text","ORDER BY displayed_text");
+   ctrlSel("select[name=p_tran_type],select[id=p_tran_type_filter]","","N","ON_CREDIT_TYPES_V","sele_value","displayed_text","ORDER BY displayed_text");
+   ctrlSel("select[name=p_establishment],select[id=p_establishment_filter]","","N","REFERENCE_V","reference_code","reference_desc","ORDER BY reference_desc");
+   ctrlSel("select[name=p_payment_tag],select[id=p_payment_tag_filter]","","N","PAYMENT_TAG_V","sele_value","displayed_text","ORDER BY displayed_text");
    
 });
 

@@ -1,14 +1,18 @@
 <%@ plsql procedure="oncredit_update" %>
-<%@ plsql parameter="p_tran_no"         type="zsi_lib.VC2_255_ARR"%>
-<%@ plsql parameter="p_tran_type"       type="zsi_lib.VC2_255_ARR"%>
-<%@ plsql parameter="p_invoice_no"      type="zsi_lib.VC2_255_ARR"%>
-<%@ plsql parameter="p_invoice_date"    type="zsi_lib.VC2_255_ARR"%>
-<%@ plsql parameter="p_empl_id_no"      type="zsi_lib.VC2_255_ARR"%>
-<%@ plsql parameter="p_empl_name"       type="zsi_lib.VC2_255_ARR"%>
-<%@ plsql parameter="p_amount"          type="zsi_lib.VC2_255_ARR"%>
-<%@ plsql parameter="p_establishment"   type="zsi_lib.VC2_255_ARR"%>
-<%@ plsql parameter="p_payment_tag"     type="zsi_lib.VC2_255_ARR"%>
-<%@ plsql parameter="p_post_status"     type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_tran_no"                 type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_tran_type"               type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_invoice_no"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_invoice_date"            type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_empl_id_no"              type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_empl_name"               type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_amount"                  type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_establishment"           type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_payment_tag"             type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_post_status"             type="zsi_lib.VC2_255_ARR"%>
+<%@ plsql parameter="p_tran_type_filter"        type="NUMBER"     default="NULL"%>
+<%@ plsql parameter="p_establishment_filter"    type="NUMBER"     default="NULL"%>
+<%@ plsql parameter="p_payment_tag_filter"      type="NUMBER"     default="NULL"%>
+
 <%!
 /*
    ========================================================================

@@ -88,6 +88,9 @@ TYPE l_cur IS REF CURSOR;
             <th class="col-xs-1" nowrap align="left">Invoice#</th>
             <th class="col-xs-1" nowrap align="right">Invoice Date</th>
             <th class="col-xs-1" nowrap align="left">Amount</th>
+            <th class="col-xs-2" nowrap align="left">Tran Type#</th>
+            <th class="col-xs-2" nowrap align="right">Establishment</th>
+            <th class="col-xs-1" nowrap align="left">Payment Tag</th>
             <th class="col-xs-1" nowrap style="text-align:center">Post</th>
 
          </tr>
@@ -123,8 +126,14 @@ TYPE l_cur IS REF CURSOR;
              <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_invoice_no',p_inputValue=>l_invoice_no, p_wrapper=>'N');%></td>
              <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_invoice_date',p_inputValue=>TO_CHAR(l_invoice_date,l_date_format), p_wrapper=>'N');%></td>
              <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_amount',p_inputValue=>zsi_lib.FormatAmount(l_amount,2), p_wrapper=>'N',p_inputclass=>'numeric', p_attributes=>'style="text-align:right"');%></td>
+             <td><% zsi_bs_lib.SelectBox(p_Name=>'p_tran_type',  p_Attributes=>'SelectedValue="' || l_tran_type || '"', p_wrapper=>'N', p_labelSize=>1, p_selectSize=>2); %></td> 
+             <td><% zsi_bs_lib.SelectBox(p_Name=>'p_establishment',  p_Attributes=>'SelectedValue="' || l_establishment || '"', p_wrapper=>'N', p_labelSize=>2, p_selectSize=>3); %></td> 
+             <td><% zsi_bs_lib.SelectBox(p_Name=>'p_payment_tag',  p_Attributes=>'SelectedValue="' || l_payment_tag || '"', p_wrapper=>'N', p_labelSize=>2, p_selectSize=>1); %></td>
              <td><% zsi_bs_lib.YesNo(p_field=>'post_status', p_value=>l_post_status, p_mandatory=>'Y');%></td>
-             <td></td>             
+             <td></td>     
+         
+         
+         
          </tr>
 <%
     END LOOP;
@@ -141,6 +150,9 @@ TYPE l_cur IS REF CURSOR;
              <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_invoice_no',p_inputValue=>'', p_wrapper=>'N');%></td>
              <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_invoice_date',p_inputValue=>'', p_wrapper=>'N');%></td>
              <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_amount',p_inputValue=>'', p_wrapper=>'N',p_inputclass=>'numeric',p_attributes=>'style="text-align:right"');%></td>
+             <td><% zsi_bs_lib.SelectBox(p_Name=>'p_tran_type',p_wrapper=>'N',p_labelSize=>1, p_selectSize=>2); %></td> 
+             <td><% zsi_bs_lib.SelectBox(p_Name=>'p_establishment',p_wrapper=>'N',p_labelSize=>2, p_selectSize=>3); %></td> 
+             <td><% zsi_bs_lib.SelectBox(p_Name=>'p_payment_tag', p_wrapper=>'N',p_labelSize=>2, p_selectSize=>1); %></td>
              <td><% zsi_bs_lib.YesNo(p_field=>'post_status', p_value=>0, p_mandatory=>'Y');%></td>
              <td></td>             
          </tr>

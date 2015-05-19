@@ -424,7 +424,7 @@ PACKAGE BODY zsi_bs_lib IS
       IF p_select_size IS NOT NULL THEN
           l_select_size :='col-' || l_default_label_size_type || '-' || p_select_size;
       ELSE
-          l_select_size :='col-' || l_default_label_size_type || '-10';
+          l_select_size :='yesno-td';
       END IF;
 
       IF p_label_name IS NOT NULL THEN

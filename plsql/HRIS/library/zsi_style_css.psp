@@ -158,6 +158,10 @@ ul
    padding-top: inherit;
 }
 
+.yesno-td{
+   width: 53px
+}
+
 /* m5= minus 5*/
 .LeftAdjust-m5{
   margin-left:-5px

@@ -317,7 +317,7 @@ BEGIN
          ,zsi_sessions_lib.GetCookieUser
          ,SYSDATE
       FROM S004_T08021
-      WHERE tran_no = p_tran_no;
+      WHERE tran_no = l_tran_no;
 
       
       INSERT INTO S004_T08010_BILLING
@@ -342,7 +342,7 @@ BEGIN
          ,zsi_sessions_lib.GetCookieUser
          ,SYSDATE
       FROM S004_T08021
-      WHERE tran_no = p_tran_no;
+      WHERE tran_no = l_tran_no;
          
       INSERT INTO S004_T08010_VACCINE
          (ldgr_no
@@ -376,7 +376,7 @@ BEGIN
          ,zsi_sessions_lib.GetCookieUser
          ,SYSDATE
       FROM S004_T08021   
-      WHERE tran_no = p_tran_no;
+      WHERE tran_no = l_tran_no;
 
         
       INSERT INTO S004_T08010_DOCTOR
@@ -401,7 +401,7 @@ BEGIN
          ,zsi_sessions_lib.GetCookieUser
          ,SYSDATE
       FROM S004_T08021
-      WHERE tran_no = p_tran_no
+      WHERE tran_no = l_tran_no
       AND doctor_code IS NOT NULL;
    END IF;
 END;

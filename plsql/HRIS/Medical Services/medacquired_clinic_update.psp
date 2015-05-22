@@ -37,6 +37,7 @@
    l_changed         VARCHAR2(1) := 'N';
    l_rec             S004_T08016%ROWTYPE;
    l_date_format     VARCHAR2(30) := zsi_lib.DefaultDateFormat;
+   l_tran_no         NUMBER:=p_tran_no;
    l_tran_date       DATE;
    l_post_date       DATE;
    l_tran_month      DATE;
@@ -55,6 +56,8 @@ BEGIN
    END IF;
    
    IF p_tran_no IS NULL  AND p_tran_date IS NOT NULL THEN
+      SELECT S004_T08016_SQ001.NEXTVAL INTO l_tran_no FROM DUAL;
+
       INSERT INTO S004_T08016 (
           tran_no
          ,tran_date
@@ -73,7 +76,7 @@ BEGIN
          ,date_created
       )
       VALUES
-      (  S004_T08016_SQ001.NEXTVAL 
+      (   l_tran_no
          ,l_tran_date
          ,p_empl_id_no
          ,p_age_brak_code
@@ -159,6 +162,7 @@ BEGIN
          UPDATE S004_T08016 SET row = l_rec WHERE tran_no=p_tran_no;
       END IF;
    END IF;
+   
    IF p_post_status = 1 then
       INSERT INTO S004_T08008 
       (   ldgr_no               
@@ -173,7 +177,7 @@ BEGIN
       )
       VALUES
       (  S004_T08008_SQ001.NEXTVAL 
-         ,p_tran_no
+         ,l_tran_no
          ,l_tran_date
          ,p_meds_code
          ,p_treatment_for
@@ -201,7 +205,7 @@ BEGIN
       )
       VALUES
       (  S004_T08010_SQ001.NEXTVAL 
-         ,p_tran_no
+         ,l_tran_no
          ,l_tran_date
          ,EXTRACT(YEAR FROM l_tran_date)
          ,p_empl_id_no

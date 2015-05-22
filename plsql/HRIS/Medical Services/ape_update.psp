@@ -265,7 +265,7 @@ BEGIN
          ,zsi_sessions_lib.GetCookieUser
          ,SYSDATE
     FROM S004_T08020
-   WHERE tran_no = p_tran_no;
+   WHERE tran_no = l_tran_no;
         
       INSERT INTO S004_T08010_RESULT
             (ldgr_no    
@@ -291,7 +291,7 @@ BEGIN
             ,zsi_sessions_lib.GetCookieUser
             ,SYSDATE
       FROM S004_T08020_RESULT
-      WHERE tran_no = p_tran_no;
+      WHERE tran_no = l_tran_no;
       END IF; 
 
 END;

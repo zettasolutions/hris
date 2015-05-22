@@ -467,8 +467,9 @@ SELECT
    ,date_modified
    ,meds_qty * unit_price AS meds_amount
    ,zsi_lib.GetDescription('meds_code_v','meds_name','meds_code',meds_code ) as meds_name     
-   ,zsi_lib.GetDescription('MEDS_V','medicine','meds_code',a.meds_code) as medicine
+   ,zsi_lib.GetDescription('MEDS_V','medicine','meds_code',meds_code) as medicine
    ,illness_seqno
+   ,dental_seqno
 FROM S004_T08020_MEDS;
   
 CREATE OR REPLACE FORCE VIEW "S004"."S004_T08020_BILLING_V" AS 

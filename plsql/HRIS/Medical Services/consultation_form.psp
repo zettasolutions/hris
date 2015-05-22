@@ -35,6 +35,7 @@
    l_ctr                   NUMBER := 1;
    l_where                 VARCHAR2(4000);
    l_meds_count            NUMBER:=0;
+   l_ds_meds_count         NUMBER:=0;
    l_tab                   VARCHAR2(4000):=p_tab;
    l_emp_rec               employee_v%ROWTYPE;
    l_rec                   consultation_v%ROWTYPE;
@@ -361,6 +362,7 @@ zsi_bs_lib.OpenFormGroup();
             <th class="col-xs-1" nowrap align="left">Qty</th>
             <th class="col-xs-1" nowrap align="left">Total</th>
             <th class="col-xs-1" nowrap align="left">Next Visit</th>
+            <th class="col-xs-1" nowrap style="text-align:center">Meds</th>
 <% IF l_post_status = 0 AND l_user_iswrite = 1 THEN %>
             <th class="col-xs-1" nowrap style="text-align:center">Delete</th>
 <% END IF; %>
@@ -368,6 +370,8 @@ zsi_bs_lib.OpenFormGroup();
          </tr>
       <%
         FOR i in l_ds_cur LOOP
+           l_where := 'dental_seqno = ' || i.seq_no;
+           l_meds_count   :=  zsi_lib.GetCount('*','S004_T08020_MEDS',l_where);
       %>
          <tr>                
             <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_ds_seq_no',p_inputValue=>i.seq_no);%>
@@ -377,6 +381,7 @@ zsi_bs_lib.OpenFormGroup();
             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_qty',p_inputValue=>i.ds_qty, p_wrapper=>'N');%></td>
             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_amount', p_inputValue=>i.ds_amount, p_wrapper=>'N',p_attributes=>'disabled');%></td>
             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_next_visit_date',p_inputValue=>TO_CHAR(i.next_visit,l_date_format), p_wrapper=>'N');%></td>
+            <td align="center"><a id="aDSMedCount<%= i.seq_no %>" href="javascript:void(0)" TITLE="Click here to Edit Dental Medicines" onClick="attachURL('dental_meds_form?p_dental_seqno=<%= i.seq_no %>&p_tran_no=<%=p_tran_no %>&p_post_status=<%= l_post_status %>&p_user_iswrite=<%= l_user_iswrite %>','Add/Edit Dental Medicines For &raquo <%=l_emp_name %>', 1200, 350)"><%=l_ds_meds_count %></a></td>
 <% IF l_post_status = 0 AND l_user_iswrite = 1 THEN %>
             <td class="col-xs-1" nowrap align="center"><% zsi_bs_lib.ButtonDelete(p_table=>'S004_T08020_DENTAL',p_Value=>i.seq_no);%></td>
 <% END IF; %>
@@ -395,6 +400,7 @@ zsi_bs_lib.OpenFormGroup();
             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_qty',    p_wrapper=>'N');%></td>
             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_amount', p_wrapper=>'N',p_attributes=>'disabled');%></td>
             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ds_next_visit_date', p_wrapper=>'N');%></td>
+            <td></td>
             <td></td>
          </tr>
       <%
@@ -444,7 +450,7 @@ zsi_bs_lib.OpenFormGroup();
                 <% zsi_bs_lib.SelectBox(p_Name=>'p_illness_code', p_wrapper=>'N');%></td>
             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ill_next_visit_date', p_wrapper=>'N');%></td>
             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_ill_remarks', p_wrapper=>'N');%></td>
-            <td align="center"><a id="aMedCount" href="javascript:void(0)" TITLE="Click here to Edit Medicine Prescriptions" onClick="attachURL('illness_meds_form?p_illness_id=&p_tran_no=<%=p_tran_no %>&p_post_status=<%= l_post_status %>&p_user_iswrite=<%= l_user_iswrite %>','Add/Edit Medicine Prescriptions For &raquo <%=l_emp_name %>', 1200, 350)"></a></td>
+            <td></td>
             <td></td>
          </tr>
       <%
@@ -757,6 +763,15 @@ $(document).ready(function(){
 
 });
 
+   /*refresh meds count in dental services detail tab. */
+   function countDSMeds(p_Id){
+      var l_condition ="where dental_seqno=" + p_Id;
+      $.get("zsi_lib.count_records?p_table=S004_T08020_MEDS&p_condition=" + l_condition + "&p_t=" + new Date().getTime(), function( data ) {
+          $("#aDSMedCount"  + p_Id).text(data); 
+      });        
+
+   }
+   
    /*refresh meds count in Illness detail tab. */
    function countIllnessMeds(p_Id){
       var l_condition ="where illness_seqno=" + p_Id;
@@ -765,6 +780,7 @@ $(document).ready(function(){
       });        
 
    }
+   
 
 </script>
 

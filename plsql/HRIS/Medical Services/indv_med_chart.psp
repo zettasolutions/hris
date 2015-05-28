@@ -86,6 +86,7 @@ zsi_bs_lib.CloseEntryForm;
       <th nowrap align="left" width="150px">Complaint</th>
       <th nowrap align="left" width="150px">Diagnosis</th>
       <th nowrap align="left" width="150px">Treatment</th>
+      <th nowrap align="left" width="150px">Remarks</th>
       <th nowrap align="left" width="150px">Doctor</th>
       <th nowrap align="left" width="150px">Specialty</th>
      </table>

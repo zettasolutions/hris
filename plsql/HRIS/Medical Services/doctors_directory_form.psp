@@ -121,11 +121,11 @@ $(document).ready(function(){
    var selObj = $("select[id=p_dd_specialty]");
    if(selObj.length>1){
       /*new entry*/
-      ctrlSel("select[id=p_dd_specialty]","","N","doctor_specialty_v","seq_no","UPPER(displayed_text)","");
+      ctrlSel("select[id=p_dd_specialty]","","N","doctor_specialty_v","seq_no","UPPER(displayed_text)"," ORDER BY UPPER(displayed_text) ");
    }
    else{
       /*edit entry*/
-      ctrlSel("select[id=p_dd_specialty]","<%=l_rec.specialty%>","N","doctor_specialty_v","seq_no","UPPER(displayed_text)","");
+      ctrlSel("select[id=p_dd_specialty]","<%=l_rec.specialty%>","N","doctor_specialty_v","seq_no","UPPER(displayed_text)"," ORDER BY UPPER(displayed_text) ");
   }
 
 });

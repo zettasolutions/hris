@@ -53,7 +53,7 @@
    IF l_prev_type <> i.result_type THEN
       l_prev_type := i.result_type;
 %>
-      <td><%= i.result_desc %></td>
+      <td><%= i.result_desc %><br>Remarks:<%=i.remarks%></td>
 <%   
    ELSE
 %>

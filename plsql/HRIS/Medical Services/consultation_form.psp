@@ -128,6 +128,7 @@
       l_diagnosis       :=l_rec.diagnosis; 
       l_treatment       :=l_rec.treatment; 
       l_recom_test      :=l_rec.recom_test;
+      l_remarks         :=l_rec.remarks;
    ELSE
       SELECT * INTO l_emp_rec FROM employee_v WHERE empl_id_no = p_id_no;
       l_empl_type             :=l_emp_rec.empl_type;

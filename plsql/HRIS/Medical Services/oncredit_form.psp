@@ -1,7 +1,7 @@
 <%@ plsql procedure="oncredit_form" %>
-<%@ plsql parameter="p_tran_type"         type="NUMBER"     default="NULL"%>
-<%@ plsql parameter="p_establishment"     type="NUMBER"     default="NULL"%>
-<%@ plsql parameter="p_payment_tag"       type="NUMBER"     default="NULL"%>
+<%@ plsql parameter="p_tran_type_filter"         type="NUMBER"     default="NULL"%>
+<%@ plsql parameter="p_establishment_filter"     type="NUMBER"     default="NULL"%>
+<%@ plsql parameter="p_payment_tag_filter"       type="NUMBER"     default="NULL"%>
 <%!
 /*
 ========================================================================
@@ -58,6 +58,7 @@ TYPE l_cur IS REF CURSOR;
    pageheader(p_dwin=>'Y');
 
 %>
+
 <body>
 <form name="frmList" action="oncredit_update" method="POST" >
 <%
@@ -74,9 +75,9 @@ TYPE l_cur IS REF CURSOR;
 
    zsi_bs_lib.OpenEntryForm;   
       zsi_bs_lib.OpenFormGroup();  
-         zsi_bs_lib.SelectBox(p_labelName=>'Tran Type',p_Name=>'p_tran_type_filter',  p_Attributes=>'SelectedValue="' || p_tran_type || '"',  p_labelSize=>1, p_selectSize=>2);
-         zsi_bs_lib.SelectBox(p_labelName=>'Establishment',p_Name=>'p_establishment_filter',  p_Attributes=>'SelectedValue="' || p_establishment || '"',   p_labelSize=>2, p_selectSize=>3);
-         zsi_bs_lib.SelectBox(p_labelName=>'Payment Tag',p_Name=>'p_payment_tag_filter',  p_Attributes=>'SelectedValue="' || 1 || '"', p_labelSize=>2, p_selectSize=>1);
+         zsi_bs_lib.SelectBox(p_labelName=>'Tran Type',p_Name=>'p_tran_type_filter',  p_Attributes=>'SelectedValue="' || p_tran_type_filter || '"',  p_labelSize=>1, p_selectSize=>2);
+         zsi_bs_lib.SelectBox(p_labelName=>'Establishment',p_Name=>'p_establishment_filter',  p_Attributes=>'SelectedValue="' || p_establishment_filter || '"',   p_labelSize=>2, p_selectSize=>3);
+         zsi_bs_lib.SelectBox(p_labelName=>'Payment Tag',p_Name=>'p_payment_tag_filter',  p_Attributes=>'SelectedValue="' || NVL(p_payment_tag_filter,1) || '"', p_labelSize=>2, p_selectSize=>1);
          zsi_bs_lib.button('btnReload','Search');
       zsi_bs_lib.CloseFormGroup();
     zsi_bs_lib.CloseEntryForm; 
@@ -104,16 +105,16 @@ TYPE l_cur IS REF CURSOR;
    l_where  := ' WHERE post_status =0' ;
    l_order  := ' ORDER BY tran_no ';
 
-   IF p_tran_type IS NOT NULL THEN
-      l_where := l_where || ' AND tran_type= ' || p_tran_type;
+   IF p_tran_type_filter IS NOT NULL THEN
+      l_where := l_where || ' AND tran_type= ' || p_tran_type_filter;
    END IF;
 
-   IF p_establishment IS NOT NULL THEN
-      l_where := l_where || ' AND establishment= ' || p_establishment;
+   IF p_establishment_filter IS NOT NULL THEN
+      l_where := l_where || ' AND establishment= ' || p_establishment_filter;
    END IF;
 
-   IF p_payment_tag IS NOT NULL THEN
-      l_where := l_where || ' AND payment_tag= ' || p_payment_tag;
+   IF p_payment_tag_filter IS NOT NULL THEN
+      l_where := l_where || ' AND payment_tag= ' || p_payment_tag_filter;
    END IF;
 
    l_sql := l_select || l_from || l_where || l_order;
@@ -180,6 +181,12 @@ TYPE l_cur IS REF CURSOR;
 <script type="text/javascript" src="zsi_search_js"></script>
 <script type="text/javascript">
 
+function SetDefaultVal(i) {
+  document.forms[0].p_tran_type[i].value = document.forms[0].p_tran_type_filter.value;
+  document.forms[0].p_establishment[i].value = document.forms[0].p_establishment_filter.value;
+  document.forms[0].p_payment_tag[i].value = document.forms[0].p_payment_tag_filter.value;
+}
+
  /*variable declaration*/
 var ctrlSel = zsi.control.SelectList;
    
@@ -197,7 +204,10 @@ var ctrlSel = zsi.control.SelectList;
          function(currentObject,data,i){            
             currentObject.value=data[0];
             var td = currentObject.parentNode;
-            $(td).next().children("#p_empl_name").val(unescape(data[43]));            
+            $(td).next().children("#p_empl_name").val(unescape(data[43]));    
+            $(td).next().next().next().next().next().children("#p_tran_type").val(document.forms[0].p_tran_type_filter.value);  
+            $(td).next().next().next().next().next().next().children("#p_establishment").val(document.forms[0].p_establishment_filter.value);  
+            $(td).next().next().next().next().next().next().next().children("#p_payment_tag").val(document.forms[0].p_payment_tag_filter.value);  
          }
       });    
       
@@ -212,6 +222,9 @@ var ctrlSel = zsi.control.SelectList;
             currentObject.value=data[43];
              var td = currentObject.parentNode;
              $(td).prev().children("#p_empl_id_no").val(data[0]);            
+             $(td).next().next().next().next().children("#p_tran_type").val(document.forms[0].p_tran_type_filter.value);  
+             $(td).next().next().next().next().next().children("#p_establishment").val(document.forms[0].p_establishment_filter.value);  
+             $(td).next().next().next().next().next().next().children("#p_payment_tag").val(document.forms[0].p_payment_tag_filter.value);  
          }
       });          
 
@@ -220,10 +233,10 @@ var ctrlSel = zsi.control.SelectList;
               {"names" :
                [  
                    "p_empl_id_no"
-                  ,"p_tran_type"
+                  ,"p_tran_type_filter"
                   ,"p_amount"
-                  ,"p_establishment"
-                  ,"p_payment_tag"
+                  ,"p_establishment_filter"
+                  ,"p_payment_tag_filter"
                ]
             ,  "required_one":"N"
             ,  "type":"M"
@@ -248,9 +261,9 @@ var ctrlSel = zsi.control.SelectList;
 
 $("#btnReload").click(function(){
    var l_params="oncredit_form?";
-   l_params += "p_tran_type=" + $("#p_tran_type_filter").val();
-   l_params += "&p_establishment=" + $("#p_establishment_filter").val();
-   l_params += "&p_payment_tag=" + $("#p_payment_tag_filter").val();
+   l_params += "p_tran_type_filter=" + $("#p_tran_type_filter").val();
+   l_params += "&p_establishment_filter=" + $("#p_establishment_filter").val();
+   l_params += "&p_payment_tag_filter=" + $("#p_payment_tag_filter").val();
    window.location.href=l_params;
    return false;
 });

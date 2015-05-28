@@ -42,7 +42,8 @@
    l_rec                        S004_T08023%ROWTYPE;
    l_amount                     NUMBER;
    l_invoice_date               DATE;
-   l_ledger_no                 NUMBER:=0;
+   l_ledger_no                  NUMBER:=0;
+   l_tran_no                    NUMBER;
    l_emp_rec                   employee_active_v%ROWTYPE;
 %>
 <%
@@ -64,9 +65,11 @@ FOR i IN 2..p_tran_no.COUNT LOOP
 
 
    l_amount       := TO_NUMBER(TRIM(REPLACE(p_amount(i),',','')));
+   l_tran_no := p_tran_no(i);
 
    IF p_tran_no(i) IS NULL  AND p_empl_id_no(i) IS NOT NULL AND p_tran_type IS NOT NULL AND p_establishment IS NOT NULL AND p_payment_tag IS NOT NULL THEN
-
+      SELECT S004_T08023_SQ001.NEXTVAL INTO l_tran_no FROM DUAL;
+      
       INSERT INTO S004_T08023
       (   tran_no
          ,tran_type
@@ -83,7 +86,7 @@ FOR i IN 2..p_tran_no.COUNT LOOP
 
       )
       VALUES
-      (   S004_T08023_SQ001.NEXTVAL
+      (   l_tran_no
          ,NVL(p_tran_type(i),p_tran_type_filter)
          ,p_invoice_no(i)
          ,l_invoice_date
@@ -98,7 +101,7 @@ FOR i IN 2..p_tran_no.COUNT LOOP
       );
 
     ELSIF p_tran_no(i) IS NOT NULL  AND p_empl_id_no(i) IS NOT NULL AND p_tran_type IS NOT NULL AND p_establishment IS NOT NULL AND p_payment_tag IS NOT NULL THEN
-      SELECT * INTO l_rec FROM S004_T08023 WHERE tran_no = p_tran_no(i);
+      SELECT * INTO l_rec FROM S004_T08023 WHERE tran_no = l_tran_no;
       IF zsi_lib.IsChanged(l_rec.tran_type, TO_NUMBER(NVL(p_tran_type(i),p_tran_type_filter))) = 'Y' THEN
          l_changed :='Y';
          l_rec.tran_type := NVL(p_tran_type(i),p_tran_type_filter);
@@ -146,7 +149,7 @@ FOR i IN 2..p_tran_no.COUNT LOOP
       IF l_changed = 'Y' THEN
          l_rec.modified_by := zsi_sessions_lib.GetCookieUser;
          l_rec.date_modifIed := SYSDATE;
-         UPDATE S004_T08023 SET row = l_rec WHERE tran_no=p_tran_no(i);
+         UPDATE S004_T08023 SET row = l_rec WHERE tran_no=l_tran_no;
       END IF;
       
        IF p_post_status(i) = 1 THEN
@@ -183,11 +186,11 @@ FOR i IN 2..p_tran_no.COUNT LOOP
          ,l_emp_rec.department
          ,l_emp_rec.group_code
          ,1
-         ,tran_type
+         ,2
          ,zsi_sessions_lib.GetCookieUser
          ,SYSDATE
     FROM S004_T08023
-   WHERE tran_no = p_tran_no(i);
+   WHERE tran_no = l_tran_no;
 
 
   INSERT INTO S004_T08010_BILLING
@@ -205,14 +208,14 @@ FOR i IN 2..p_tran_no.COUNT LOOP
             ,EXTRACT(YEAR FROM invoice_date)
             ,invoice_date
             ,id_no
-            ,tran_type
+            ,11
             ,amount   
             ,establishment
             ,payment_tag
             ,zsi_sessions_lib.GetCookieUser
             ,SYSDATE
       FROM S004_T08023
-      WHERE tran_no = p_tran_no(i);
+      WHERE tran_no = l_tran_no;
    END IF;
 
 
@@ -221,5 +224,6 @@ END;
 %>
 
 <script type="text/javascript">
-    window.location.href="oncredit_form";
+    window.location.href="oncredit_form?p_tran_type_filter=<%=p_tran_type_filter%>&p_establishment_filter=<%=p_establishment_filter%>&p_payment_tag_filter=<%=p_payment_tag_filter%>";
 </script>
+  

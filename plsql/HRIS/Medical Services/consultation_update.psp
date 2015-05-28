@@ -252,6 +252,11 @@ BEGIN
       l_rec.treatment := p_treatment;
       END IF;      
 
+      IF zsi_lib.IsChanged(l_rec.remarks, p_remarks) = 'Y' THEN
+         l_changed :='Y';
+      l_rec.remarks := p_remarks;
+      END IF;      
+
       IF zsi_lib.IsChanged(l_rec.post_status, TO_NUMBER(p_post_status)) = 'Y' THEN
          l_changed :='Y';
       l_rec.post_status := p_post_status;
@@ -848,6 +853,8 @@ BEGIN
       FROM S004_T08020_BILLING
       WHERE tran_no = l_tran_no;
       
+      UPDATE S004_T08001 SET PLAN_CURR_BAL =  (PLAN_CURR_BAL - (SELECT SUM(amnt_billed) FROM S004_T08020_BILLING WHERE tran_no = l_tran_no)) WHERE id_no = TO_NUMBER(p_empl_id_no);
+      
           INSERT INTO S004_T08010_DENTAL
              (ldgr_no    
              ,seq_no     
@@ -1006,6 +1013,8 @@ BEGIN
          WHERE tran_no = l_tran_no;   
       END IF; 
 END;
+
+
 %>
 <script type="text/javascript">
    parent.parent.parent.HomeWindow.LoadData("?p_id_no=<%=p_empl_id_no %>");

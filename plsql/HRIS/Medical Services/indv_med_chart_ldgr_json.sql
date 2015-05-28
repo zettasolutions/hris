@@ -55,6 +55,7 @@ l_medplan              S004_T08010_V.medplan%TYPE;
 l_complaint            S004_T08010_V.complaint%TYPE;
 l_diagnosis            S004_T08010_V.treatment%TYPE;
 l_treatment            S004_T08010_V.treatment%TYPE;
+l_remarks              S004_T08010_V.remarks%TYPE;
 l_doctor               VARCHAR2(4000);
 l_specialty            VARCHAR2(4000);
 l_row_no               NUMBER(10);
@@ -75,7 +76,8 @@ BEGIN
                       ,medplan
                       ,complaint            
                       ,diagnosis            
-                      ,treatment';
+                      ,treatment
+                      ,remarks';
                      
   l_from  := ' FROM S004_T08010_V ';
   l_where := ' WHERE id_no = ' || p_empl_id_no ;
@@ -124,6 +126,7 @@ BEGIN
                        ,l_complaint     
                        ,l_diagnosis          
                        ,l_treatment
+                       ,l_remarks
                        ,l_row_no;
       EXIT WHEN l_ref%NOTFOUND;
       l_row_count := l_row_count + 1;
@@ -146,6 +149,7 @@ BEGIN
                                                    || l_complaint            || '","' 
                                                    || l_diagnosis            || '","'                                                  
                                                    || l_treatment            || '","'
+                                                   || l_remarks              || '","'
                                                    || l_doctor               || '","' 
                                                    || l_specialty            || '"' 
       ||']}';

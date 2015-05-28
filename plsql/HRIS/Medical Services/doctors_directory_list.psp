@@ -95,7 +95,7 @@
    END IF;
    l_url := l_url ||'&p_rows=' || l_rows;
 
-   l_sql := l_select ||', row_number() OVER (ORDER BY doctor_code) rn ' || l_from || l_where;
+   l_sql := l_select ||', row_number() OVER (ORDER BY UPPER(doctor_name),UPPER(specialty) ) rn ' || l_from || l_where;
 
    l_sql := 'SELECT * FROM ( ' || l_sql || ') ' || zsi_lib.GeneratePagingWhere(p_page_no);
 %>
@@ -103,8 +103,6 @@
 <%
 
    zsi_bs_lib.openModalWindow('modalWindow','Search Doctor','dd_search_frm','doctors_directory_list');
-
-
 
    zsi_bs_lib.OpenFormGroup();
       zsi_bs_lib.InputTextBox(p_labelName =>'Code',p_inputName=>'p_dd_code', p_labelSize =>3, p_inputSize =>3, p_inputclass=>'numeric');

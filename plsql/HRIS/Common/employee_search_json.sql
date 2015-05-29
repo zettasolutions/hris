@@ -514,8 +514,8 @@ BEGIN
                                                    || l_rank                                 || '","'
                                                    || l_plan_coverage                        || '","'
                                                    || l_plan_curr_bal                        || '","'
-                                                   || l_plan_avail_bal                       || '","'
-                                                   || l_unposted_amt                         || '"'                                                   
+                                                   || zsi_lib.FormatAmount(l_plan_avail_bal,2)                       || '","'
+                                                   || zsi_lib.FormatAmount(l_unposted_amt,2)                         || '"'                                                   
                                                    
                                                    
          ||']}';

@@ -234,8 +234,8 @@ var ctrlSel = zsi.control.SelectList;
                [  
                    "p_empl_id_no"
                   ,"p_tran_type_filter"
-                  ,"p_amount"
                   ,"p_invoice_date"
+                  ,"p_amount"
                   ,"p_establishment_filter"
                   ,"p_payment_tag_filter"
                ]
@@ -248,8 +248,8 @@ var ctrlSel = zsi.control.SelectList;
                [                       
                   "Employee"  
                   ,"On-credit Type "
-                  ,"Amount"
                   ,"Invoice Date"
+                  ,"Amount"
                   ,"Establishment"
                   ,"Payment Tag"
                ]

@@ -56,6 +56,7 @@ BEGIN
 </head>
 <body>
 <%
+
 FOR i IN 2..p_tran_no.COUNT LOOP
    l_post_date := '';
    IF p_post_status(i) = 1 then
@@ -152,12 +153,13 @@ FOR i IN 2..p_tran_no.COUNT LOOP
          UPDATE S004_T08023 SET row = l_rec WHERE tran_no=l_tran_no;
       END IF;
       
-       IF p_post_status(i) = 1 THEN
-         UPDATE S004_T08001 SET PLAN_CURR_BAL =  (PLAN_CURR_BAL - l_amount) WHERE id_no = TO_NUMBER(p_empl_id_no(i));
-      END IF;
    END IF;
+
    
    IF p_post_status(i) = 1 THEN
+      
+      UPDATE S004_T08001 SET PLAN_CURR_BAL =  (PLAN_CURR_BAL - l_amount) WHERE id_no = TO_NUMBER(p_empl_id_no(i));   
+   
       SELECT S004_T08010_SQ001.NEXTVAL INTO l_ledger_no FROM DUAL; 
       SELECT * INTO l_emp_rec FROM employee_active_v WHERE empl_id_no = p_empl_id_no(i);
       INSERT INTO S004_T08010
@@ -186,7 +188,7 @@ FOR i IN 2..p_tran_no.COUNT LOOP
          ,l_emp_rec.department
          ,l_emp_rec.group_code
          ,1
-         ,2
+         ,decode(p_tran_type_filter,1,1,4)
          ,zsi_sessions_lib.GetCookieUser
          ,SYSDATE
     FROM S004_T08023
@@ -208,7 +210,7 @@ FOR i IN 2..p_tran_no.COUNT LOOP
             ,EXTRACT(YEAR FROM invoice_date)
             ,invoice_date
             ,id_no
-            ,11
+            ,decode(p_tran_type_filter,1,11,3)
             ,amount   
             ,establishment
             ,payment_tag

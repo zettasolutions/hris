@@ -66,7 +66,7 @@ l_comma                      VARCHAR2(1);
 
 
 BEGIN
-   check_login;
+   --check_login;
    owa_util.mime_header('application/json');
 
    l_select := 'SELECT a.tran_no,a.start_date,a.end_date,a.trn_desc, a.trn_type_name,a.spsr_name ,a.venu_name,a.travel_desc ';

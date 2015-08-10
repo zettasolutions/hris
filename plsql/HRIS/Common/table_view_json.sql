@@ -37,7 +37,7 @@ l_tv_name                    TABLES_VIEWS_V.tv_name%TYPE;
 l_type                       TABLES_VIEWS_V.type%TYPE;
 
 BEGIN
-   check_login;
+   --check_login;
    owa_util.mime_header('application/json');
 
    l_select := 'SELECT tv_name, type ';

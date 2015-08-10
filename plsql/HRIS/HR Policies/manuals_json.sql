@@ -60,7 +60,7 @@ PROCEDURE manuals_json (
    l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID('manuals_list');
 
 BEGIN
-   check_login;
+   --check_login;
    owa_util.mime_header('application/json');
 
    l_select := 'SELECT manual_code, manual_title, manual_summary, file_name, remarks, created_by, date_created, modified_by, date_modified ';

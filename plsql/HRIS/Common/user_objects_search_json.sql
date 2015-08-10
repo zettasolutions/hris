@@ -37,7 +37,7 @@ l_ref          l_cur;
 l_object_name                user_objects.object_name%TYPE;
 
 BEGIN
-   check_login;
+   --check_login;
    owa_util.mime_header('application/json');
 
    l_select := 'SELECT object_name ';

@@ -51,7 +51,7 @@ l_total_rows                 NUMBER(10);
 l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID('train_mrtc_participants_list');
 
 BEGIN
-   check_login;
+   --check_login;
    owa_util.mime_header('application/json');
 
    l_select := 'SELECT agency_code, agency_desc, tran_no,trainee, job_position, address, contact_no, remarks';

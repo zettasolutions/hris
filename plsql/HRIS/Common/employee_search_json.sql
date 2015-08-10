@@ -149,7 +149,7 @@ l_plan_avail_bal             employee_active_v.plan_avail_bal%TYPE;
 l_unposted_amt               employee_active_v.unposted_amt%TYPE;  
 
 BEGIN
-   check_login;
+   --check_login;
    owa_util.mime_header('application/json');
    l_empl_name := utl_url.escape(p_empl_name);  
    l_empl_name := replace(l_empl_name,'Ã‘','Ñ');

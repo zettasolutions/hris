@@ -41,7 +41,7 @@ CURSOR cs_cur IS
     ORDER BY seq_no;
     
 BEGIN
-   check_login;
+   --check_login;
    owa_util.mime_header('application/json'); 
 
    htp.p('{"rows":[');

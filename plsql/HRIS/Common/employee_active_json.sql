@@ -107,7 +107,7 @@ IS
 
 
 BEGIN
-   check_login;
+   --check_login;
    owa_util.mime_header('application/json'); 
    
    l_select := 'SELECT '   

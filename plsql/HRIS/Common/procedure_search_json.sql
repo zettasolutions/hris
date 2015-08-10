@@ -37,7 +37,7 @@ l_proc_id                    hris_modules_v.module_id%TYPE;
 l_url                        hris_modules_v.module_url%TYPE;
 
 BEGIN
-   check_login;
+   --check_login;
    owa_util.mime_header('application/json');
    l_url := utl_url.escape(p_url);  
    l_url := replace(l_url,'Ã‘','Ñ');

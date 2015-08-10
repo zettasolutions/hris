@@ -59,7 +59,7 @@ CURSOR ts_cur(lp_tran_no IN NUMBER) IS
     WHERE tran_no = lp_tran_no;
     
 BEGIN
-check_login;
+--check_login;
 owa_util.mime_header('application/json');  
 
 l_select := 'SELECT tran_no, trn_code, trn_desc ,venu_name, actual_cost, trn_hours ,start_date ,end_date, spsr_name ';

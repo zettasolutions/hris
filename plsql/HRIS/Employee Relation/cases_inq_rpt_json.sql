@@ -79,7 +79,7 @@ CURSOR ch_cur(lp_status_seq_no IN NUMBER) IS
 
 
 BEGIN
-   check_login;
+   --check_login;
    owa_util.mime_header('application/json');
 
    l_select := 'SELECT tran_no,tran_year, seq_no, case_type_desc,case_no,charges, respondents, pi_date';

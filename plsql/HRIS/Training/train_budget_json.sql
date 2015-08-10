@@ -56,7 +56,7 @@ l_total_rows                 NUMBER(10);
 l_module_id                  s004_modules.module_id%TYPE := zsi_lib.GetModuleID('train_budget_list');
 
 BEGIN
-   check_login;
+   --check_login;
    owa_util.mime_header('application/json');
 
    l_select := 'SELECT tran_no,tran_year,budget_type_desc, conv_desc,id_no,emp_name,dept_desc, budget_amt';

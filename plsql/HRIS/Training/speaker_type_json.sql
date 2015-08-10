@@ -33,7 +33,7 @@ l_spk_type_desc   SPEAKERS_V.spk_type_desc%TYPE;
  
  
 BEGIN
-   check_login;
+   --check_login;
    owa_util.mime_header('application/json');
 
    l_select := 'SELECT spk_type_desc';

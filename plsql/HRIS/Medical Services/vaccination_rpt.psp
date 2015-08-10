@@ -22,8 +22,6 @@
    l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
    l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
    l_rpt_title                  VARCHAR2(1024);   
-   l_sub_amount                 NUMBER:=0;
-   l_ttl_amount                 NUMBER:=0;
 %>
 <%  
    
@@ -70,6 +68,7 @@ function onLoadComplete(data){
    var jsonGrid = $(".gridReport");
    jsonGrid.clearGrid();
    var l_dept_code="";
+   var l_ttl_amount=0;
    for(var _group in newdata) {
       var r = ""
       r +="<tr>";
@@ -102,8 +101,8 @@ function onLoadComplete(data){
                  r +="<td align='right'> "   +  this[6]  + " </td>"; 
             r +="</tr>";
             ctr++;
-            l_sub_amount := l_sub_amount + parseFloat(this[6]);
-            l_ttl_amount := l_ttl_amount + parseFloat(this[6]);
+            l_sub_amount = l_sub_amount + parseFloat(this[6]);
+            l_ttl_amount = l_ttl_amount + parseFloat(this[6]);
          });
  
  

@@ -79,6 +79,12 @@ $(document).ready(function(){
 
 $("#btnPrint").click(function(){
    var l_params="";
+   
+    if($("#p_empl_id_no").val()=="") {
+      alert("Please select Employee");
+      return;
+    }   
+   
    l_params += "p_empl_id_no=" + $("#p_empl_id_no").val();
    l_params += "&p_year=" + $("#p_year").val();
    window.open("house_cons_byID_rpt?" + l_params);

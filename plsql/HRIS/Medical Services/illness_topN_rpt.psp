@@ -32,15 +32,15 @@
    CURSOR dept_cur (p_ccnt_grp_cd IN NUMBER) IS
       SELECT ccnt_cd, ccnt_abbrv
         FROM ccnt_dept_v
-       WHERE ccnt_grp_cd = p_ccnt_grp_cd
+       WHERE ccnt_group_cd = p_ccnt_grp_cd
        ORDER BY ccnt_abbrv;
 
    CURSOR ccnt_grp_cur IS
-      SELECT ccnt_grp_cd, COUNT(*) as ccnt_grp_count
+      SELECT ccnt_group_cd, COUNT(*) as ccnt_grp_count
         FROM ccnt_dept_v
-       GROUP BY ccnt_grp_cd
+       GROUP BY ccnt_group_cd
        HAVING COUNT(*) > 1
-       ORDER BY ccnt_grp_cd;
+       ORDER BY ccnt_group_cd;
 
 
    l_select                     VARCHAR2(1000);
@@ -156,7 +156,7 @@
 
          l_first := TRUE;
          <<DEPARTMENTS>>
-         FOR d IN dept_cur(g.ccnt_grp_cd) LOOP
+         FOR d IN dept_cur(g.ccnt_group_cd) LOOP
 %>
       <tr>
          <td><%= d.ccnt_abbrv %></td>

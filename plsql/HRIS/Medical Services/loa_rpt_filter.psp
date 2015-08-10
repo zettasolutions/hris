@@ -90,6 +90,21 @@ $(document).ready(function(){
 
 $("#btnPrint").click(function(){
    var l_params="";
+   
+    if($("#p_empl_id_no").val()=="") {
+      alert("Please select Employee");
+      return;
+    }   
+
+    if($("#p_valid_udate").val()=="") {
+      alert("Please enter date");
+      return;
+    }   
+
+    if($("#p_reference_code").val()=="") {
+      alert("Please enter establishment");
+      return;
+    }     
    l_params += "p_empl_id_no=" + $("#p_empl_id_no").val();
    l_params += "&p_empl_name=" + $("#p_empl_name").val();
    l_params += "&p_valid_udate=" + $("#p_valid_udate").val();

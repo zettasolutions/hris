@@ -151,6 +151,7 @@
 
    function onLoadComplete(data){
       mygrid.clearAll();
+      zsi.table.dhtmlx.Unescape(data,3);
       mygrid.parse(data, "json");
       l_page_rows=data.page_rows;
       zsi.page.DisplayRecordPage(data.page_no,data.page_rows,data.row_count);

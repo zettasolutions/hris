@@ -144,7 +144,7 @@ BEGIN
                                                    || l_link          || '","'
                                                    || TO_CHAR(l_start_date,l_date_format)    || '","'
                                                    || TO_CHAR(l_end_date,l_date_format)      || '","'
-                                                   || l_trn_desc         || '","'
+                                                   || utl_url.escape(l_trn_desc)         || '","'
                                                    || l_trn_type_name    || '","'
                                                    || l_spsr_name        || '","'
                                                    || l_venu_name        || '","'                                                  
@@ -155,7 +155,6 @@ BEGIN
 
       htp.p(l_json);
       l_comma := ',';
-
 END LOOP;
 
 htp.p('], "page_no":"'|| p_page_no ||'","page_rows":"'|| l_rows ||'","row_count":"' || l_row_count || '"}');

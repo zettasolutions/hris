@@ -369,64 +369,66 @@ BEGIN
    END LOOP; 
 --   l_reg_fee := zsi_lib.GetSum('actual_cost','S004_T07003_TRAINEES',' tran_no = ' || l_tran_no);
 --   UPDATE S004_T07003 SET reg_fee = l_reg_fee WHERE tran_no = l_tran_no; 
-      l_divparts := (p_trainee_assess_seq_no.COUNT - 1) / (p_seq_no.COUNT-1);
-      FOR i IN 2..p_seq_no.COUNT LOOP  
-         IF l_loopctr = 1 then        
-             l_start := 2;
-             l_end := (l_start + l_divparts) -1;
-         ELSE
-             l_start := l_end + 1;
-             l_end := (l_start + l_divparts)-1;
-         END IF;
-         l_loopctr := l_loopctr + 1;
-      IF p_seq_no(i) IS NULL THEN
-         SELECT S004_T07003_SQ001.NEXTVAL INTO l_seq_no FROM DUAL; 
-         FOR j IN l_start..l_end LOOP        
-              INSERT INTO S004_T07003_ASSESSMENT (
-                tran_no
-               ,id_no
-               ,seq_no
-               ,assessment_type
-               ,assessment_code
-               ,rating
-               ,trainee_assess_seq_no
-               ,created_by
-               ,date_created
-              )
-               VALUES (
-                 l_tran_no
-                ,p_id_no(i)
-                ,l_seq_no
-                ,200
-                ,p_assessment_code(j)
-                ,p_rating(j)
-                ,S004_T07003_SQ001.NEXTVAL
-                ,zsi_sessions_lib.GetCookieUser
-                ,SYSDATE
-                );           
-         END LOOP;
-      ELSE
-         FOR j IN l_start..l_end LOOP 
-               SELECT * INTO l_recTA FROM S004_T07003_ASSESSMENT WHERE trainee_assess_seq_no = p_trainee_assess_seq_no(j);
+      IF (p_trainee_assess_seq_no.COUNT - 1) <> 0 THEN
+          l_divparts := (p_trainee_assess_seq_no.COUNT - 1) / (p_seq_no.COUNT-1);
+          FOR i IN 2..p_seq_no.COUNT LOOP  
+             IF l_loopctr = 1 then        
+                 l_start := 2;
+                 l_end := (l_start + l_divparts) -1;
+             ELSE
+                 l_start := l_end + 1;
+                 l_end := (l_start + l_divparts)-1;
+             END IF;
+             l_loopctr := l_loopctr + 1;
+          IF p_seq_no(i) IS NULL THEN
+             SELECT S004_T07003_SQ001.NEXTVAL INTO l_seq_no FROM DUAL; 
+             FOR j IN l_start..l_end LOOP        
+                  INSERT INTO S004_T07003_ASSESSMENT (
+                    tran_no
+                   ,id_no
+                   ,seq_no
+                   ,assessment_type
+                   ,assessment_code
+                   ,rating
+                   ,trainee_assess_seq_no
+                   ,created_by
+                   ,date_created
+                  )
+                   VALUES (
+                     l_tran_no
+                    ,p_id_no(i)
+                    ,l_seq_no
+                    ,200
+                    ,p_assessment_code(j)
+                    ,p_rating(j)
+                    ,S004_T07003_SQ001.NEXTVAL
+                    ,zsi_sessions_lib.GetCookieUser
+                    ,SYSDATE
+                    );           
+             END LOOP;
+          ELSE
+             FOR j IN l_start..l_end LOOP 
+                   SELECT * INTO l_recTA FROM S004_T07003_ASSESSMENT WHERE trainee_assess_seq_no = p_trainee_assess_seq_no(j);
 
-               IF zsi_lib.IsChanged(l_recTA.id_no, TO_NUMBER(p_id_no(i))) = 'Y' THEN
-                  l_changed :='Y';
-                  l_recTA.id_no := p_id_no(i);
-               END IF;
+                   IF zsi_lib.IsChanged(l_recTA.id_no, TO_NUMBER(p_id_no(i))) = 'Y' THEN
+                      l_changed :='Y';
+                      l_recTA.id_no := p_id_no(i);
+                   END IF;
 
-               IF zsi_lib.IsChanged(l_recTA.rating, TO_NUMBER(p_rating(j))) = 'Y' THEN
-                  l_changed :='Y';
-                  l_recTA.rating := p_rating(j);
-               END IF;
+                   IF zsi_lib.IsChanged(l_recTA.rating, TO_NUMBER(p_rating(j))) = 'Y' THEN
+                      l_changed :='Y';
+                      l_recTA.rating := p_rating(j);
+                   END IF;
 
-            IF l_changed = 'Y' THEN
-               l_recTA.modified_by := zsi_sessions_lib.GetCookieUser;
-               l_recTA.date_modifIed := SYSDATE;
-               UPDATE S004_T07003_ASSESSMENT SET row = l_recTA WHERE trainee_assess_seq_no = p_trainee_assess_seq_no(j);
-            END IF;         
-         END LOOP;
-      END IF;
-   END LOOP;
+                IF l_changed = 'Y' THEN
+                   l_recTA.modified_by := zsi_sessions_lib.GetCookieUser;
+                   l_recTA.date_modifIed := SYSDATE;
+                   UPDATE S004_T07003_ASSESSMENT SET row = l_recTA WHERE trainee_assess_seq_no = p_trainee_assess_seq_no(j);
+                END IF;         
+             END LOOP;
+          END IF;
+       END LOOP;
+    END IF;
 END;
 %>
 <script type="text/javascript">

@@ -91,6 +91,7 @@
 
 %>
 <%
+   pageheader(p_dwin=>'Y');
    if(l_tab is null) THEN
       l_tab:='spkrInfo';
    END IF;   
@@ -115,7 +116,6 @@
       l_end_date     :=to_char(l_rec.end_date, l_date_format);
       l_remarks      :=l_rec.remarks;
    END IF;
-   pageheader(p_dwin=>'Y');
 
 %>
 <body>
@@ -198,7 +198,7 @@ zsi_bs_lib.OpenEntryForm;
             <td><% zsi_bs_lib.InputHiddenBox(p_inputName=>'p_spk_seq_no',p_inputValue=>i.seq_no);  %>
                 <% zsi_bs_lib.SelectBox(p_Name=>'p_spk_code', p_wrapper=>'N', p_Attributes=>'SelectedValue="' || i.spk_code || '"');%></td>
             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_spk_type_desc', p_inputValue=>i.spk_type_desc,p_wrapper=>'N', p_attributes=>'disabled');%></td>
-            <td><a href="javascript:void(0)" TITLE="Click here to Edit Assessment" onClick="attachURL('train_sched_attend_ass_form?p_tran_no=<%=p_tran_no%>&p_spk_seq_no=<%= i.seq_no %>&p_module_id=<%=p_module_id%>&p_tab=spkrInfo','Add/Edit Assessment for Speaker <%=i.spk_name %>', 1350, 700);w1.maximize();">Assessment</a></td>    
+            <td><a href="javascript:void(0);" TITLE="Click here to Edit Assessment" onclick="attachURL('train_sched_attend_ass_form?p_tran_no=<%=p_tran_no%>&p_spk_seq_no=<%= i.seq_no %>&p_module_id=<%=p_module_id%>&p_tab=spkrInfo','Add/Edit Assessment for Speaker <%=i.spk_name %>', 1350, 700);w1.maximize();">Assessment</a></td>    
             <td class="col-xs-1" nowrap align="center"><% zsi_bs_lib.ButtonDelete(p_table=>'S004_T07003_SPEAKER',p_Value=>i.seq_no);%></td>
         </tr>
       <%
@@ -520,24 +520,13 @@ var ctrlSel = zsi.control.SelectList;
                [    
                    "p_start_date"
                   ,"p_end_date"
-                  ,"p_trn_days"
-                  ,"p_trn_hours"
                   ,"p_trn_code"
                   ,"p_trn_type"
                   ,"p_travel_type"
-                  ,"p_venu_code"
-                  ,"p_spsr_code"
                ]
             ,  "required_one":"N"
             ,  "type":"S"
             }
-           ,{"names" :
-               [  
-                   "p_spk_code"
-               ]
-            ,  "required_one":"N"
-            ,  "type":"M"
-            }         
            ,{"names" :  
                [  
                    "p_item_code"
@@ -549,10 +538,6 @@ var ctrlSel = zsi.control.SelectList;
            ,{"names" :
                [  
                    "p_empl_id_no"
-                  ,"p_tt_reg_fee"
-                  ,"p_reg_fee_charge_to"
-                  ,"p_travel_cost_charge_to"
-                  ,"p_with_certificate"
                ]
             ,  "required_one":"N"
             ,  "type":"M"
@@ -564,18 +549,9 @@ var ctrlSel = zsi.control.SelectList;
                [         
                    "Start Date"
                   ,"End Date"
-                  ,"Training Days"
-                  ,"Training Hours"
                   ,"Training Code"
                   ,"Training Type"
                   ,"Travel"
-                  ,"Venue"
-                  ,"Sponsor"
-               ]
-            }
-           ,{"titles" :  
-               [                       
-                   "Speaker"
                ]
             }
            ,{"titles" :  
@@ -587,10 +563,6 @@ var ctrlSel = zsi.control.SelectList;
            ,{"titles" :  
                [                       
                   "Participant/Trainee"  
-                  ,"Reg. Fee"
-                  ,"Reg. Fee Charge To"
-                  ,"Travel Cost Charge To"
-                  ,"With Certificate?"
                ]
             }           
          ]
@@ -599,24 +571,6 @@ var ctrlSel = zsi.control.SelectList;
 
       
    })    
-
-function attachURL(winURL,winTitle,winWidth,winHeight) {
-//var w1;
-   if (dhtmlxWin.isWindow("w1")) w1.close();
-   //w1 = dhtmlxWin.createWindow("w1", 20, 50, winWidth, winHeight); // x,y,width,height
-   var w = $(document).width();
-   var x = (w - winWidth) / 2;
-   var h = $(document).height();
-   var y = (h - winHeight) / 2;
-   w1 = dhtmlxWin.createWindow("w1", x, y, winWidth, winHeight); // x,y,width,height
-   w1.setModal(true);
-   w1.button("close").enable();
-   w1.button("minmax1").enable();
-   w1.button("minmax2").enable();
-   w1.button("park").hide();
-   w1.setText(winTitle);
-   w1.attachURL(winURL);
-}
 
 
 $("form[name=frmList]").submit(function(){
@@ -693,6 +647,9 @@ $("form[name=frmList]").submit(function(){
 //on page loaded
 $(document).ready(function(){
    //populate list
+   dhtmlxWin = new dhtmlXWindows();
+   dhtmlxWin.setImagePath("<%= l_dhtmlx_path %>dhtmlxWindows/codebase/imgs/");
+
    ctrlSel("#p_trf_tranno","<%=l_trf_tranno%>","N","TRF_Status800_v","trf_tranno","trf_tran_no","ORDER BY trf_tran_no");
    ctrlSel("#p_trn_code","<%=l_trn_code%>","N","S004_T07000","trn_code","trn_desc","ORDER BY trn_desc");
    ctrlSel("#p_trn_type","<%=l_trn_type%>","N","S004_T07007","trn_type","type_name","ORDER BY type_name");
@@ -700,6 +657,7 @@ $(document).ready(function(){
    ctrlSel("#p_venu_code","<%=l_venu_code%>","N","S004_T07009","venu_code","venu_name","ORDER BY venu_name");
    ctrlSel("#p_travel_type","<%=l_travel_type%>","N","travel_types_v","sele_value","displayed_text","ORDER BY displayed_text");
    ctrlSel("#p_spsr_code","<%=l_spsr_code%>","N","S004_T07008","spsr_code","spsr_name","ORDER BY spsr_name");
+   ctrlSel("select[id=p_id_no]","<%=l_id_no%>","N","TrainingTrainees_V","empl_id_no","empl_name","WHERE tran_no=<%=p_tran_no%> ORDER BY empl_name");
    
    ctrlSel("select[id=p_spk_code]","","N","S004_T07011","spk_code","spk_name","ORDER BY spk_name");
    ctrlSel("select[id=p_item_code]","","N","S004_T07001","trn_item_code","trn_item_desc","");
@@ -715,7 +673,23 @@ $(document).ready(function(){
    });
 
 });
-
+function attachURL(winURL,winTitle,winWidth,winHeight) {
+//var w1;
+   if (dhtmlxWin.isWindow("w1")) w1.close();
+   //w1 = dhtmlxWin.createWindow("w1", 20, 50, winWidth, winHeight); // x,y,width,height
+   var w = $(document).width();
+   var x = (w - winWidth) / 2;
+   var h = $(document).height();
+   var y = (h - winHeight) / 2;
+   w1 = dhtmlxWin.createWindow("w1", x, y, winWidth, winHeight); // x,y,width,height
+   w1.setModal(true);
+   w1.button("close").enable();
+   w1.button("minmax1").enable();
+   w1.button("minmax2").enable();
+   w1.button("park").hide();
+   w1.setText(winTitle);
+   w1.attachURL(winURL);
+}
 </script>
 
 </body>

@@ -310,7 +310,7 @@ zsi_bs_lib.OpenEntryForm;
              <td><% zsi_bs_lib.SelectBox(p_Name=>'p_reg_fee_charge_to', p_wrapper=>'N');%></td>
              <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_travel_cost',p_inputValue=>'', p_wrapper=>'N',p_attributes=>'style="text-align:right"');%></td>
              <td><% zsi_bs_lib.SelectBox(p_Name=>'p_travel_cost_charge_to', p_wrapper=>'N');%></td>
-             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_actual_cost',p_inputValue=>'', p_wrapper=>'N', p_attributes=>'style="text-align:right", disabled');%></td>
+             <td><% zsi_bs_lib.InputTextBox(p_inputName=>'p_actual_cost',p_inputValue=>'', p_wrapper=>'N', p_attributes=>'style="text-align:right" disabled');%></td>
              <td><% zsi_bs_lib.YesNo(p_field=>'with_certificate');%></td>
              <td></td>             
          </tr>
@@ -657,7 +657,12 @@ $(document).ready(function(){
    ctrlSel("#p_venu_code","<%=l_venu_code%>","N","S004_T07009","venu_code","venu_name","ORDER BY venu_name");
    ctrlSel("#p_travel_type","<%=l_travel_type%>","N","travel_types_v","sele_value","displayed_text","ORDER BY displayed_text");
    ctrlSel("#p_spsr_code","<%=l_spsr_code%>","N","S004_T07008","spsr_code","spsr_name","ORDER BY spsr_name");
-   ctrlSel("select[id=p_id_no]","<%=l_id_no%>","N","TrainingTrainees_V","empl_id_no","empl_name","WHERE tran_no=<%=p_tran_no%> ORDER BY empl_name");
+   
+   
+   if('<%=p_tran_no%>'!=='')  
+   	ctrlSel("select[id=p_id_no]","<%=l_id_no%>","N","TrainingTrainees_V","empl_id_no","empl_name","WHERE tran_no=<%=p_tran_no%> ORDER BY empl_name");
+   else
+   	ctrlSel("select[id=p_id_no]","<%=l_id_no%>","N","TrainingTrainees_V","empl_id_no","empl_name","ORDER BY empl_name");
    
    ctrlSel("select[id=p_spk_code]","","N","S004_T07011","spk_code","spk_name","ORDER BY spk_name");
    ctrlSel("select[id=p_item_code]","","N","S004_T07001","trn_item_code","trn_item_desc","");

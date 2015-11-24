@@ -1,0 +1,116 @@
+<%@ plsql procedure="emp_sent_pub_rpt" %>
+<%@ plsql parameter="p_start_date"               type="VARCHAR2" %>
+<%@ plsql parameter="p_end_date"                 type="VARCHAR2" %>
+<%@ plsql parameter="p_list_by"                  type="VARCHAR2" %>
+
+<%!
+/*
+========================================================================
+*
+* Copyright (c) 2014-2015 ZettaSolution, Inc.  All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification is strictly prohibited.
+*
+========================================================================
+*/
+/* Modification History
+   Date       By    History
+   ---------  ----  ---------------------------------------------------------------------
+   24-NOV-15  GT    Modified.
+   12-NOV-15  GT    New
+*/
+--DECLARATION SECTION
+   l_dhtmlx_path                VARCHAR2(100) := zsi_lib.DHTMLXPath;
+   l_js_path                    VARCHAR2(100) := zsi_lib.JSPath;
+   l_style_path                 VARCHAR2(128) := zsi_lib.StylePath;
+   l_rpt_title                  VARCHAR2(1024);   
+%>
+<%  
+   
+   reportheader(p_output=>'H');
+%>
+<body>
+<div class="loadingStatus">
+      <div class="loadingImg"></div> 
+      <div class="loadingText">Processing...Please wait</div>
+</div>
+
+<table>
+   <tr valign="top">
+      <td align="center"  class="head5">SUMMARY OF EMPLOYEES SENT TO PUBLIC TRAINING</td>
+   </tr>
+   <tr>
+      <td align="center"  class="head6">For the Period of <%=p_start_date%> - <%=p_end_date%></td>
+   </tr>
+   <tr>
+      <td align="center" class="head6">Run Date: <%= TRIM(TO_CHAR(SYSDATE,'mm/dd/yyyy hh:mi:ss AM')) %></td>
+   </tr>
+</table>
+
+<table class="gridReport">
+   <thead>
+   <tr valign="bottom">
+      <th nowrap align="left">Name of Employee</th>
+      <th nowrap align="left">Dept</th>
+      <th nowrap align="center"># of Training Attended</th>
+      <th nowrap align="right">Total Cost</th>
+   </tr>
+   </thead> 
+</table>
+
+<script type="text/javascript">
+
+function LoadData(){
+   var l_url = window.location.href;
+   var l_index = l_url.indexOf("?");   
+   var l_params= l_url.substr(l_index + 1);
+   
+   $.getJSON("emp_sent_pub_json?" + l_params
+      ,onLoadComplete
+   ).fail(function() {
+       $(".loadingStatus").css("display","none");
+       alert("Sorry, the current report cannot be displayed at this moment.");
+   });
+
+}
+
+function onLoadComplete(data){
+   var jsonGrid = $(".gridReport");
+   jsonGrid.clearGrid();
+   var l_total=0;
+   $.each(data.rows, function () {
+      var r = "";
+      r += "<tr valign='top'>";
+      r += "<td nowrap>" + unescape(this.data[0])   + "</td>";
+      r += "<td>" + this.data[1]   + "</td>";
+      r += "<td align='center'>" + this.data[2]   + "</td>";
+      r += "<td align='right'>" + this.data[3]   + "</td>";
+      r += "</tr>";   
+      
+      
+      l_total += this.data[3];
+      jsonGrid.append(r);
+   });   
+
+   var r = "";
+      r += "<tr valign='top'>";
+      r += "<td colspan='3' align='right'><b>Over-all Total &raquo; </td>";
+      r += "<td align='right'>" + l_total   + "</b></td>";
+      r += "</tr>";   
+      jsonGrid.append(r);
+
+   $(".loadingStatus").css("display","none");   
+   //window.print();
+}
+
+ 
+//on page loaded
+$(document).ready(function(){    
+   LoadData();
+}); 
+   
+ 
+</script>
+</body>
+</html>

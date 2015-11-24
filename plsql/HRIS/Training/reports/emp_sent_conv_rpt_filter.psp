@@ -13,7 +13,7 @@
 /* Modification History
    Date       By    History
    ---------  ----  ---------------------------------------------------------------------
-   02-FEB-15  BD    New
+   12-NOV-15  GT    New
 */
    --DECLARATION SECTION
    l_user                       VARCHAR2(30);
@@ -38,11 +38,11 @@
    zsi_bs_lib.CloseFormGroup();
    zsi_bs_lib.OpenFormGroup();
 %>
-   <label class=" col-xs-1 control-label">List By</label>
+   <label class=" col-xs-1 control-label">ORDER By</label>
    <div class="col-xs-2">
    <select class="form-control input-sm" id="p_list_by" name="p_list_by">
-   <option value="1">Employee Name</option>
-   <option value="2">Department</option>
+   <option value="empl_name">Employee Name</option>
+   <option value="dept_abbrv">Department</option>
    </select>
    </div>
 <%

@@ -103,22 +103,6 @@ WHERE trf_status = 800;
    FROM S004_T07003;
 /
 
-
- CREATE OR REPLACE FORCE VIEW TrainingSpeakers_V AS 
-   SELECT
-    tran_no
-   ,seq_no
-   ,spk_code
-   ,topic
-   ,created_by
-   ,date_created
-   ,modified_by
-   ,date_modified   
-   ,zsi_lib.GetDescription('S004_T07011','spk_name','spk_code', spk_code ) as spk_name
-   ,zsi_lib.GetDescription('Speakers_V','spk_type_desc','spk_code', spk_code ) as spk_type_desc
-   FROM S004_T07003_SPEAKER; 
-/
-
  CREATE OR REPLACE FORCE VIEW TrainingTrainees_V AS 
    SELECT
    b.tran_no
@@ -137,6 +121,7 @@ WHERE trf_status = 800;
    ,b.date_modified 
    ,a.trn_code
    ,a.trn_hours
+   ,a.conv_code
    ,a.conv_desc
    ,a.trn_desc
    ,a.start_date
@@ -153,6 +138,160 @@ WHERE trf_status = 800;
    FROM S004_T07003_TRAINEES b, TrainingSchedAttend_V a
    WHERE b.tran_no = a.tran_no;      
 /
+
+ CREATE OR REPLACE FORCE VIEW ConvSchedAttend_V AS 
+   SELECT
+       tran_no
+      ,trf_tranno
+      ,trn_code
+      ,venu_code
+      ,spsr_code
+      ,start_date
+      ,end_date
+      ,trn_days
+      ,trn_hours
+      ,trn_status
+      ,trn_cost
+      ,trn_type
+      ,conv_code
+      ,reg_fee
+      ,travel_type
+      ,remarks
+      ,created_by   
+      ,date_created 
+      ,modified_by  
+      ,date_modified
+      ,zsi_lib.GetDescription('S004_T07000','trn_desc','trn_code', trn_code ) as trn_desc
+      ,zsi_lib.GetDescription('S004_T07007','type_name','trn_type', trn_type ) as trn_type_name
+      ,zsi_lib.GetDescription('S004_T07008','spsr_name','spsr_code', spsr_code ) as spsr_name
+      ,zsi_lib.GetDescription('S004_T07009','venu_name','venu_code', venu_code ) as venu_name
+      ,zsi_lib.GetDescription('S004_T07010','conv_desc','conv_code', conv_code) as conv_desc
+      ,zsi_lib.GetDescription('Travel_Types_v','displayed_text','sele_value', travel_type ) as travel_desc
+   FROM S004_T07003
+   WHERE conv_code IS NOT NULL;
+
+ CREATE OR REPLACE FORCE VIEW ConvTrainees_V AS 
+   SELECT
+   b.tran_no
+   ,b.seq_no
+   ,b.empl_id_no
+   ,b.attendee_type
+   ,b.reg_fee
+   ,b.reg_fee_charge_to
+   ,b.travel_cost
+   ,b.travel_cost_charge_to
+   ,b.actual_cost
+   ,b.with_certificate
+   ,b.created_by
+   ,b.date_created
+   ,b.modified_by
+   ,b.date_modified 
+   ,a.trn_code
+   ,a.trn_hours
+   ,a.conv_code
+   ,a.conv_desc
+   ,a.trn_desc
+   ,a.start_date
+   ,a.end_date
+   ,a.venu_name
+   ,a.trn_type_name
+   ,a.spsr_name
+   ,EXTRACT(YEAR FROM a.start_date) as trn_year
+   ,zsi_lib.GetDescription('employee_v','empl_name','empl_id_no', b.empl_id_no ) as empl_name
+   ,zsi_lib.GetDescription('employee_v','department','empl_id_no',b.empl_id_no) as dept_code 
+   ,zsi_lib.GetDescription('employee_v','dept_desc','empl_id_no', b.empl_id_no ) as dept_desc
+   ,zsi_lib.GetDescription('employee_v','dept_abbrv','empl_id_no', b.empl_id_no ) as dept_abbrv
+   ,zsi_lib.GetStatus(with_certificate) as with_cert
+   FROM S004_T07003_TRAINEES b, ConvSchedAttend_V a
+   WHERE b.tran_no = a.tran_no;      
+/
+ CREATE OR REPLACE FORCE VIEW PubTrainSchedAttend_V AS 
+   SELECT
+       tran_no
+      ,trf_tranno
+      ,trn_code
+      ,venu_code
+      ,spsr_code
+      ,start_date
+      ,end_date
+      ,trn_days
+      ,trn_hours
+      ,trn_status
+      ,trn_cost
+      ,trn_type
+      ,conv_code
+      ,reg_fee
+      ,travel_type
+      ,remarks
+      ,created_by   
+      ,date_created 
+      ,modified_by  
+      ,date_modified
+      ,zsi_lib.GetDescription('S004_T07000','trn_desc','trn_code', trn_code ) as trn_desc
+      ,zsi_lib.GetDescription('S004_T07007','type_name','trn_type', trn_type ) as trn_type_name
+      ,zsi_lib.GetDescription('S004_T07008','spsr_name','spsr_code', spsr_code ) as spsr_name
+      ,zsi_lib.GetDescription('S004_T07009','venu_name','venu_code', venu_code ) as venu_name
+      ,zsi_lib.GetDescription('S004_T07010','conv_desc','conv_code', conv_code) as conv_desc
+      ,zsi_lib.GetDescription('Travel_Types_v','displayed_text','sele_value', travel_type ) as travel_desc
+   FROM S004_T07003;
+   WHERE trn_type = 3;
+/
+
+
+ CREATE OR REPLACE FORCE VIEW PubTrainTrainees_V AS 
+   SELECT
+   b.tran_no
+   ,b.seq_no
+   ,b.empl_id_no
+   ,b.attendee_type
+   ,b.reg_fee
+   ,b.reg_fee_charge_to
+   ,b.travel_cost
+   ,b.travel_cost_charge_to
+   ,b.actual_cost
+   ,b.with_certificate
+   ,b.created_by
+   ,b.date_created
+   ,b.modified_by
+   ,b.date_modified 
+   ,a.trn_code
+   ,a.trn_hours
+   ,a.conv_code
+   ,a.conv_desc
+   ,a.trn_desc
+   ,a.start_date
+   ,a.end_date
+   ,a.venu_name
+   ,a.trn_type_name
+   ,a.spsr_name
+   ,EXTRACT(YEAR FROM a.start_date) as trn_year
+   ,zsi_lib.GetDescription('employee_v','empl_name','empl_id_no', b.empl_id_no ) as empl_name
+   ,zsi_lib.GetDescription('employee_v','department','empl_id_no',b.empl_id_no) as dept_code 
+   ,zsi_lib.GetDescription('employee_v','dept_desc','empl_id_no', b.empl_id_no ) as dept_desc
+   ,zsi_lib.GetDescription('employee_v','dept_abbrv','empl_id_no', b.empl_id_no ) as dept_abbrv
+   ,zsi_lib.GetStatus(with_certificate) as with_cert
+   FROM S004_T07003_TRAINEES b, PubTrainSchedAttend_V a
+   WHERE b.tran_no = a.tran_no;      
+/
+
+
+ CREATE OR REPLACE FORCE VIEW TrainingSpeakers_V AS 
+   SELECT
+    tran_no
+   ,seq_no
+   ,spk_code
+   ,topic
+   ,created_by
+   ,date_created
+   ,modified_by
+   ,date_modified   
+   ,zsi_lib.GetDescription('S004_T07011','spk_name','spk_code', spk_code ) as spk_name
+   ,zsi_lib.GetDescription('Speakers_V','spk_type_desc','spk_code', spk_code ) as spk_type_desc
+   FROM S004_T07003_SPEAKER; 
+/
+
+
+
 
  CREATE OR REPLACE FORCE VIEW TrainingCosting_V AS 
    SELECT

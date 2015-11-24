@@ -1,8 +1,8 @@
 SET SCAN OFF
 CREATE OR REPLACE 
-PROCEDURE conv_emp_rpt_json (
-                              p_month              IN NUMBER default NULL,
-                              p_year               IN NUMBER default NULL,
+PROCEDURE emp_sent_conv_json (
+                              p_start_date         IN VARCHAR2 default NULL,
+                              p_end_date           IN VARCHAR2 default NULL,
                               p_list_by            IN VARCHAR2 default NULL,
                               p_rows               IN NUMBER default NULL,
                               p_page_no            IN NUMBER default 1,
@@ -20,7 +20,7 @@ PROCEDURE conv_emp_rpt_json (
 /* Modification History
    Date       By    History
    ---------  ----  ---------------------------------------------------------------------
-   31-MAR-15  GT    New
+   12-NOV-15  GT    New
 */
 --DECLARATION SECTION
 l_json                       VARCHAR2(8000);
@@ -43,44 +43,45 @@ l_comma                      VARCHAR2(1);
 
 TYPE ta_cur IS REF CURSOR;
 taref              ta_cur;
-l_spsr_name                TrainingTrainees_V.spsr_name%TYPE;
-l_venu_name                TrainingTrainees_V.venu_name%TYPE;
+l_empl_name                TrainingTrainees_V.empl_name%TYPE;
+l_dept_abbrv               TrainingTrainees_V.dept_abbrv%TYPE;
 l_tran_no                  TrainingTrainees_V.tran_no%TYPE;
 l_trn_desc                 TrainingTrainees_V.trn_desc%TYPE;  
-l_no_pax                   NUMBER:=0;
 l_trn_hours                TrainingTrainees_V.trn_hours%TYPE;   
 l_start_date               TrainingTrainees_V.start_date%TYPE;  
 l_end_date                 TrainingTrainees_V.end_date%TYPE;     
-l_trn_type_name            TrainingTrainees_V.trn_type_name%TYPE;  
+l_actual_cost              TrainingTrainees_V.actual_cost%TYPE;     
 
 BEGIN
 check_login;
 owa_util.mime_header('application/json');  
 
-l_select := ' SELECT tran_no, trn_desc, venu_name, start_date ,end_date, trn_hours,  zsi_lib.GetCount(''tran_no'', ''S004_T07003_TRAINEES'',''tran_no='' || tran_no ), trn_type_name, spsr_name';
+l_select := ' SELECT empl_name, dept_abbrv, trn_desc, tran_no, trn_hours, start_date ,end_date,  actual_cost ';
 l_from   := ' FROM ConvTrainees_V';
-l_where  := ' WHERE EXTRACT(MONTH FROM start_date) =' || p_month || ' AND EXTRACT(YEAR FROM start_date) =' || p_year;
-l_order  := ' ORDER BY tran_no,' || p_list_by;
+l_where  := ' WHERE (start_date BETWEEN ''' || TO_DATE(p_start_date,'mm/dd/yyyy') || ''' AND ''' || TO_DATE(p_end_date,'mm/dd/yyyy') || ''')';
+l_where  := l_where  || ' AND (end_date BETWEEN ''' || TO_DATE(p_start_date,'mm/dd/yyyy') || ''' AND ''' || TO_DATE(p_end_date,'mm/dd/yyyy') || ''')';
+
+l_order  := ' ORDER BY ' || p_list_by;
    
-   l_sql := l_select || l_from || l_where || l_order;
+l_sql := l_select || l_from || l_where || l_order;
+
    
    htp.p('{"rows":[');
       OPEN taref FOR l_sql;
       LOOP
-          FETCH taref INTO l_tran_no, l_trn_desc , l_venu_name, l_start_date ,l_end_date, l_trn_hours, l_no_pax , l_trn_type_name, l_spsr_name;
+          FETCH taref INTO l_empl_name, l_dept_abbrv , l_trn_desc, l_tran_no, l_trn_hours, l_start_date ,l_end_date,  l_actual_cost;
       EXIT WHEN taref%NOTFOUND;
 
       l_row_count := l_row_count + 1;
       l_json:= l_comma || '{ "id":'|| l_row_count ||', "data":["' 
-                                                   || l_tran_no                            || '","'
-                                                   || l_trn_desc                           || '","'                                                   
-                                                   || l_venu_name                          || '","'
-                                                   || TO_CHAR(l_start_date, l_date_format) || '","'
-                                                   || TO_CHAR(l_end_date, l_date_format)   || '","'
-                                                   || l_no_pax                             || '","'
-                                                   || l_trn_hours                          || '","'                                               
-                                                   || l_trn_type_name                      || '","'
-                                                   || l_spsr_name                          || '"'
+                                                   || utl_url.escape(l_empl_name)         || '","'
+                                                   || l_dept_abbrv                        || '","'                                                   
+                                                   || utl_url.escape(l_trn_desc)          || '","'
+                                                   || l_tran_no                           || '","'
+                                                   || l_trn_hours                         || '","' 
+                                                   || TO_CHAR(l_end_date, l_date_format)  || '","'
+                                                   || TO_CHAR(l_start_date, l_date_format)||  '","'
+                                                   || zsi_lib.FormatAmount(l_actual_cost,2) ||  '"'
       ||']}';
 
       htp.p(l_json);

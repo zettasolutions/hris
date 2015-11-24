@@ -13,7 +13,7 @@
 /* Modification History
    Date       By    History
    ---------  ----  ---------------------------------------------------------------------
-   02-FEB-15  BD    New
+   12-NOV-15  GT    New
 */
    --DECLARATION SECTION
    l_user                       VARCHAR2(30);
